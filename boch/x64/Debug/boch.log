@@ -1,0 +1,5 @@
+﻿  misc_mem.cc
+E:\Study\codes\bochs\boch\boch\cpu.h(294,31): warning C4506: 内联函数“void BX_CPU_C::invalidate_prefetch_q(void)”没有定义
+  (编译源文件“misc_mem.cc”)
+  
+  boch.vcxproj -> E:\Study\codes\bochs\boch\x64\Debug\boch.exe
