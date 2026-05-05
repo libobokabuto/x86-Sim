@@ -3377,7 +3377,7 @@ BX_SMF BX_CPP_INLINE void invalidate_prefetch_q(void) //4498ÐÐ
 {
     BX_CPU_THIS_PTR eipPageWindowSize = 0;
 }
-BX_SMF BX_CPP_INLINE void invalidate_stack_cache(void)
+BX_CPP_INLINE void BX_CPU_C::invalidate_stack_cache(void)
 {
     //4503
     BX_CPU_THIS_PTR espPageWindowSize = 0;

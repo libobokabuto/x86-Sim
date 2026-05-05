@@ -14,6 +14,7 @@ BOCHSAPI BX_CPU_C bx_cpu;
 #endif
 BOCHSAPI BX_MEM_C bx_mem;
 
+bx_debug_t bx_dbg;
 
 
 bx_startup_flags_t bx_startup_flags;//78ÐÐ

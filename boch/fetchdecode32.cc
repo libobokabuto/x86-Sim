@@ -1,4 +1,4 @@
-
+Ôªø
 #include "bochs.h"
 #include "cpu.h"
 #include "cpuid.h"
@@ -35,10 +35,10 @@ extern int decoder32_nop(const Bit8u* iptr, unsigned& remain, bxInstruction_c* i
 extern int decoder32(const Bit8u* iptr, unsigned& remain, bxInstruction_c* i, unsigned b1, unsigned sse_prefix, const void* opcode_table);
 extern int decoder32_modrm(const Bit8u* iptr, unsigned& remain, bxInstruction_c* i, unsigned b1, unsigned sse_prefix, const void* opcode_table);
 
-typedef int (*BxFetchDecode32Ptr)(const Bit8u* iptr, unsigned& remain, bxInstruction_c* i, unsigned b1, unsigned sse_prefix, const void* opcode_table);//74––
+typedef int (*BxFetchDecode32Ptr)(const Bit8u* iptr, unsigned& remain, bxInstruction_c* i, unsigned b1, unsigned sse_prefix, const void* opcode_table);//74Ë°å
 
 struct BxOpcodeDecodeDescriptor32 {
-    //76––
+    //76Ë°å
     BxFetchDecode32Ptr decode_method;
     const void* opcode_table;
 };
@@ -47,11 +47,13 @@ struct BxOpcodeDecodeDescriptor32 {
 #include "softfloat.h"
 #include "simd_pfp.h"
 #include "simd_compare.h"
+#include "simd_bf16.h"
+#include "simd_vnni.h"
 
 
 bxIAOpcodeTable BxOpcodesTable[] = {
 #ifndef BX_STANDALONE_DECODER
-    //&BX_CPU_C::BxError, &BX_CPU_C::BxError÷Æ«∞ «d,e
+    //&BX_CPU_C::BxError, &BX_CPU_C::BxError‰πãÂâçÊòØd,e
 #define bx_define_opcode(a, b, c, d, e, f, s1, s2, s3, s4, g) { d, e, { s1, s2, s3, s4 }, g },
 #else
 #define bx_define_opcode(a, b, c, d, e, f, s1, s2, s3, s4, g) {       { s1, s2, s3, s4 }, g },
@@ -1425,7 +1427,7 @@ int decoder_vex32(const Bit8u* iptr, unsigned& remain, bxInstruction_c* i, unsig
         (vex_l << VEX_VL_128_256_OFFSET);
     if (i->modC0() && nnn == rm)
         decmask |= (1 << SRC_EQ_DST_OFFSET);
-    //–Ë“™ia_dpcodes.def
+    //ÈúÄË¶Åia_dpcodes.def
     ia_opcode = findOpcode(BxOpcodeTableVEX[opcode_byte], decmask);
 
     bool has_immediate = (opcode_byte >= 0x70 && opcode_byte <= 0x73) || (opcode_byte >= 0xC2 && opcode_byte <= 0xC6) || (opcode_byte >= 0x200);
@@ -1570,7 +1572,7 @@ int decoder_evex32(const Bit8u* iptr, unsigned& remain, bxInstruction_c* i, unsi
         decmask |= (1 << SRC_EQ_DST_OFFSET);
     if (!opmask)
         decmask |= (1 << MASK_K0_OFFSET);
-    //–Ë“™ia_dpcodes.def
+    //ÈúÄË¶Åia_dpcodes.def
     ia_opcode = findOpcode(BxOpcodeTableEVEX[opcode_byte], decmask);
 
     bool has_immediate = (opcode_byte >= 0x70 && opcode_byte <= 0x73) || (opcode_byte >= 0xC2 && opcode_byte <= 0xC6) || (opcode_byte >= 0x200 && opcode_byte < 0x300);
@@ -1658,7 +1660,7 @@ int decoder_xop32(const Bit8u* iptr, unsigned& remain, bxInstruction_c* i, unsig
         (vex_l << VEX_VL_128_256_OFFSET);
     if (i->modC0() && modrm.nnn == modrm.rm)
         decmask |= (1 << SRC_EQ_DST_OFFSET);
-    //–Ë“™ia_dpcodes.def
+    //ÈúÄË¶Åia_dpcodes.def
     ia_opcode = findOpcode(BxOpcodeTableXOP[opcode_byte], decmask);
 
     if (fetchImmediate(iptr, remain, i, ia_opcode, false) < 0)
@@ -1831,9 +1833,9 @@ int decoder32_nop(const Bit8u* iptr, unsigned& remain, bxInstruction_c* i, unsig
     i->assertModC0();
 
     if (sse_prefix == SSE_PREFIX_F3)
-        return BX_IA_PAUSE;  //–Ë“™ia_dpcodes.def
+        return BX_IA_PAUSE;  //ÈúÄË¶Åia_dpcodes.def
     else
-        return BX_IA_NOP;   //–Ë“™ia_dpcodes.def
+        return BX_IA_NOP;   //ÈúÄË¶Åia_dpcodes.def
 }
 
 int decoder_simple32(const Bit8u* iptr, unsigned& remain, bxInstruction_c* i, unsigned b1, unsigned sse_prefix, const void* opcode_table)
@@ -1969,11 +1971,11 @@ if (b1 == 0x138 || b1 == 0x13a) {
         return(-1);
     Bit8u opcode = *iptr++;
     if (b1 == 0x138) {
-        opcode_table = BxOpcodeTable0F38[opcode];//–Ë“™ia_dpcodes.def
+        opcode_table = BxOpcodeTable0F38[opcode];//ÈúÄË¶Åia_dpcodes.def
         b1 = 0x200 | opcode;
     }
     else if (b1 == 0x13a) {
-        opcode_table = BxOpcodeTable0F3A[opcode];//–Ë“™ia_dpcodes.def
+        opcode_table = BxOpcodeTable0F3A[opcode];//ÈúÄË¶Åia_dpcodes.def
         b1 = 0x300 | opcode;
     }
     remain--;
@@ -2005,7 +2007,7 @@ if (b1 == 0x138 || b1 == 0x13a) {
         if (i->modC0() || !(op_flags & BX_LOCKABLE)) {
 #if BX_CPU_LEVEL >= 6
             if ((op_flags & BX_LOCKABLE) != 0) {
-                //–Ë“™ia_dpcodes.def
+                //ÈúÄË¶Åia_dpcodes.def
                 if (ia_opcode == BX_IA_MOV_CR0Rd)
                     i->setSrcReg(0, 8); // extend CR0 -> CR8
                 else if (ia_opcode == BX_IA_MOV_RdCR0)
@@ -2030,7 +2032,7 @@ int BX_CPU_C::assignHandler(bxInstruction_c* i, Bit32u fetchModeMask)
     unsigned ia_opcode = i->getIaOpcode();
     if (0) {
         /*
-        ≈–∂œÃıº˛ «! i->modC0(£©
+        Âà§Êñ≠Êù°‰ª∂ÊòØ! i->modC0(Ôºâ
         i->execute1 = BxOpcodesTable[ia_opcode].execute1;
         i->handlers.execute2 = BxOpcodesTable[ia_opcode].execute2;
 
