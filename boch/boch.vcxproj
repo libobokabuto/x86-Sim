@@ -148,6 +148,7 @@
     <ClCompile Include="memory_stub.cc" />
     <ClCompile Include="misc_mem.cc" />
     <ClCompile Include="paging.cc" />
+    <ClCompile Include="paramtree.cc" />
     <ClCompile Include="proc_ctrl.cc" />
     <ClCompile Include="siminterface.cc" />
   </ItemGroup>
@@ -171,12 +172,15 @@
     <ClInclude Include="instrument.h" />
     <ClInclude Include="iodev.h" />
     <ClInclude Include="memory-bochs.h" />
+    <ClInclude Include="paramtree.h" />
+    <ClInclude Include="param_names.h" />
     <ClInclude Include="simd_compare.h" />
     <ClInclude Include="simd_int.h" />
     <ClInclude Include="simd_pfp.h" />
     <ClInclude Include="siminterface.h" />
     <ClInclude Include="softfloat.h" />
     <ClInclude Include="tlb.h" />
+    <ClInclude Include="vcruntime.h" />
     <ClInclude Include="vmx.h" />
     <ClInclude Include="vmx_ctrls.h" />
     <ClInclude Include="xmm.h" />

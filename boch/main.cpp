@@ -33,13 +33,14 @@ int bx_begin_simulation(int argc, char* argv[])
 
 
 void bx_init_hardware() {
+	//1170
 	int i;
 	char pname[16];
 	bx_list_c* base;
 	char buffer[128];
 	//内存初始化
-	//memSize = 33554432, hostMemSize = 33554432, memBlockSize = 131072
-	BX_MEM(0)->init_memory(33554432, 33554432, 131072);			//1290
+	
+	BX_MEM(0)->init_memory(memSize, hostMemSize, memBlockSize);			//1290
 	//加载BIOS
 	BX_MEM(0)->load_ROM("BIOS-bochs-latest", 0, 0);
 	//初始化所有
