@@ -36,6 +36,39 @@
     <ClCompile Include="memory_stub.cc">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="icache.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="fetchdecode32.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="fetchdecode_opmap_0f38.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="fetchdecode64.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="disasm.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="fetchdecode_opmap_avx.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="fetchdecode_opmap_evex.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="fetchdecode_opmap_xop.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="cpuid.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="proc_ctrl.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="fetchdecode_opmap_0f3a.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bochs.h">
@@ -77,5 +110,52 @@
     <ClInclude Include="cpuid.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="bswap.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="instrument.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="fetchdecode.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ia_opcodes.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="fetchdecode_opmap.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="fetchdecode_x87.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="features.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="vmx.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="vmx_ctrls.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="xmm.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="softfloat.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="simd_int.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="simd_pfp.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="simd_compare.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ia_opcodes.def">
+      <Filter>源文件</Filter>
+    </None>
   </ItemGroup>
 </Project>

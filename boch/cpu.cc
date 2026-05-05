@@ -28,8 +28,19 @@ bxICacheEntry_c* BX_CPU_C::getICacheEntry(void)
         prefetch();
         eipBiased = RIP + BX_CPU_THIS_PTR eipPageBias;
     }
+    INC_ICACHE_STAT(iCacheLookups);
+
     bx_phy_address pAddr = BX_CPU_THIS_PTR pAddrFetchPage + eipBiased;
     bxICacheEntry_c* entry = BX_CPU_THIS_PTR iCache.find_entry(pAddr, BX_CPU_THIS_PTR fetchModeMask);
+    entry = NULL;
+
+    if (entry == NULL)
+    {
+        // iCache miss. No validated instruction with matching fetch parameters
+        // is in the iCache.
+        INC_ICACHE_STAT(iCacheMisses);
+        entry = serveICacheMiss((Bit32u)eipBiased, pAddr);
+    }
     return entry;
 }
 

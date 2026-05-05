@@ -124,27 +124,65 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="cpu.cc" />
+    <ClCompile Include="cpuid.cc" />
+    <ClCompile Include="disasm.cc" />
+    <ClCompile Include="fetchdecode_opmap_xop.cc" />
+    <ClCompile Include="fetchdecode32.cc" />
+    <ClCompile Include="fetchdecode64.cc" />
+    <ClCompile Include="fetchdecode_opmap_0f38.cc">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="fetchdecode_opmap_avx.cc">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="fetchdecode_opmap_evex.cc" />
+    <ClCompile Include="icache.cc" />
     <ClCompile Include="init.cc" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="memory_stub.cc" />
     <ClCompile Include="misc_mem.cc" />
     <ClCompile Include="paging.cc" />
+    <ClCompile Include="proc_ctrl.cc" />
     <ClCompile Include="siminterface.cc" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bochs.h" />
+    <ClInclude Include="bswap.h" />
     <ClInclude Include="config.h" />
     <ClInclude Include="cpu.h" />
     <ClInclude Include="cpuid.h" />
     <ClInclude Include="cpustats.h" />
     <ClInclude Include="decoder.h" />
     <ClInclude Include="descriptor.h" />
+    <ClInclude Include="features.h" />
+    <ClCompile Include="fetchdecode_opmap_0f3a.cc" />
+    <ClInclude Include="fetchdecode_x87.h" />
+    <ClInclude Include="fetchdecode.h" />
+    <ClInclude Include="fetchdecode_opmap.h" />
+    <ClInclude Include="ia_opcodes.h" />
     <ClInclude Include="icache.h" />
     <ClInclude Include="instr.h" />
+    <ClInclude Include="instrument.h" />
     <ClInclude Include="iodev.h" />
     <ClInclude Include="memory-bochs.h" />
+    <ClInclude Include="simd_compare.h" />
+    <ClInclude Include="simd_int.h" />
+    <ClInclude Include="simd_pfp.h" />
     <ClInclude Include="siminterface.h" />
+    <ClInclude Include="softfloat.h" />
     <ClInclude Include="tlb.h" />
+    <ClInclude Include="vmx.h" />
+    <ClInclude Include="vmx_ctrls.h" />
+    <ClInclude Include="xmm.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ia_opcodes.def" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

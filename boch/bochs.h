@@ -386,6 +386,6 @@ enum {
 
 void bx_center_print(FILE* file, const char* line, unsigned maxwidth);
 
-//#include "misc/bswap.h"
+#include "bswap.h"
 
 #endif  /* BX_BOCHS_H */

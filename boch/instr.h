@@ -1,9 +1,10 @@
 #pragma once
-typedef void (BX_CPP_AttrRegparmN(1) *BxExecutePtr_tR)(bxInstruction_c *);
+
 
 class BX_CPU_C;
 class bxInstruction_c;
 
+typedef void (BX_CPP_AttrRegparmN(1)* BxExecutePtr_tR)(bxInstruction_c*);//40
 class bxInstruction_c {
 public:
 

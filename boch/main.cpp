@@ -1,7 +1,5 @@
-#include "config.h"
 #include "bochs.h"
 #include "memory-bochs.h"
-#include "icache.h"
 #include "cpu.h"
 
 //自己添加的头文件，与源码不相同

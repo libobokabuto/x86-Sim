@@ -1,0 +1,146 @@
+#include "bochs.h"
+#include "cpu.h"
+
+#include "siminterface.h"
+
+bxPageWriteStampTable pageWriteStampTable; //35
+
+extern int fetchDecode32(const Bit8u* fetchPtr, bool is_32, bxInstruction_c* i, unsigned remainingInPage);//37
+#if BX_SUPPORT_X86_64
+extern int fetchDecode64(const Bit8u* fetchPtr, bxInstruction_c* i, unsigned remainingInPage);            //39
+#endif
+bxICacheEntry_c* BX_CPU_C::serveICacheMiss(Bit32u eipBiased, bx_phy_address pAddr)
+{
+	//94
+	bxICacheEntry_c* entry = BX_CPU_THIS_PTR iCache.get_entry(pAddr, BX_CPU_THIS_PTR fetchModeMask);
+
+	BX_CPU_THIS_PTR iCache.alloc_trace(entry);
+
+	entry->pAddr = pAddr;
+	entry->traceMask = 0;
+
+	unsigned remainingInPage = BX_CPU_THIS_PTR eipPageWindowSize - eipBiased;
+	const Bit8u* fetchPtr = BX_CPU_THIS_PTR eipFetchPtr + eipBiased;
+	int ret;
+
+	bxInstruction_c* i = entry->i;
+
+	Bit32u pageOffset = PAGE_OFFSET((Bit32u)pAddr);
+	Bit32u traceMask = 0;
+
+#if BX_SUPPORT_SMP == 0
+	if (PPFOf(pAddr) == BX_CPU_THIS_PTR pAddrStackPage)
+		invalidate_stack_cache();
+#endif
+
+	// Don't allow traces longer than cpu_loop can execute
+	static unsigned quantum =
+#if BX_SUPPORT_SMP
+	(BX_SMP_PROCESSORS > 1) ? SIM->get_param_num(BXPN_SMP_QUANTUM)->get() :
+#endif
+		BX_MAX_TRACE_LENGTH;
+	if (bx_dbg.debugger_active)
+		quantum = 1;
+
+	for (unsigned n = 0; n < quantum; n++)
+	{
+#if BX_SUPPORT_X86_64
+		if (BX_CPU_THIS_PTR cpu_mode == BX_MODE_LONG_64)
+			ret = fetchDecode64(fetchPtr, i, remainingInPage);
+		else
+#endif
+			ret = fetchDecode32(fetchPtr, BX_CPU_THIS_PTR sregs[BX_SEG_REG_CS].cache.u.segment.d_b, i, remainingInPage);
+		if (ret < 0) {
+			// Fetching instruction on segment/page boundary
+			if (n > 0) {
+				// The trace is already valid, it has several instructions inside,
+				// in this case just drop the boundary instruction and stop
+				// tracing.
+				break;
+			}
+			// First instruction is boundary fetch, leave the trace cache entry
+			// invalid for now because boundaryFetch() can fault
+			entry->pAddr = ~entry->pAddr;
+			entry->tlen = 1;
+			boundaryFetch(fetchPtr, remainingInPage, i);
+
+			// Add the instruction to trace cache
+			entry->pAddr = ~entry->pAddr;
+			entry->traceMask = 0x80000000; /* last line in page */
+			pageWriteStampTable.markICacheMask(entry->pAddr, entry->traceMask);
+			pageWriteStampTable.markICacheMask(BX_CPU_THIS_PTR pAddrFetchPage, 0x1);
+			if (!bx_dbg.debugger_active) {
+#if BX_SUPPORT_HANDLERS_CHAINING_SPEEDUPS
+				entry->tlen++; /* Add the inserted end of trace opcode */
+				genDummyICacheEntry(++i);
+#endif
+			}
+
+			BX_CPU_THIS_PTR iCache.commit_page_split_trace(BX_CPU_THIS_PTR pAddrFetchPage, entry);
+			return entry;
+		}
+
+		ret = assignHandler(i, BX_CPU_THIS_PTR fetchModeMask);
+
+		unsigned iLen = i->ilen();
+		entry->tlen++;
+
+#ifdef BX_INSTR_STORE_OPCODE_BYTES
+		i->set_opcode_bytes(fetchPtr);
+#endif
+		BX_INSTR_OPCODE(BX_CPU_ID, i, fetchPtr, iLen,
+			BX_CPU_THIS_PTR sregs[BX_SEG_REG_CS].cache.u.segment.d_b, long64_mode());
+
+		i++;
+
+		traceMask |= 1 << (pageOffset >> 7);
+		traceMask |= 1 << ((pageOffset + iLen - 1) >> 7);
+
+		// continue to the next instruction
+		remainingInPage -= iLen;
+		if (ret != 0 /* stop trace indication */ || remainingInPage == 0) break;
+		pAddr += iLen;
+		pageOffset += iLen;
+		fetchPtr += iLen;
+
+		// try to find a trace starting from current pAddr and merge
+		if (!bx_dbg.debugger_active) {
+			if (remainingInPage >= 15) { // avoid merging with page split trace
+				if (mergeTraces(entry, i, pAddr)) {
+					entry->traceMask |= traceMask;
+					pageWriteStampTable.markICacheMask(pAddr, entry->traceMask);
+					BX_CPU_THIS_PTR iCache.commit_trace(entry->tlen);
+					return entry;
+				}
+			}
+		}
+	}
+
+	entry->traceMask |= traceMask;
+
+	pageWriteStampTable.markICacheMask(pAddr, entry->traceMask);
+
+	if (!bx_dbg.debugger_active) {
+#if BX_SUPPORT_HANDLERS_CHAINING_SPEEDUPS
+		entry->tlen++; /* Add the inserted end of trace opcode */
+		genDummyICacheEntry(i);
+#endif
+	}
+
+	BX_CPU_THIS_PTR iCache.commit_trace(entry->tlen);
+
+	return entry;
+}
+
+bool BX_CPU_C::mergeTraces(bxICacheEntry_c* entry, bxInstruction_c* i, bx_phy_address pAddr)
+{
+	return
+		false;
+	//220
+}
+
+void BX_CPU_C::boundaryFetch(const Bit8u* fetchPtr, unsigned remainingInPage, bxInstruction_c* i)
+{
+	//252
+}
+
