@@ -128,7 +128,7 @@
     <ClCompile Include="crregs.cc" />
     <ClCompile Include="ctrl_xfer32.cc" />
     <ClCompile Include="disasm.cc" />
-    <ClCompile Include="exception,cc.cpp" />
+    <ClCompile Include="exception.cc" />
     <ClCompile Include="fetchdecode_opmap_xop.cc" />
     <ClCompile Include="fetchdecode32.cc" />
     <ClCompile Include="fetchdecode64.cc" />
@@ -185,6 +185,7 @@
     <ClInclude Include="instr.h" />
     <ClInclude Include="instrument.h" />
     <ClInclude Include="iodev.h" />
+    <ClInclude Include="lazy_flags.h" />
     <ClInclude Include="memory-bochs.h" />
     <ClInclude Include="osdep.h" />
     <ClInclude Include="paramtree.h" />

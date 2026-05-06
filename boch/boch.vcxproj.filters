@@ -105,9 +105,6 @@
     <ClCompile Include="segment_ctrl_pro.cc">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="exception,cc.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="vmx.cc">
       <Filter>源文件</Filter>
     </ClCompile>

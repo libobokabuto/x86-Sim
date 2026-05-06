@@ -20,3 +20,10 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::JMP_Ap(bxInstruction_c* i)
 
     BX_NEXT_TRACE(i);
 }
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::ZERO_IDIOM_GwR(bxInstruction_c* i)
+{
+    BX_WRITE_16BIT_REG(i->dst(), 0);
+    SET_FLAGS_OSZAPC_LOGIC_16(0);
+    BX_NEXT_INSTR(i);
+}

@@ -9,6 +9,9 @@
 
 #define RIP (BX_CPU_THIS_PTR gen_reg[BX_64BIT_REG_RIP].rrx)  //107行
 
+#define BX_WRITE_16BIT_REG(index, val) {\
+  BX_CPU_THIS_PTR gen_reg[index].word.rx = val; \
+}
 
 #define BX_CLEAR_64BIT_HIGH(index) {\
   BX_CPU_THIS_PTR gen_reg[index].dword.hrx = 0; \
@@ -180,6 +183,7 @@ const Bit32u EFlagsRFMask = (1 << 16); //612行
 #include "crregs.h"//692
 #include "descriptor.h"//693行
 #include "instr.h" //694行
+#include "lazy_flags.h"
 #include "tlb.h" //696行
 #include "icache.h"//697行
 
@@ -342,7 +346,7 @@ public:
     bx_gen_reg_t gen_reg[BX_GENERAL_REGISTERS + 4]; //930行
 
     Bit32u eflags;//940行
-
+    bx_lazyflags_entry oszapc;
     bx_address prev_rip; //948行
 
     Bit64u icount;
@@ -408,7 +412,9 @@ public:
 
     bxICache_c iCache BX_CPP_AlignN(32);//1336行
     Bit32u fetchModeMask;//1337行
-
+    BX_SMF BX_CPP_INLINE void clearEFlagsOSZAPC(void) {
+        SET_FLAGS_OSZAPC_LOGIC_32(1);
+    }
 	void initialize(void);
 	BX_SMF void cpu_loop(void);
     void init_statistics(void);//1416
@@ -790,7 +796,7 @@ public:
     BX_SMF void BSWAP_RX(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void BSWAP_ERX(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
 
-    BX_SMF void ZERO_IDIOM_GwR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void ZERO_IDIOM_GwR(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void ZERO_IDIOM_GdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
 
     BX_SMF void ADD_GbEbR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
@@ -3615,3 +3621,4 @@ IMPLEMENT_EFLAG_SET_ACCESSOR_RF(16) //5851行
 
 
 #define BX_NEXT_TRACE(i) { return; } //5914
+#define BX_NEXT_INSTR(i) { return; }

@@ -99,6 +99,9 @@ void BX_CPU_C::reset(unsigned source)
     UNUSED(source);
 
     BX_CPU_THIS_PTR eflags = 0x2;
+    memset(&BX_CPU_THIS_PTR oszapc, 0, sizeof(BX_CPU_THIS_PTR oszapc));
+    clearEFlagsOSZAPC();
+
     BX_CPU_THIS_PTR prev_rip = RIP = 0x0000FFF0;
 
     BX_CPU_THIS_PTR sregs[BX_SEG_REG_CS].selector.value = 0xF000;
@@ -124,6 +127,7 @@ void BX_CPU_C::reset(unsigned source)
     BX_CPU_THIS_PTR eipPageWindowSize = 0;
     BX_CPU_THIS_PTR eipFetchPtr = NULL;
     BX_CPU_THIS_PTR pAddrFetchPage = 0;
+
 }
 
 void BX_CPU_C::init_statistics(void)
