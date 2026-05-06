@@ -22,8 +22,22 @@
 #define BX_CPU_ID (0)
 #endif
 
+enum BX_Exception {
+    //318
+BX_DF_EXCEPTION = 8,
+BX_GP_EXCEPTION = 13,//330
+BX_PF_EXCEPTION = 14,
+};
 
+const unsigned BX_CPU_HANDLED_EXCEPTIONS = 32; //349
+
+enum ExceptionClass {
+    //351
+    BX_EXCEPTION_CLASS_FAULT = 1,
+};
 enum BxCpuMode {
+    BX_MODE_IA32_REAL = 0,
+    BX_MODE_IA32_PROTECTED = 2,
     BX_MODE_LONG_64 = 4           // EFER.LMA = 1, CR0.PE=1, CS.L=1,362行
 };
 
@@ -382,6 +396,11 @@ public:
     const Bit8u* espHostPtr;
     bx_phy_address pAddrStackPage; // Guest physical address of current stack page
 
+
+#if BX_INSTRUMENTATION
+#else
+#define BX_INSTR_FAR_BRANCH_ORIGIN()
+#endif
     #define BX_DTLB_SIZE 2048
     #define BX_ITLB_SIZE 1024
         TLB<BX_DTLB_SIZE> DTLB BX_CPP_AlignN(32);
@@ -3426,8 +3445,16 @@ public:
 	BX_SMF bxICacheEntry_c* getICacheEntry(void);
     BX_SMF bx_hostpageaddr_t getHostMemAddr(bx_phy_address addr, unsigned rw);//4716行
     BX_SMF bx_phy_address translate_linear(bx_TLB_entry* entry, bx_address laddr, unsigned user, unsigned rw);//4719行
+    BX_SMF void real_mode_int(Bit8u vector, bool push_error, Bit16u error_code); //4764
+    BX_SMF bool exception_push_error(unsigned vector);//4769
+    BX_SMF int  get_exception_type(unsigned vector);//4770
+    BX_SMF void exception(unsigned vector, Bit16u error_code)//4771
+        BX_CPP_AttrNoReturn();
     BX_SMF void init_SMRAM(void);//4773
     BX_SMF void reset(unsigned source); //4804
+    BX_SMF void jump_protected(bxInstruction_c* i, Bit16u cs, bx_address disp) BX_CPP_AttrRegparmN(3);//4872
+    BX_SMF void    load_seg_reg(bx_segment_reg_t* seg, Bit16u new_value) BX_CPP_AttrRegparmN(2); //4930
+    BX_SMF void jmp_far32(bxInstruction_c* i, Bit16u cs_raw, Bit32u disp32);
     BX_SMF void init_FetchDecodeTables(void); //4985
     BX_SMF int  assignHandler(bxInstruction_c* i, Bit32u fetchModeMask); //4986
     BX_SMF BX_CPP_INLINE bool is_cpu_extension_supported(unsigned extension) {
@@ -3437,7 +3464,7 @@ public:
 	BX_SMF Bit32u get_laddr32(unsigned seg, Bit32u offset);//5049行
 
     DECLARE_EFLAG_ACCESSOR(RF, 16) //5070行
-       
+    BX_SMF BX_CPP_INLINE bool protected_mode(void);//5079
     BX_SMF BX_CPP_INLINE bool long_mode(void);//5081
 
 #if BX_CPU_LEVEL >= 6    //5129
@@ -3544,7 +3571,7 @@ BX_CPP_INLINE Bit32u BX_CPU_C::get_laddr32(unsigned seg, Bit32u offset) //5524行
 	return (Bit32u)BX_CPU_THIS_PTR sregs[seg].cache.u.segment.base + offset;
 }
 
-BX_SMF BX_CPP_INLINE void invalidate_prefetch_q(void) //4498行
+BX_CPP_INLINE void BX_CPU_C::invalidate_prefetch_q(void) //4498行
 {
     BX_CPU_THIS_PTR eipPageWindowSize = 0;
 }
@@ -3562,8 +3589,18 @@ enum {
     BX_FETCH_MODE_EVEX_OK = (1 << 6),
 };
 
-class bxInstruction_c;//5785行
+/*BX_CPP_INLINE bool BX_CPU_C::real_mode(void)
+{
+    //5780
+    return (BX_CPU_THIS_PTR cpu_mode == BX_MODE_IA32_REAL);
+}*/
 
+class bxInstruction_c;//5785行
+BX_CPP_INLINE bool BX_CPU_C::protected_mode(void)
+{
+    //5797
+    return (BX_CPU_THIS_PTR cpu_mode >= BX_MODE_IA32_PROTECTED);
+}
 BX_CPP_INLINE bool BX_CPU_C::long_mode(void)
 {
     //5800
@@ -3575,3 +3612,6 @@ BX_CPP_INLINE bool BX_CPU_C::long_mode(void)
 }
 
 IMPLEMENT_EFLAG_SET_ACCESSOR_RF(16) //5851行
+
+
+#define BX_NEXT_TRACE(i) { return; } //5914

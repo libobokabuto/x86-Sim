@@ -16,7 +16,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::JMP_Ap(bxInstruction_c* i)
     }
     cs_raw = i->Iw2();
 
-    //jmp_far32(i, cs_raw, disp32);
+    jmp_far32(i, cs_raw, disp32);
 
-    //BX_NEXT_TRACE(i);
+    BX_NEXT_TRACE(i);
 }

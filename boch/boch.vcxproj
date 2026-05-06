@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -126,7 +126,9 @@
     <ClCompile Include="cpu.cc" />
     <ClCompile Include="cpuid.cc" />
     <ClCompile Include="crregs.cc" />
+    <ClCompile Include="ctrl_xfer32.cc" />
     <ClCompile Include="disasm.cc" />
+    <ClCompile Include="exception,cc.cpp" />
     <ClCompile Include="fetchdecode_opmap_xop.cc" />
     <ClCompile Include="fetchdecode32.cc" />
     <ClCompile Include="fetchdecode64.cc" />
@@ -145,6 +147,7 @@
     <ClCompile Include="fetchdecode_opmap_evex.cc" />
     <ClCompile Include="icache.cc" />
     <ClCompile Include="init.cc" />
+    <ClCompile Include="jmp_far.cc" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="memory_stub.cc" />
     <ClCompile Include="misc_mem.cc" />
@@ -155,9 +158,11 @@
     <ClCompile Include="paramtree.cc" />
     <ClCompile Include="pc_system.cc" />
     <ClCompile Include="proc_ctrl.cc" />
+    <ClCompile Include="segment_ctrl_pro.cc" />
     <ClCompile Include="siminterface.cc" />
     <ClCompile Include="smm.cc" />
     <ClCompile Include="vmcs.cc" />
+    <ClCompile Include="vmx.cc" />
     <ClCompile Include="xsave.cc" />
   </ItemGroup>
   <ItemGroup>
