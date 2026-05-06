@@ -1,6 +1,8 @@
 #pragma once
+
 typedef struct BOCHSAPI {
 	// standard argc,argv
+	//809
 	int argc;
 	char** argv;
 #ifdef WIN32

@@ -20,6 +20,9 @@ enum BxCpuMode {
     BX_MODE_LONG_64 = 4           // EFER.LMA = 1, CR0.PE=1, CS.L=1,362行
 };
 
+const unsigned BX_MSR_MAX_INDEX = 0x1000;
+const Bit32u CACHE_LINE_SIZE = 64;
+
 class BX_CPU_C;//391行
 class bxInstruction_c;//393行
 struct bxICacheEntry_c;
@@ -152,6 +155,7 @@ BOCHSAPI extern BX_CPU_C  bx_cpu;         //465行
 
 const Bit32u EFlagsRFMask = (1 << 16); //612行
 
+#include "crregs.h"//692
 #include "descriptor.h"//693行
 #include "instr.h" //694行
 #include "tlb.h" //696行
@@ -263,9 +267,32 @@ typedef void (*xmm_pfp_3op_mask)(BxPackedXmmRegister* opdst, const BxPackedXmmRe
 #include "vmx.h"
 #endif
 
+#if BX_SUPPORT_SVM
+struct SVM_HOST_STATE;
+struct SVM_CONTROLS;
+struct VMCB_CACHE;
+#endif
+
+enum monitor_armed_by {
+    BX_MONITOR_NOT_ARMED = 0,
+    BX_MONITOR_ARMED_BY_MONITOR,
+    BX_MONITOR_ARMED_BY_MONITORX,
+    BX_MONITOR_ARMED_BY_UMONITOR
+};
+
+#if BX_SUPPORT_MONITOR_MWAIT
+struct monitor_addr_t {
+
+    bx_phy_address monitor_addr;
+    unsigned armed_by;
+    BX_CPP_INLINE bool armed(void) const { return armed_by != BX_MONITOR_NOT_ARMED; }
+};
+#endif
+
+
 class bx_cpuid_t; //887行
 
-class BOCHSAPI BX_CPU_C{ //889行
+class BOCHSAPI BX_CPU_C{ //889-5377行
 public:
 
     unsigned bx_cpuid;//892行
@@ -275,6 +302,16 @@ public:
         Bit32u ia_extensions_bitmask[BX_ISA_EXTENSIONS_ARRAY_SIZE]; //898
 #define BX_CPUID_SUPPORT_ISA_EXTENSION(feature) \
    (BX_CPU_THIS_PTR ia_extensions_bitmask[feature/32] & (1<<(feature%32)))
+#if BX_SUPPORT_VMX
+        Bit32u vmx_extensions_bitmask;
+#endif
+#if BX_SUPPORT_SVM
+        Bit32u svm_extensions_bitmask;
+#endif
+#define BX_SUPPORT_VMX_EXTENSION(feature_mask) \
+   (BX_CPU_THIS_PTR vmx_extensions_bitmask & (feature_mask))
+#define BX_SUPPORT_SVM_EXTENSION(feature_mask) \
+   (BX_CPU_THIS_PTR svm_extensions_bitmask & (feature_mask))
 
 
 
@@ -289,12 +326,26 @@ public:
 	/* user segment register set */
 	bx_segment_reg_t  sregs[6]; //970行
 
-#if BX_SUPPORT_VMX
-    bool in_vmx_guest;
 
-    VMCS_CACHE vmcs;
+#if BX_SUPPORT_MONITOR_MWAIT
+    monitor_addr_t monitor;
 #endif
 
+#if BX_CONFIGURE_MSRS
+    MSR* msrs[BX_MSR_MAX_INDEX];
+#endif
+
+#if BX_SUPPORT_VMX //1104
+    bool in_vmx_guest;
+
+    VMCS_CACHE vmcs; //1116
+    VMX_CAP vmx_cap;
+    VMCS_Mapping* vmcs_map; //118
+#endif
+#if BX_SUPPORT_SVM//1121
+    VMCB_CACHE* vmcb;
+#else//1134
+#endif//1138
     #define BX_EVENT_CODE_BREAKPOINT_ASSIST       (1 <<  3) //1167行
 
     Bit32u  pending_event;//1180行
@@ -329,6 +380,7 @@ public:
 
 	void initialize(void);
 	BX_SMF void cpu_loop(void);
+    void init_statistics(void);//1416
     
     static BX_CPP_INLINE void gao_no(int, const char*) {} //319
 
@@ -3362,10 +3414,114 @@ public:
 	BX_SMF bxICacheEntry_c* getICacheEntry(void);
     BX_SMF bx_hostpageaddr_t getHostMemAddr(bx_phy_address addr, unsigned rw);//4716行
     BX_SMF bx_phy_address translate_linear(bx_TLB_entry* entry, bx_address laddr, unsigned user, unsigned rw);//4719行
+    BX_SMF void init_SMRAM(void);//4773
+    BX_SMF void init_FetchDecodeTables(void); //4985
     BX_SMF int  assignHandler(bxInstruction_c* i, Bit32u fetchModeMask); //4986
+    BX_SMF BX_CPP_INLINE bool is_cpu_extension_supported(unsigned extension) {
+        assert(extension < BX_ISA_EXTENSION_LAST);
+        return BX_CPU_THIS_PTR ia_extensions_bitmask[extension / 32] & (1 << (extension % 32));
+    }
 	BX_SMF Bit32u get_laddr32(unsigned seg, Bit32u offset);//5049行
 
     DECLARE_EFLAG_ACCESSOR(RF, 16) //5070行
+        
+#if BX_CPU_LEVEL >= 6    //5129
+    BX_SMF void xsave_xrestor_init(void); //5130
+    BX_SMF bool xsave_x87_state_xinuse(void); //5135
+    BX_SMF void xsave_x87_state(bxInstruction_c* i, bx_address offset);
+    BX_SMF void xrstor_x87_state(bxInstruction_c* i, bx_address offset);
+    BX_SMF void xrstor_init_x87_state(void);
+
+    BX_SMF bool xsave_sse_state_xinuse(void);//5140
+    BX_SMF void xsave_sse_state(bxInstruction_c* i, bx_address offset);
+    BX_SMF void xrstor_sse_state(bxInstruction_c* i, bx_address offset);
+    BX_SMF void xrstor_init_sse_state(void);
+#if BX_SUPPORT_AVX
+    BX_SMF bool xsave_ymm_state_xinuse(void);
+    BX_SMF void xsave_ymm_state(bxInstruction_c* i, bx_address offset);
+    BX_SMF void xrstor_ymm_state(bxInstruction_c* i, bx_address offset);
+    BX_SMF void xrstor_init_ymm_state(void);
+#if BX_SUPPORT_EVEX
+    BX_SMF bool xsave_opmask_state_xinuse(void);
+    BX_SMF void xsave_opmask_state(bxInstruction_c* i, bx_address offset);
+    BX_SMF void xrstor_opmask_state(bxInstruction_c* i, bx_address offset);
+    BX_SMF void xrstor_init_opmask_state(void);
+
+    BX_SMF bool xsave_zmm_hi256_state_xinuse(void);
+    BX_SMF void xsave_zmm_hi256_state(bxInstruction_c* i, bx_address offset);
+    BX_SMF void xrstor_zmm_hi256_state(bxInstruction_c* i, bx_address offset);
+    BX_SMF void xrstor_init_zmm_hi256_state(void);
+
+    BX_SMF bool xsave_hi_zmm_state_xinuse(void);
+    BX_SMF void xsave_hi_zmm_state(bxInstruction_c* i, bx_address offset);
+    BX_SMF void xrstor_hi_zmm_state(bxInstruction_c* i, bx_address offset);
+    BX_SMF void xrstor_init_hi_zmm_state(void);
+
+#endif//5165
+#endif//5166
+
+
+#if BX_SUPPORT_PKEYS
+    BX_SMF bool xsave_pkru_state_xinuse(void);
+    BX_SMF void xsave_pkru_state(bxInstruction_c* i, bx_address offset);
+    BX_SMF void xrstor_pkru_state(bxInstruction_c* i, bx_address offset);
+    BX_SMF void xrstor_init_pkru_state(void);
+#endif
+
+#if BX_SUPPORT_CET
+    BX_SMF bool xsave_cet_u_state_xinuse(void);
+    BX_SMF void xsave_cet_u_state(bxInstruction_c* i, bx_address offset);
+    BX_SMF void xrstor_cet_u_state(bxInstruction_c* i, bx_address offset);
+    BX_SMF void xrstor_init_cet_u_state(void);
+
+    BX_SMF bool xsave_cet_s_state_xinuse(void);
+    BX_SMF void xsave_cet_s_state(bxInstruction_c* i, bx_address offset);
+    BX_SMF void xrstor_cet_s_state(bxInstruction_c* i, bx_address offset);
+    BX_SMF void xrstor_init_cet_s_state(void);
+#endif
+#if BX_SUPPORT_UINTR
+    BX_SMF bool xsave_uintr_state_xinuse(void);
+    BX_SMF void xsave_uintr_state(bxInstruction_c* i, bx_address offset);
+    BX_SMF void xrstor_uintr_state(bxInstruction_c* i, bx_address offset);
+    BX_SMF void xrstor_init_uintr_state(void);
+#endif
+
+#if BX_SUPPORT_AMX
+    BX_SMF bool xsave_tilecfg_state_xinuse(void);
+    BX_SMF void xsave_tilecfg_state(bxInstruction_c* i, bx_address offset);
+    BX_SMF void xrstor_tilecfg_state(bxInstruction_c* i, bx_address offset);
+    BX_SMF void xrstor_init_tilecfg_state(void);
+
+    BX_SMF bool xsave_tiledata_state_xinuse(void);
+    BX_SMF void xsave_tiledata_state(bxInstruction_c* i, bx_address offset);
+    BX_SMF void xrstor_tiledata_state(bxInstruction_c* i, bx_address offset);
+    BX_SMF void xrstor_init_tiledata_state(void);
+#endif
+#endif //5205
+    BX_SMF bool is_monitor(bx_phy_address addr, unsigned len);
+    BX_SMF void check_monitor(bx_phy_address addr, unsigned len);
+
+    BX_SMF void init_vmx_capabilities(void);//5260
+
+#if BX_SUPPORT_VMX >= 2
+    BX_SMF void init_ept_vpid_capabilities(void);
+    BX_SMF void init_vmfunc_capabilities(void);
+#endif
+    BX_SMF void init_pin_based_vmexec_ctrls(void);
+    BX_SMF void init_primary_proc_based_vmexec_ctrls(void);
+    BX_SMF void init_secondary_proc_based_vmexec_ctrls(void);
+    BX_SMF void init_tertiary_proc_based_vmexec_ctrls(void);
+    BX_SMF void init_vmexit_ctrls(void);//5269
+    BX_SMF void init_secondary_vmexit_ctrls(void);
+    BX_SMF void init_vmentry_ctrls(void);//5271
+    BX_SMF void init_VMCS(void);//5272
+#if BX_CPU_LEVEL >= 5 //5369
+    void init_MSRs();//5370
+    void destroy_MSRs();
+#if BX_CONFIGURE_MSRS
+    int load_MSRs(const char* file);
+#endif
+#endif//5375
 };
 
 BX_CPP_INLINE Bit32u BX_CPU_C::get_laddr32(unsigned seg, Bit32u offset) //5524行

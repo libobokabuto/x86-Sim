@@ -10,6 +10,7 @@ BX_CPP_INLINE bool is_power_of_2(Bit64u x)
 }
 
 #define BX_MEM_VECTOR_ALIGN 4096 //37
+Bit8u* const BX_MEMORY_STUB_C::swapped_out = ((Bit8u*)NULL - sizeof(Bit8u)); //44
 
 BX_MEMORY_STUB_C::BX_MEMORY_STUB_C()
 {
@@ -90,4 +91,32 @@ void BX_MEMORY_STUB_C::init_memory(Bit64u guest, Bit64u host, Bit32u block_size)
 		}
 		BX_MEM_THIS used_blocks = 0;
 	}
+}
+void BX_MEMORY_STUB_C::allocate_block(Bit32u block)
+{
+	//178
+}
+Bit8u* BX_MEMORY_STUB_C::get_vector(bx_phy_address addr)
+{
+	Bit32u block = (Bit32u)(addr / BX_MEM_THIS block_size);
+#if (BX_LARGE_RAMFILE)
+	if (!BX_MEM_THIS blocks[block] || (BX_MEM_THIS blocks[block] == BX_MEM_THIS swapped_out))
+#else
+	if (!BX_MEM_THIS blocks[block])
+#endif
+		allocate_block(block);
+
+	return BX_MEM_THIS blocks[block] + (Bit32u)(addr & (BX_MEM_THIS block_size - 1));
+}
+
+bool BX_MEMORY_STUB_C::is_monitor(bx_phy_address begin_addr, unsigned len)
+{
+	//525
+	
+	for (int i = 0; i < BX_SMP_PROCESSORS; i++) {
+		if (BX_CPU(i)->is_monitor(begin_addr, len))
+			return true;
+	}
+	
+	return false; // this is NOT monitored page
 }

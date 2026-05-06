@@ -2025,7 +2025,7 @@ if (b1 == 0x138 || b1 == 0x13a) {
     }
     return(0);
 }
-
+#ifndef BX_STANDALONE_DECODER
 int BX_CPU_C::assignHandler(bxInstruction_c* i, Bit32u fetchModeMask)
 {
     //2061
@@ -2141,3 +2141,110 @@ int BX_CPU_C::assignHandler(bxInstruction_c* i, Bit32u fetchModeMask)
 
         return(0);
 }
+
+void BX_CPU_C::init_FetchDecodeTables(void)
+{
+    static Bit8u BxOpcodeFeatures[BX_IA_LAST] =
+    {
+  #define bx_define_opcode(a, b, c, d, e, f, s1, s2, s3, s4, g) f,
+  #include "ia_opcodes.def"
+    };
+  #undef  bx_define_opcode
+
+#if BX_CPU_LEVEL > 3
+    if (!BX_CPU_THIS_PTR ia_extensions_bitmask[0])
+       // BX_PANIC(("init_FetchDecodeTables: CPU features bitmask is empty !"));
+#endif
+     if (BX_IA_LAST > 0xfff)
+        //BX_PANIC(("init_FetchDecodeTables: too many opcodes defined !"));
+     
+
+    for (unsigned n = 0; n < BX_IA_LAST; n++) {
+        switch (n) {
+            // special case: these opcodes also supported if 3DNOW! Extensions are supported
+        case BX_IA_MASKMOVQ_PqNq:
+        case BX_IA_MOVNTQ_MqPq:
+        case BX_IA_PAVGB_PqQq:
+        case BX_IA_PAVGW_PqQq:
+        case BX_IA_PEXTRW_GdNqIb:
+        case BX_IA_PINSRW_PqEwIb:
+        case BX_IA_PMAXSW_PqQq:
+        case BX_IA_PMAXUB_PqQq:
+        case BX_IA_PMINSW_PqQq:
+        case BX_IA_PMINUB_PqQq:
+        case BX_IA_PMOVMSKB_GdNq:
+        case BX_IA_PMULHUW_PqQq:
+        case BX_IA_PSADBW_PqQq:
+        case BX_IA_PSHUFW_PqQqIb:
+        case BX_IA_SFENCE:
+            if (BX_CPUID_SUPPORT_ISA_EXTENSION(BX_ISA_3DNOW_EXT)) continue;
+
+        default: break;
+        }
+    
+        unsigned ia_opcode_feature = BxOpcodeFeatures[n];
+        if (!BX_CPUID_SUPPORT_ISA_EXTENSION(ia_opcode_feature)) {
+            switch (ia_opcode_feature) {
+            case BX_ISA_AVX512:
+            case BX_ISA_AVX512_DQ:
+            case BX_ISA_AVX512_BW:
+            case BX_ISA_AVX512_CD:
+            case BX_ISA_AVX512_VBMI:
+            case BX_ISA_AVX512_VBMI2:
+            case BX_ISA_AVX512_IFMA52:
+            case BX_ISA_AVX512_VPOPCNTDQ:
+            case BX_ISA_AVX512_VNNI:
+            case BX_ISA_AVX512_BITALG:
+            case BX_ISA_AVX512_BF16:
+            case BX_ISA_AVX512_FP16:
+                // It is possible that AVX512 is not supported on this processor but AVX10 is (for example AVX10_VL256 only)
+                // AVX10_1 includes all above AVX512 extensions
+                if (BX_CPUID_SUPPORT_ISA_EXTENSION(BX_ISA_AVX10_1)) continue;
+
+            default: break;
+            }
+            BxOpcodesTable[n].execute1 = &BX_CPU_C::BxError;
+            BxOpcodesTable[n].execute2 = &BX_CPU_C::BxError;
+            // won't allow this new #UD opcode to check prepare_SSE and similar
+            BxOpcodesTable[n].opflags = 0;
+        }
+    }
+
+    if (!BX_CPUID_SUPPORT_ISA_EXTENSION(BX_ISA_LZCNT)) {
+        BxOpcodesTable[BX_IA_LZCNT_GwEw] = BxOpcodesTable[BX_IA_BSR_GwEw];
+        BxOpcodesTable[BX_IA_LZCNT_GdEd] = BxOpcodesTable[BX_IA_BSR_GdEd];
+#if BX_SUPPORT_X86_64
+        BxOpcodesTable[BX_IA_LZCNT_GqEq] = BxOpcodesTable[BX_IA_BSR_GqEq];
+#endif
+    }
+
+    if (!BX_CPUID_SUPPORT_ISA_EXTENSION(BX_ISA_BMI1)) {
+        BxOpcodesTable[BX_IA_TZCNT_GwEw] = BxOpcodesTable[BX_IA_BSF_GwEw];
+        BxOpcodesTable[BX_IA_TZCNT_GdEd] = BxOpcodesTable[BX_IA_BSF_GdEd];
+#if BX_SUPPORT_X86_64
+        BxOpcodesTable[BX_IA_TZCNT_GqEq] = BxOpcodesTable[BX_IA_BSF_GqEq];
+#endif
+    }
+
+    if (BX_CPUID_SUPPORT_ISA_EXTENSION(BX_ISA_ALT_MOV_CR8)) {
+        BxOpcodesTable[BX_IA_MOV_CR0Rd].opflags |= BX_LOCKABLE;
+        BxOpcodesTable[BX_IA_MOV_RdCR0].opflags |= BX_LOCKABLE;
+#if BX_SUPPORT_X86_64
+        BxOpcodesTable[BX_IA_MOV_CR0Rq].opflags |= BX_LOCKABLE;
+        BxOpcodesTable[BX_IA_MOV_RqCR0].opflags |= BX_LOCKABLE;
+#endif
+    }
+
+#if BX_SUPPORT_EVEX
+    // EVEX extensions for SM4 require AVX10_2
+    if (!BX_CPUID_SUPPORT_ISA_EXTENSION(BX_ISA_SM4) || !BX_CPUID_SUPPORT_ISA_EXTENSION(BX_ISA_AVX10_2)) {
+        BxOpcodesTable[BX_IA_EVEX_VSM4KEY4_VdqHdqWdq].execute1 = &BX_CPU_C::BxError;
+        BxOpcodesTable[BX_IA_EVEX_VSM4KEY4_VdqHdqWdq].opflags = 0;   // won't allow this new #UD opcode to check prepare_EVEX
+
+        BxOpcodesTable[BX_IA_EVEX_VSM4RNDS4_VdqHdqWdq].execute1 = &BX_CPU_C::BxError;
+        BxOpcodesTable[BX_IA_EVEX_VSM4RNDS4_VdqHdqWdq].opflags = 0;  // won't allow this new #UD opcode to check prepare_EVEX
+    }
+#endif
+
+}
+#endif

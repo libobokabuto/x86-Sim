@@ -1,3 +1,4 @@
+#define _CRT_SECURE_NO_WARNINGS
 #include "bochs.h"
 #include "cpu.h"
 #include "iodev.h"
@@ -99,4 +100,124 @@ void BX_MEM_C::cleanup_memory()
 void BX_MEM_C::load_ROM(const char* path, bx_phy_address romaddress, Bit8u type)
 {
 	//296
+}
+
+Bit8u* BX_MEM_C::getHostMemAddr(BX_CPU_C* cpu, bx_phy_address addr, unsigned rw)
+{
+	bx_phy_address a20addr = A20ADDR(addr);
+
+	bool is_bios = (a20addr >= (bx_phy_address)BX_MEM_THIS bios_rom_addr);
+#if BX_PHY_ADDRESS_LONG
+	if (a20addr > BX_CONST64(0xffffffff)) is_bios = false;
+#endif
+
+	bool write = rw & 1;
+
+	if ((cpu != NULL) && (rw == BX_EXECUTE)) {
+		// reading from SMRAM memory space
+		if ((a20addr >= 0x000a0000 && a20addr < 0x000c0000) && (BX_MEM_THIS smram_available))
+		{
+			//if (BX_MEM_THIS smram_enable || cpu->smm_mode())
+			//	return BX_MEM_THIS get_vector(a20addr);
+		}
+	}
+
+#if BX_SUPPORT_MONITOR_MWAIT
+	if (write && BX_MEM_THIS is_monitor(a20addr & ~((bx_phy_address)(0xfff)), 0xfff)) {
+		// Vetoed! Write monitored page !
+		return(NULL);
+	}
+#endif
+	/*
+	while (memory_handler) {
+    if (memory_handler->begin <= a20addr &&
+        memory_handler->end >= a20addr) {
+      if (memory_handler->da_handler)
+        return memory_handler->da_handler(a20addr, rw, memory_handler->param);
+      else
+        return(NULL); // Vetoed! memory handler for i/o apic, vram, mmio and PCI PnP
+    }
+    memory_handler = memory_handler->next;
+  }
+	*/
+	if (!write) {
+		if ((a20addr >= 0x000a0000 && a20addr < 0x000c0000))
+			return(NULL); // Vetoed!  Mem mapped IO (VGA)
+#if BX_SUPPORT_PCI
+		else if (BX_MEM_THIS pci_enabled && (a20addr >= 0x000c0000 && a20addr < 0x00100000)) {
+			unsigned area = (unsigned)(a20addr >> 14) & 0x0f;
+			if (area > BX_MEM_AREA_F0000) area = BX_MEM_AREA_F0000;
+			if (BX_MEM_THIS memory_type[area][0] == false) {
+				// Read from ROM
+				if ((a20addr & 0xfffe0000) == 0x000e0000) {
+					// last 128K of BIOS ROM mapped to 0xE0000-0xFFFFF
+					return (Bit8u*)&BX_MEM_THIS rom[BIOS_MAP_LAST128K(a20addr)];
+				}
+				else {
+					return (Bit8u*)&BX_MEM_THIS rom[(a20addr & EXROM_MASK) + BIOSROMSZ];
+				}
+			}
+			else {
+				// Read from ShadowRAM
+				return BX_MEM_THIS get_vector(a20addr);
+			}
+		}
+#endif
+		else if ((a20addr < BX_MEM_THIS len) && !is_bios)
+		{
+			if (a20addr < 0x000c0000 || a20addr >= 0x00100000) {
+				return BX_MEM_THIS get_vector(a20addr);
+			}
+			// must be in C0000 - FFFFF range
+			else if ((a20addr & 0xfffe0000) == 0x000e0000) {
+				// last 128K of BIOS ROM mapped to 0xE0000-0xFFFFF
+				return (Bit8u*)&BX_MEM_THIS rom[BIOS_MAP_LAST128K(a20addr)];
+			}
+			else {
+				return((Bit8u*)&BX_MEM_THIS rom[(a20addr & EXROM_MASK) + BIOSROMSZ]);
+			}
+		}
+
+#if BX_PHY_ADDRESS_LONG
+		else if (a20addr > BX_CONST64(0xffffffff)) {
+			// Error, requested addr is out of bounds.
+			return (Bit8u*)&BX_MEM_THIS bogus[a20addr & 0xfff];
+		}
+#endif
+		else if (is_bios)
+		{
+			return (Bit8u*)&BX_MEM_THIS rom[a20addr & BIOS_MASK];
+		}
+		else
+		{
+			// Error, requested addr is out of bounds.
+			return (Bit8u*)&BX_MEM_THIS bogus[a20addr & 0xfff];
+		}
+	}
+
+	else
+	{ // op == {BX_WRITE, BX_RW}
+		if ((a20addr >= BX_MEM_THIS len) || is_bios)
+			return(NULL); // Error, requested addr is out of bounds.
+		else if (a20addr >= 0x000a0000 && a20addr < 0x000c0000)
+			return(NULL); // Vetoed!  Mem mapped IO (VGA)
+#if BX_SUPPORT_PCI
+		else if (BX_MEM_THIS pci_enabled && (a20addr >= 0x000c0000 && a20addr < 0x00100000))
+		{
+			// Veto direct writes to this area. Otherwise, there is a chance
+			// for Guest2HostTLB and memory consistency problems, for example
+			// when some 16K block marked as write-only using PAM registers.
+			return(NULL);
+		}
+#endif
+		else
+		{
+			if (a20addr < 0x000c0000 || a20addr >= 0x00100000) {
+				return BX_MEM_THIS get_vector(a20addr);
+			}
+			else {
+				return(NULL);  // Vetoed!  ROMs
+			}
+		}
+	}
 }

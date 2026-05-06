@@ -72,6 +72,24 @@
     <ClCompile Include="paramtree.cc">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="crregs.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="smm.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="vmcs.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="xsave.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="msr.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="mwait.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bochs.h">
@@ -162,6 +180,18 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="paramtree.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="crregs.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="svm.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="smm.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="pc_system.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

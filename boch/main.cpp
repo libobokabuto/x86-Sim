@@ -1,7 +1,7 @@
 #include "bochs.h"
 #include "memory-bochs.h"
 #include "cpu.h"
-
+#include "iodev.h"
 //自己添加的头文件，与源码不相同
 #include "siminterface.h"
 
@@ -22,6 +22,9 @@ bx_startup_flags_t bx_startup_flags;//78行
 void bx_init_hardware(void);//70行
 int bx_init_main(int argc, char* argv[]);
 
+
+bx_pc_system_c bx_pc_system;
+
 int bx_begin_simulation(int argc, char* argv[])
 {
 	bx_init_hardware();
@@ -39,7 +42,24 @@ void bx_init_hardware() {
 	bx_list_c* base;
 	char buffer[128];
 	//内存初始化
-	
+	//memSize = 33554432, hostMemSize = 33554432, memBlockSize = 131072
+	/*替换的是
+	bx_param_num_c *bxp_memsize = SIM->get_param_num(BXPN_MEM_SIZE);
+	Bit64u memSize = bxp_memsize->get64() * BX_CONST64(1024*1024);
+
+	bx_param_num_c *bxp_host_memsize = SIM->get_param_num(BXPN_HOST_MEM_SIZE);
+	Bit64u hostMemSize = bxp_host_memsize->get64() * BX_CONST64(1024*1024);
+
+	// do not allocate more host memory than needed for emulation of guest RAM
+	if (memSize < hostMemSize) hostMemSize = memSize;
+
+	bx_param_num_c *bxp_memblock_size = SIM->get_param_num(BXPN_MEM_BLOCK_SIZE);
+	Bit32u memBlockSize = (Bit32u)(bxp_memblock_size->get64() * 1024);
+	*/
+	Bit64u memSize = BX_CONST64(32 * 1024 * 1024);
+	Bit64u hostMemSize = BX_CONST64(32 * 1024 * 1024);
+	Bit32u memBlockSize = 131072;
+
 	BX_MEM(0)->init_memory(memSize, hostMemSize, memBlockSize);			//1290
 	//加载BIOS
 	BX_MEM(0)->load_ROM("BIOS-bochs-latest", 0, 0);
