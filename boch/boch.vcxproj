@@ -150,8 +150,10 @@
     <ClCompile Include="misc_mem.cc" />
     <ClCompile Include="msr.cc" />
     <ClCompile Include="mwait.cc" />
+    <ClCompile Include="myinst.cc" />
     <ClCompile Include="paging.cc" />
     <ClCompile Include="paramtree.cc" />
+    <ClCompile Include="pc_system.cc" />
     <ClCompile Include="proc_ctrl.cc" />
     <ClCompile Include="siminterface.cc" />
     <ClCompile Include="smm.cc" />
@@ -179,6 +181,7 @@
     <ClInclude Include="instrument.h" />
     <ClInclude Include="iodev.h" />
     <ClInclude Include="memory-bochs.h" />
+    <ClInclude Include="osdep.h" />
     <ClInclude Include="paramtree.h" />
     <ClInclude Include="param_names.h" />
     <ClInclude Include="pc_system.h" />

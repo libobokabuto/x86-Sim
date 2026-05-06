@@ -68,6 +68,10 @@ typedef struct
 
 } bx_descriptor_t;
 
+enum {
+    BX_DATA_READ_WRITE_ACCESSED = 0x3,
+};
+
 typedef struct { //180ÐÐ
 	bx_selector_t    selector;
 	bx_descriptor_t  cache;

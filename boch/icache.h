@@ -80,10 +80,10 @@ public:
 
 		// register page split entry
 		if (pageSplitIndex[nextPageSplitIndex].ppf != BX_ICACHE_INVALID_PHY_ADDRESS)
-			pageSplitIndex[nextPageSplitIndex].e->pAddr = BX_ICACHE_INVALID_PHY_ADDRESS;
+			//pageSplitIndex[nextPageSplitIndex].e->pAddr = BX_ICACHE_INVALID_PHY_ADDRESS;
 
-		pageSplitIndex[nextPageSplitIndex].ppf = paddr;
-		pageSplitIndex[nextPageSplitIndex].e = e;
+		//pageSplitIndex[nextPageSplitIndex].ppf = paddr;
+		//pageSplitIndex[nextPageSplitIndex].e = e;
 
 		nextPageSplitIndex = (nextPageSplitIndex + 1) & (BX_ICACHE_PAGE_SPLIT_ENTRIES - 1);
 	}

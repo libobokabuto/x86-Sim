@@ -90,6 +90,12 @@
     <ClCompile Include="mwait.cc">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="pc_system.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="myinst.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bochs.h">
@@ -192,6 +198,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="pc_system.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="osdep.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

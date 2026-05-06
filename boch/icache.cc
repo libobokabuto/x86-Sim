@@ -67,8 +67,8 @@ bxICacheEntry_c* BX_CPU_C::serveICacheMiss(Bit32u eipBiased, bx_phy_address pAdd
 			// Add the instruction to trace cache
 			entry->pAddr = ~entry->pAddr;
 			entry->traceMask = 0x80000000; /* last line in page */
-			pageWriteStampTable.markICacheMask(entry->pAddr, entry->traceMask);
-			pageWriteStampTable.markICacheMask(BX_CPU_THIS_PTR pAddrFetchPage, 0x1);
+			// pageWriteStampTable.markICacheMask(entry->pAddr, entry->traceMask); //自己注释
+			// pageWriteStampTable.markICacheMask(BX_CPU_THIS_PTR pAddrFetchPage, 0x1); //自己注释
 			if (!bx_dbg.debugger_active) {
 #if BX_SUPPORT_HANDLERS_CHAINING_SPEEDUPS
 				entry->tlen++; /* Add the inserted end of trace opcode */
@@ -108,7 +108,7 @@ bxICacheEntry_c* BX_CPU_C::serveICacheMiss(Bit32u eipBiased, bx_phy_address pAdd
 			if (remainingInPage >= 15) { // avoid merging with page split trace
 				if (mergeTraces(entry, i, pAddr)) {
 					entry->traceMask |= traceMask;
-					pageWriteStampTable.markICacheMask(pAddr, entry->traceMask);
+					//pageWriteStampTable.markICacheMask(pAddr, entry->traceMask); //自己注释
 					BX_CPU_THIS_PTR iCache.commit_trace(entry->tlen);
 					return entry;
 				}
@@ -118,7 +118,7 @@ bxICacheEntry_c* BX_CPU_C::serveICacheMiss(Bit32u eipBiased, bx_phy_address pAdd
 
 	entry->traceMask |= traceMask;
 
-	pageWriteStampTable.markICacheMask(pAddr, entry->traceMask);
+	// pageWriteStampTable.markICacheMask(pAddr, entry->traceMask);  //自己注释
 
 	if (!bx_dbg.debugger_active) {
 #if BX_SUPPORT_HANDLERS_CHAINING_SPEEDUPS

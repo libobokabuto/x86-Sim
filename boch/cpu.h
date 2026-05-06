@@ -16,6 +16,13 @@
 
 #define USER_PL   (BX_CPU_THIS_PTR user_pl)   //200行
 
+#if BX_SUPPORT_SMP  //202
+#define BX_CPU_ID (BX_CPU_THIS_PTR bx_cpuid)
+#else
+#define BX_CPU_ID (0)
+#endif
+
+
 enum BxCpuMode {
     BX_MODE_LONG_64 = 4           // EFER.LMA = 1, CR0.PE=1, CS.L=1,362行
 };
@@ -29,7 +36,8 @@ struct bxICacheEntry_c;
 
 #  define BX_CPU_THIS_PTR  BX_CPU(0)->    //421行
 #  define BX_CPU_THIS      BX_CPU(0)
-
+#  define BX_CPU_CALL_METHOD(func, args) \
+            ((BxExecutePtr_tR) (func)) args
 
 #define DECLARE_EFLAG_ACCESSOR(name,bitnum)                     \
   BX_SMF BX_CPP_INLINE unsigned  get_##name ();                 \
@@ -323,9 +331,13 @@ public:
 
     bx_address prev_rip; //948行
 
+    Bit64u icount;
+
 	/* user segment register set */
 	bx_segment_reg_t  sregs[6]; //970行
 
+
+    bx_efer_t efer; //996
 
 #if BX_SUPPORT_MONITOR_MWAIT
     monitor_addr_t monitor;
@@ -349,7 +361,7 @@ public:
     #define BX_EVENT_CODE_BREAKPOINT_ASSIST       (1 <<  3) //1167行
 
     Bit32u  pending_event;//1180行
-
+    Bit32u  async_event; //1182
 
     BX_SMF BX_CPP_INLINE void clear_event(Bit32u event) { //1189行
         
@@ -575,7 +587,7 @@ public:
     BX_SMF void CALL_Jd(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void JMP_Jd(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void JMP_Jw(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
-    BX_SMF void JMP_Ap(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void JMP_Ap(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void IN_ALDX(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void IN_AXDX(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void IN_EAXDX(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
@@ -3415,6 +3427,7 @@ public:
     BX_SMF bx_hostpageaddr_t getHostMemAddr(bx_phy_address addr, unsigned rw);//4716行
     BX_SMF bx_phy_address translate_linear(bx_TLB_entry* entry, bx_address laddr, unsigned user, unsigned rw);//4719行
     BX_SMF void init_SMRAM(void);//4773
+    BX_SMF void reset(unsigned source); //4804
     BX_SMF void init_FetchDecodeTables(void); //4985
     BX_SMF int  assignHandler(bxInstruction_c* i, Bit32u fetchModeMask); //4986
     BX_SMF BX_CPP_INLINE bool is_cpu_extension_supported(unsigned extension) {
@@ -3424,7 +3437,9 @@ public:
 	BX_SMF Bit32u get_laddr32(unsigned seg, Bit32u offset);//5049行
 
     DECLARE_EFLAG_ACCESSOR(RF, 16) //5070行
-        
+       
+    BX_SMF BX_CPP_INLINE bool long_mode(void);//5081
+
 #if BX_CPU_LEVEL >= 6    //5129
     BX_SMF void xsave_xrestor_init(void); //5130
     BX_SMF bool xsave_x87_state_xinuse(void); //5135
@@ -3522,7 +3537,7 @@ public:
     int load_MSRs(const char* file);
 #endif
 #endif//5375
-};
+};//5376
 
 BX_CPP_INLINE Bit32u BX_CPU_C::get_laddr32(unsigned seg, Bit32u offset) //5524行
 {
@@ -3548,5 +3563,15 @@ enum {
 };
 
 class bxInstruction_c;//5785行
+
+BX_CPP_INLINE bool BX_CPU_C::long_mode(void)
+{
+    //5800
+#if BX_SUPPORT_X86_64
+    return BX_CPU_THIS_PTR efer.get_LMA();
+#else
+    return 0;
+#endif
+}
 
 IMPLEMENT_EFLAG_SET_ACCESSOR_RF(16) //5851行

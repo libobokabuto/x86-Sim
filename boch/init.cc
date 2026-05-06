@@ -94,6 +94,37 @@ void BX_CPU_C::initialize(void)
 
     init_statistics();
 }
+void BX_CPU_C::reset(unsigned source)
+{
+    UNUSED(source);
+
+    BX_CPU_THIS_PTR eflags = 0x2;
+    BX_CPU_THIS_PTR prev_rip = RIP = 0x0000FFF0;
+
+    BX_CPU_THIS_PTR sregs[BX_SEG_REG_CS].selector.value = 0xF000;
+    BX_CPU_THIS_PTR sregs[BX_SEG_REG_CS].selector.index = 0xF000 >> 3;
+    BX_CPU_THIS_PTR sregs[BX_SEG_REG_CS].selector.ti = 0;
+    BX_CPU_THIS_PTR sregs[BX_SEG_REG_CS].selector.rpl = 0;
+
+    BX_CPU_THIS_PTR sregs[BX_SEG_REG_CS].cache.valid = SegValidCache | SegAccessROK | SegAccessWOK;
+    BX_CPU_THIS_PTR sregs[BX_SEG_REG_CS].cache.p = 1;
+    BX_CPU_THIS_PTR sregs[BX_SEG_REG_CS].cache.dpl = 0;
+    BX_CPU_THIS_PTR sregs[BX_SEG_REG_CS].cache.segment = 1;
+    BX_CPU_THIS_PTR sregs[BX_SEG_REG_CS].cache.type = BX_DATA_READ_WRITE_ACCESSED;
+    BX_CPU_THIS_PTR sregs[BX_SEG_REG_CS].cache.u.segment.base = 0xFFFF0000;
+    BX_CPU_THIS_PTR sregs[BX_SEG_REG_CS].cache.u.segment.limit_scaled = 0xFFFF;
+    BX_CPU_THIS_PTR sregs[BX_SEG_REG_CS].cache.u.segment.g = 0;
+    BX_CPU_THIS_PTR sregs[BX_SEG_REG_CS].cache.u.segment.d_b = 0;
+#if BX_SUPPORT_X86_64
+    BX_CPU_THIS_PTR sregs[BX_SEG_REG_CS].cache.u.segment.l = 0;
+#endif
+    BX_CPU_THIS_PTR sregs[BX_SEG_REG_CS].cache.u.segment.avl = 0;
+
+    BX_CPU_THIS_PTR eipPageBias = 0;
+    BX_CPU_THIS_PTR eipPageWindowSize = 0;
+    BX_CPU_THIS_PTR eipFetchPtr = NULL;
+    BX_CPU_THIS_PTR pAddrFetchPage = 0;
+}
 
 void BX_CPU_C::init_statistics(void)
 {

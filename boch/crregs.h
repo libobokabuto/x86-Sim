@@ -1,5 +1,26 @@
 #pragma once
+struct bx_cr0_t {
+#define IMPLEMENT_CRREG_ACCESSORS(name, bitnum)            \
+  BX_CPP_INLINE bool get_##name() const {               \
+    return 1 & (val32 >> bitnum);                          \
+  }                                                        \
+  BX_CPP_INLINE void set_##name(Bit8u val) {               \
+    val32 = (val32 & ~(1<<bitnum)) | ((!!val) << bitnum);  \
+  }
+};
+struct bx_efer_t {
+    Bit32u val32;
+    
+#if BX_SUPPORT_X86_64
+    IMPLEMENT_CRREG_ACCESSORS(LME, 8);
+    IMPLEMENT_CRREG_ACCESSORS(LMA, 10);
+#endif
+    
 
+
+    BX_CPP_INLINE Bit32u get32() const { return val32; }
+    BX_CPP_INLINE void set32(Bit32u val) { val32 = val; }
+};
 #if BX_CPU_LEVEL >= 6
 
 const unsigned XSAVE_FPU_STATE_LEN = 160; //254

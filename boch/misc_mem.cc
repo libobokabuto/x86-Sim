@@ -1,7 +1,13 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include "bochs.h"
 #include "cpu.h"
+#include "param_names.h"
 #include "iodev.h"
+
+#include <io.h> //自己加的
+#include <fcntl.h> //自己加的
+#include <sys/stat.h> //自己加的
+
 //31
 #define BX_MEM_HANDLERS   ((BX_CONST64(1) << BX_PHY_ADDRESS_WIDTH) >> 20) /* one per megabyte */
 
@@ -99,8 +105,147 @@ void BX_MEM_C::cleanup_memory()
 }
 void BX_MEM_C::load_ROM(const char* path, bx_phy_address romaddress, Bit8u type)
 {
-	//296
+	struct _stat stat_buf;
+
+	int fd, ret, i, start_idx, end_idx;
+	unsigned long size, max_size, offset;
+	bool is_bochs_bios = false;
+
+	if (*path == '\0') {
+		return;
+	}
+
+	fd = _open(path, O_RDONLY
+
+#ifdef O_BINARY
+		| O_BINARY
+#endif
+	);
+	if (fd < 0) {
+		return;
+	}
+
+	ret = _fstat(fd, &stat_buf);
+	if (ret) {
+		_close(fd);
+		return;
+	}
+
+	size = (unsigned long)stat_buf.st_size;
+
+	if (type > 0) {
+		max_size = 0x20000;
+	}
+	else {
+		max_size = BIOSROMSZ;
+	}
+
+	if (size > max_size) {
+		_close(fd);
+		return;
+	}
+
+	if (type == 0) {
+		if (romaddress > 0) {
+			if ((romaddress + size) != 0x100000 && (romaddress + size)) {
+				_close(fd);
+				return;
+			}
+		}
+		else {
+			romaddress = ~(size - 1);
+		}
+
+		offset = (unsigned long)(romaddress & BIOS_MASK);
+
+		if ((romaddress & 0xf0000) < 0xf0000) {
+			BX_MEM_THIS rom_present[64] = true;
+		}
+
+		BX_MEM_THIS bios_rom_addr = (Bit32u)romaddress;
+
+		is_bochs_bios =
+			(strstr(path, "BIOS-bochs-latest") != NULL) ||
+			(strstr(path, "BIOS-bochs-legacy") != NULL);
+
+		if (size == 0x40000) {
+			BX_MEM_THIS flash_type = 2;
+		}
+		else if (size == 0x20000) {
+			BX_MEM_THIS flash_type = 1;
+		}
+	}
+	else {
+		if ((size % 512) != 0) {
+			_close(fd);
+			return;
+		}
+
+		if ((romaddress % 2048) != 0) {
+			_close(fd);
+			return;
+		}
+
+		if ((romaddress < 0xc0000) ||
+			(((romaddress + size - 1) > 0xdffff) && (romaddress < 0xe0000))) {
+			_close(fd);
+			return;
+		}
+
+		if (romaddress < 0xe0000) {
+			offset = (unsigned long)((romaddress & EXROM_MASK) + BIOSROMSZ);
+			start_idx = (((Bit32u)romaddress - 0xc0000) >> 11);
+			end_idx = start_idx + (size >> 11) + (((size % 2048) > 0) ? 1 : 0);
+		}
+		else {
+			offset = (unsigned long)(romaddress & BIOS_MASK);
+			start_idx = 64;
+			end_idx = 64;
+		}
+
+		for (i = start_idx; i < end_idx; i++) {
+			if (BX_MEM_THIS rom_present[i]) {
+				_close(fd);
+				return;
+			}
+			else {
+				BX_MEM_THIS rom_present[i] = true;
+			}
+		}
+	}
+
+	while (size > 0) {
+		ret = _read(fd, (bx_ptr_t)&BX_MEM_THIS rom[offset], (unsigned)size);
+		if (ret <= 0) {
+			_close(fd);
+			return;
+		}
+		size -= ret;
+		offset += ret;
+	}
+
+	_close(fd);
+
+	offset -= (unsigned long)stat_buf.st_size;
+	size = (unsigned long)stat_buf.st_size;
+
+	if (is_bochs_bios ||
+		((BX_MEM_THIS rom[offset] == 0x55) && (BX_MEM_THIS rom[offset + 1] == 0xaa))) {
+		if ((type == 0) && ((romaddress & 0xfffff) == 0xe0000)) {
+			offset += 0x10000;
+			size = 0x10000;
+		}
+
+		Bit8u checksum = 0;
+		for (i = 0; i < (int)size; i++) {
+			checksum += BX_MEM_THIS rom[offset + i];
+		}
+
+		// 当前阶段只先完成 ROM 装载，不处理中断式报错和 flash 持久化
+		UNUSED(checksum);
+	}
 }
+
 
 Bit8u* BX_MEM_C::getHostMemAddr(BX_CPU_C* cpu, bx_phy_address addr, unsigned rw)
 {
