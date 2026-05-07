@@ -12,6 +12,9 @@ const Bit32u LF_MASK_SD = (0x01 << LF_BIT_SD);
 const Bit32u LF_MASK_AF = (0x01 << LF_BIT_AF);//44
 const Bit32u LF_MASK_PDB = (0xFF << LF_BIT_PDB);//45
 
+#define SUB_COUT_VEC(op1, op2, result) \
+  (((~(op1)) & (op2)) | (((~(op1)) ^ (op2)) & (result)))
+
 
 //63
 #define SET_FLAGS_OSZAPC_SIZE(size, lf_carries, lf_result) { \
@@ -24,6 +27,8 @@ const Bit32u LF_MASK_PDB = (0xFF << LF_BIT_PDB);//45
   BX_CPU_THIS_PTR oszapc.auxbits = (bx_address)(Bit32u)temp; \
 }
 
+#define SET_FLAGS_OSZAPC_8(carries, result) \
+  SET_FLAGS_OSZAPC_SIZE(8, carries, result)
 #define SET_FLAGS_OSZAPC_16(carries, result) \
   SET_FLAGS_OSZAPC_SIZE(16, carries, result) //76
 #define SET_FLAGS_OSZAPC_32(carries, result) \
@@ -34,6 +39,9 @@ const Bit32u LF_MASK_PDB = (0xFF << LF_BIT_PDB);//45
    SET_FLAGS_OSZAPC_16(0, (result_16)) //88
 #define SET_FLAGS_OSZAPC_LOGIC_32(result_32) \
    SET_FLAGS_OSZAPC_32(0, (result_32))
+
+#define SET_FLAGS_OSZAPC_SUB_8(op1_8, op2_8, diff_8) \
+  SET_FLAGS_OSZAPC_8(SUB_COUT_VEC((op1_8), (op2_8), (diff_8)), (diff_8))
 
 struct bx_lazyflags_entry { //193
     bx_address result;

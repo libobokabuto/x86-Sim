@@ -70,3 +70,14 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::MOV_GbEbR(bxInstruction_c* i)
 
     BX_NEXT_INSTR(i);
 }
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::CMP_EbIbR(bxInstruction_c* i)
+{
+    Bit32u op1_8 = BX_READ_8BIT_REGx(i->dst(), i->extend8bitL());
+    Bit32u op2_8 = i->Ib();
+    Bit32u diff_8 = op1_8 - op2_8;
+
+    SET_FLAGS_OSZAPC_SUB_8(op1_8, op2_8, diff_8);
+
+    BX_NEXT_INSTR(i);
+}
