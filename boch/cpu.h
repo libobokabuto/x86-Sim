@@ -14,6 +14,9 @@
 }
 
 #if BX_SUPPORT_X86_64
+#define BX_READ_8BIT_REGx(index, extended) ((((index) & 4) == 0 || (extended)) ? \
+  (BX_CPU_THIS_PTR gen_reg[index].word.byte.rl) : \
+  (BX_CPU_THIS_PTR gen_reg[(index)-4].word.byte.rh))
 #define BX_WRITE_8BIT_REGx(index, extended, val) {\
   if (((index) & 4) == 0 || (extended)) \
     BX_CPU_THIS_PTR gen_reg[index].word.byte.rl = val; \
@@ -21,6 +24,9 @@
     BX_CPU_THIS_PTR gen_reg[(index)-4].word.byte.rh = val; \
 }
 #else
+#define BX_READ_8BIT_REGx(index, ext) (((index) & 4) ? \
+  (BX_CPU_THIS_PTR gen_reg[(index)-4].word.byte.rh) : \
+  (BX_CPU_THIS_PTR gen_reg[index].word.byte.rl))
 #define BX_WRITE_8BIT_REGx(index, ext, val) {\
   if ((index) & 4) \
     BX_CPU_THIS_PTR gen_reg[(index)-4].word.byte.rh = val; \
@@ -502,7 +508,7 @@ public:
     BX_SMF void MOV_EbGbM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void MOV_EwGwM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void MOV_GbEbM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
-    BX_SMF void MOV_GbEbR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void MOV_GbEbR(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void MOV_GdEdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void MOV_GwEwM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void MOV_GwEwR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }

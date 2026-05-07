@@ -62,3 +62,11 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::IN_ALIb(bxInstruction_c* i)
 
     BX_NEXT_TRACE(i);
 }
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::MOV_GbEbR(bxInstruction_c* i)
+{
+    Bit8u op2 = BX_READ_8BIT_REGx(i->src(), i->extend8bitL());
+    BX_WRITE_8BIT_REGx(i->dst(), i->extend8bitL(), op2);
+
+    BX_NEXT_INSTR(i);
+}
