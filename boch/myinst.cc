@@ -41,3 +41,10 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::OUT_IbAL(bxInstruction_c* i)
 
     BX_NEXT_TRACE(i);
 }
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::MOV_EbIbR(bxInstruction_c* i)
+{
+    BX_WRITE_8BIT_REGx(i->dst(), i->extend8bitL(), i->Ib());
+
+    BX_NEXT_INSTR(i);
+}
