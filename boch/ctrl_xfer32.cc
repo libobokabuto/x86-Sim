@@ -3,6 +3,16 @@
 #include "cpu.h"
 #define LOG_THIS BX_CPU_THIS_PTR
 
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::branch_near16(Bit16u new_IP)
+{
+    if (new_IP > BX_CPU_THIS_PTR sregs[BX_SEG_REG_CS].cache.u.segment.limit_scaled) {
+        exception(BX_GP_EXCEPTION, 0);
+    }
+
+    invalidate_prefetch_q();
+    EIP = new_IP;
+}
+
 
 void BX_CPU_C::jmp_far32(bxInstruction_c* i, Bit16u cs_raw, Bit32u disp32)
 {

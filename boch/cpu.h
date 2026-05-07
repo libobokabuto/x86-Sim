@@ -365,6 +365,7 @@ public:
 
 	BX_CPU_C(unsigned id = 0);
 	~BX_CPU_C();
+    BX_SMF BX_CPP_INLINE unsigned get_ZF(void) { return BX_CPU_THIS_PTR oszapc.result == 0; }
     bx_gen_reg_t gen_reg[BX_GENERAL_REGISTERS + 4]; //930ÐÐ
 
     Bit32u eflags;//940ÐÐ
@@ -674,7 +675,7 @@ public:
     BX_SMF void JNO_Jw(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void JB_Jw(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void JNB_Jw(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
-    BX_SMF void JZ_Jw(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void JZ_Jw(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void JNZ_Jw(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void JBE_Jw(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void JNBE_Jw(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
@@ -3482,6 +3483,7 @@ public:
     BX_SMF void reset(unsigned source); //4804
     BX_SMF void jump_protected(bxInstruction_c* i, Bit16u cs, bx_address disp) BX_CPP_AttrRegparmN(3);//4872
     BX_SMF void    load_seg_reg(bx_segment_reg_t* seg, Bit16u new_value) BX_CPP_AttrRegparmN(2); //4930
+    BX_SMF void branch_near16(Bit16u new_IP) BX_CPP_AttrRegparmN(1);
     BX_SMF void jmp_far32(bxInstruction_c* i, Bit16u cs_raw, Bit32u disp32);
     BX_SMF void init_FetchDecodeTables(void); //4985
     BX_SMF int  assignHandler(bxInstruction_c* i, Bit32u fetchModeMask); //4986

@@ -81,3 +81,15 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::CMP_EbIbR(bxInstruction_c* i)
 
     BX_NEXT_INSTR(i);
 }
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::JZ_Jw(bxInstruction_c* i)
+{
+    if (get_ZF()) {
+        Bit16u new_IP = (Bit16u)(EIP + i->Iw());
+        branch_near16(new_IP);
+
+        BX_NEXT_TRACE(i);
+    }
+
+    BX_NEXT_INSTR(i);
+}
