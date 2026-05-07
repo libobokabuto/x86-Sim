@@ -618,7 +618,7 @@ public:
     BX_SMF void LOOP32_Jb(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void JCXZ_Jb(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void JECXZ_Jb(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
-    BX_SMF void IN_ALIb(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void IN_ALIb(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void IN_AXIb(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void IN_EAXIb(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void OUT_IbAL(bxInstruction_c*) BX_CPP_AttrRegparmN(1);

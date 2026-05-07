@@ -89,6 +89,7 @@ public:
     BX_MEM_C* mem;//392
     bool register_default_io_read_handler(void* this_ptr, bx_read_handler_t f, const char* name, Bit8u mask);//411
     bool register_default_io_write_handler(void* this_ptr, bx_write_handler_t f, const char* name, Bit8u mask);//412
+    Bit32u inp(Bit16u addr, unsigned io_len) BX_CPP_AttrRegparmN(2);
     void   outp(Bit16u addr, Bit32u value, unsigned io_len) BX_CPP_AttrRegparmN(3); //416
 private:
 

@@ -97,6 +97,32 @@ bool bx_devices_c::register_default_io_write_handler(void* this_ptr, bx_write_ha
 }
 
 
+Bit32u BX_CPP_AttrRegparmN(2)
+bx_devices_c::inp(Bit16u addr, unsigned io_len)
+{
+    struct io_handler_struct* io_read_handler;
+    Bit32u ret;
+
+    io_read_handler = read_port_to_handler[addr];
+    if (io_read_handler->mask & io_len) {
+        ret = ((bx_read_handler_t)io_read_handler->funct)(io_read_handler->this_ptr, (Bit32u)addr, io_len);
+    }
+    else {
+        switch (io_len) {
+        case 1: ret = 0xff; break;
+        case 2: ret = 0xffff; break;
+        default: ret = 0xffffffff; break;
+        }
+        if (addr != 0x0cf8) { // don't flood the logfile when probing PCI
+            //BX_ERROR(("read from port 0x%04x with len %d returns 0x%x", addr, io_len, ret));
+        }
+    }
+
+    BX_DBG_IO_REPORT(addr, io_len, BX_READ, ret);
+
+    return ret;
+}
+
 void BX_CPP_AttrRegparmN(3)   //1086
 bx_devices_c::outp(Bit16u addr, Bit32u value, unsigned io_len)
 {

@@ -48,3 +48,17 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::MOV_EbIbR(bxInstruction_c* i)
 
     BX_NEXT_INSTR(i);
 }
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::IN_ALIb(bxInstruction_c* i)
+{
+    unsigned port = i->Ib();
+    /*
+    if (!allow_io(i, port, 1)) {
+        BX_DEBUG(("IN_ALIb: I/O access not allowed !"));
+        exception(BX_GP_EXCEPTION, 0);
+    }*/
+
+    BX_CPU_THIS_PTR gen_reg[0].word.byte.rl = (Bit8u)BX_INP(port, 1);
+
+    BX_NEXT_TRACE(i);
+}
