@@ -1,4 +1,5 @@
 #define _CRT_SECURE_NO_WARNINGS
+#define _CRT_NONSTDC_NO_WARNINGS
 #include "bochs.h"
 #include "cpu.h"
 #include "param_names.h"

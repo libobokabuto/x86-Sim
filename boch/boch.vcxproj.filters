@@ -108,6 +108,24 @@
     <ClCompile Include="vmx.cc">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="devices.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="exception.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="dbg_main.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="unmapped.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="plugin.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="pci.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bochs.h">
@@ -126,6 +144,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="memory-bochs.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="pci.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="siminterface.h">
@@ -213,6 +234,21 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="osdep.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="lazy_flags.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="debug.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="plugin.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="unmapped.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="extplugin.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

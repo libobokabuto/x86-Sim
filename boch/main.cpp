@@ -18,7 +18,7 @@ bx_debug_t bx_dbg;
 
 
 bx_startup_flags_t bx_startup_flags;//78行
-
+bool bx_user_quit;
 void bx_init_hardware(void);//70行
 int bx_init_main(int argc, char* argv[]);
 
@@ -70,7 +70,7 @@ void bx_init_hardware() {
 	BX_CPU(0)->initialize();
 	bx_pc_system.Reset(BX_RESET_HARDWARE);//1341
 
-	//DEV_init_devices();//暂时不用
+	DEV_init_devices();
 }
 
 int main_proc(int argc, char* argv[])

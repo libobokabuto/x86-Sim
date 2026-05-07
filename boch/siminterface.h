@@ -19,3 +19,4 @@ typedef struct BOCHSAPI {
 } bx_startup_flags_t;
 
 BOCHSAPI extern bx_startup_flags_t bx_startup_flags;
+BOCHSAPI extern bool bx_user_quit;

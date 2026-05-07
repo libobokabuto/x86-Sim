@@ -1,6 +1,13 @@
 #include "bochs.h"
 #include "cpu.h"
-#include "pc_system.h"
+#include "iodev.h"
+
+
+void BX_CPP_AttrRegparmN(3)
+bx_pc_system_c::outp(Bit16u addr, Bit32u value, unsigned io_len)
+{
+    bx_devices.outp(addr, value, io_len);
+}
 
 void bx_pc_system_c::set_enable_a20(bool value)
 {

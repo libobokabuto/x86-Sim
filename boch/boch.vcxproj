@@ -127,6 +127,8 @@
     <ClCompile Include="cpuid.cc" />
     <ClCompile Include="crregs.cc" />
     <ClCompile Include="ctrl_xfer32.cc" />
+    <ClCompile Include="dbg_main.cc" />
+    <ClCompile Include="devices.cc" />
     <ClCompile Include="disasm.cc" />
     <ClCompile Include="exception.cc" />
     <ClCompile Include="fetchdecode_opmap_xop.cc" />
@@ -156,11 +158,14 @@
     <ClCompile Include="myinst.cc" />
     <ClCompile Include="paging.cc" />
     <ClCompile Include="paramtree.cc" />
+    <ClCompile Include="pci.cc" />
     <ClCompile Include="pc_system.cc" />
+    <ClCompile Include="plugin.cc" />
     <ClCompile Include="proc_ctrl.cc" />
     <ClCompile Include="segment_ctrl_pro.cc" />
     <ClCompile Include="siminterface.cc" />
     <ClCompile Include="smm.cc" />
+    <ClCompile Include="unmapped.cc" />
     <ClCompile Include="vmcs.cc" />
     <ClCompile Include="vmx.cc" />
     <ClCompile Include="xsave.cc" />
@@ -173,8 +178,10 @@
     <ClInclude Include="cpuid.h" />
     <ClInclude Include="cpustats.h" />
     <ClInclude Include="crregs.h" />
+    <ClInclude Include="debug.h" />
     <ClInclude Include="decoder.h" />
     <ClInclude Include="descriptor.h" />
+    <ClInclude Include="extplugin.h" />
     <ClInclude Include="features.h" />
     <ClCompile Include="fetchdecode_opmap_0f3a.cc" />
     <ClInclude Include="fetchdecode_x87.h" />
@@ -187,10 +194,12 @@
     <ClInclude Include="iodev.h" />
     <ClInclude Include="lazy_flags.h" />
     <ClInclude Include="memory-bochs.h" />
+    <ClInclude Include="pci.h" />
     <ClInclude Include="osdep.h" />
     <ClInclude Include="paramtree.h" />
     <ClInclude Include="param_names.h" />
     <ClInclude Include="pc_system.h" />
+    <ClInclude Include="plugin.h" />
     <ClInclude Include="simd_compare.h" />
     <ClInclude Include="simd_int.h" />
     <ClInclude Include="simd_pfp.h" />
@@ -199,6 +208,7 @@
     <ClInclude Include="softfloat.h" />
     <ClInclude Include="svm.h" />
     <ClInclude Include="tlb.h" />
+    <ClInclude Include="unmapped.h" />
     <ClInclude Include="vcruntime.h" />
     <ClInclude Include="vmx.h" />
     <ClInclude Include="vmx_ctrls.h" />

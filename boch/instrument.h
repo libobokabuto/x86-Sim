@@ -7,3 +7,6 @@
 
 #define BX_INSTR_BEFORE_EXECUTION(cpu_id, i) //176
 #define BX_INSTR_AFTER_EXECUTION(cpu_id, i)
+
+
+#define BX_INSTR_OUTP(addr, len, val) //189

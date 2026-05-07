@@ -101,7 +101,7 @@ extern "C" {
 }
 #endif
 
-//#include "osdep.h"       /* platform dependent includes and defines */
+#include "osdep.h"       /* platform dependent includes and defines */
 
 class bx_param_c;
 class bx_list_c;
