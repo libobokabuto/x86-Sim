@@ -15,16 +15,11 @@
   BX_CPU_THIS_PTR gen_reg[index].word.rx = val; \
 }
 #define PREV_RIP (BX_CPU_THIS_PTR prev_rip) //131
+
 #if BX_SUPPORT_X86_64
 #define BX_READ_8BIT_REGx(index, extended) ((((index) & 4) == 0 || (extended)) ? \
   (BX_CPU_THIS_PTR gen_reg[index].word.byte.rl) : \
   (BX_CPU_THIS_PTR gen_reg[(index)-4].word.byte.rh))
-#define BX_WRITE_8BIT_REGx(index, extended, val) {\
-  if (((index) & 4) == 0 || (extended)) \
-    BX_CPU_THIS_PTR gen_reg[index].word.byte.rl = val; \
-  else \
-    BX_CPU_THIS_PTR gen_reg[(index)-4].word.byte.rh = val; \
-}
 #else
 #define BX_READ_8BIT_REGx(index, ext) (((index) & 4) ? \
   (BX_CPU_THIS_PTR gen_reg[(index)-4].word.byte.rh) : \
@@ -36,11 +31,21 @@
     BX_CPU_THIS_PTR gen_reg[index].word.byte.rl = val; \
 }
 #endif
-
+#define BX_READ_16BIT_REG(index) (BX_CPU_THIS_PTR gen_reg[index].word.rx)
+#if BX_SUPPORT_X86_64
+#define BX_WRITE_8BIT_REGx(index, extended, val) {\
+  if (((index) & 4) == 0 || (extended)) \
+    BX_CPU_THIS_PTR gen_reg[index].word.byte.rl = val; \
+  else \
+    BX_CPU_THIS_PTR gen_reg[(index)-4].word.byte.rh = val; \
+}
 #define BX_CLEAR_64BIT_HIGH(index) {\
   BX_CPU_THIS_PTR gen_reg[index].dword.hrx = 0; \
 } //174-176行 
 
+#else //178
+#endif //196
+#define CPL       (BX_CPU_THIS_PTR sregs[BX_SEG_REG_CS].selector.rpl) //198
 #define USER_PL   (BX_CPU_THIS_PTR user_pl)   //200行
 
 #if BX_SUPPORT_SMP  //202
@@ -64,6 +69,7 @@ enum ExceptionClass {
 };
 enum BxCpuMode {
     BX_MODE_IA32_REAL = 0,
+    BX_MODE_IA32_V8086 = 1,
     BX_MODE_IA32_PROTECTED = 2,
     BX_MODE_LONG_64 = 4           // EFER.LMA = 1, CR0.PE=1, CS.L=1,362行
 };
@@ -141,7 +147,7 @@ struct bxICacheEntry_c;
     }                                                           \
   }
 
-// need special handling when IF is set
+// need special handling when IF is set 544
 #define IMPLEMENT_EFLAG_SET_ACCESSOR_IF(bitnum)                 \
   BX_CPP_INLINE void BX_CPU_C::assert_IF() {                    \
     BX_CPU_THIS_PTR eflags |= (1<<bitnum);                      \
@@ -186,6 +192,7 @@ struct bxICacheEntry_c;
       (BX_CPU_THIS_PTR eflags&~(1<<bitnum))|(Bit32u(val)<<bitnum);  \
   }
 
+//588
 #define DECLARE_EFLAG_ACCESSOR_IOPL(bitnum)                     \
   BX_SMF BX_CPP_INLINE void set_IOPL(Bit32u val);               \
   BX_SMF BX_CPP_INLINE Bit32u  get_IOPL(void);
@@ -201,8 +208,11 @@ struct bxICacheEntry_c;
 
 BOCHSAPI extern BX_CPU_C** bx_cpu_array;  //462行
 BOCHSAPI extern BX_CPU_C  bx_cpu;         //465行
-
+const Bit32u EFlagsIFMask = (1 << 9); //607
 const Bit32u EFlagsRFMask = (1 << 16); //612行
+#if BX_SUPPORT_FPU
+#include "i387.h"
+#endif
 
 #include "crregs.h"//692
 #include "descriptor.h"//693行
@@ -378,10 +388,10 @@ public:
 
 	/* user segment register set */
 	bx_segment_reg_t  sregs[6]; //970行
-
-
+#if BX_CPU_LEVEL >= 5
+    bx_cr4_t   cr4;
     bx_efer_t efer; //996
-
+#endif
 #if BX_SUPPORT_MONITOR_MWAIT
     monitor_addr_t monitor;
 #endif
@@ -398,18 +408,34 @@ public:
     VMCS_Mapping* vmcs_map; //118
 #endif
 #if BX_SUPPORT_SVM//1121
+    bool in_svm_guest; //1122
     VMCB_CACHE* vmcb;
 #else//1134
 #endif//1138
-    #define BX_EVENT_CODE_BREAKPOINT_ASSIST       (1 <<  3) //1167行
-
+#define BX_EVENT_CODE_BREAKPOINT_ASSIST       (1 <<  3) //1167行
+#define BX_EVENT_VMX_INTERRUPT_WINDOW_EXITING (1 <<  6) //1170
+#define BX_EVENT_SVM_VIRQ_PENDING             (1 <<  8)
+#define BX_EVENT_PENDING_VMX_VIRTUAL_INTR     (1 <<  9)
+#define BX_EVENT_PENDING_INTR                 (1 << 10)
+#define BX_EVENT_PENDING_LAPIC_INTR           (1 << 11)
+#define BX_EVENT_PENDING_UINTR                (1 << 12)
     Bit32u  pending_event;//1180行
+    Bit32u  event_mask;
     Bit32u  async_event; //1182
 
     BX_SMF BX_CPP_INLINE void clear_event(Bit32u event) { //1189行
-        
+        BX_CPU_THIS_PTR pending_event &= ~event;
     }
-
+    BX_SMF BX_CPP_INLINE void mask_event(Bit32u event) {
+        BX_CPU_THIS_PTR event_mask |= event;
+    }
+    BX_SMF BX_CPP_INLINE void unmask_event(Bit32u event) { //1196
+        BX_CPU_THIS_PTR event_mask &= ~event;
+        if (is_pending(event)) BX_CPU_THIS_PTR async_event = 1;
+    }
+    BX_SMF BX_CPP_INLINE bool is_pending(Bit32u event) { //1205
+        return (BX_CPU_THIS_PTR pending_event & event) != 0;
+    }
 #define BX_ASYNC_EVENT_STOP_TRACE (1<<31) //1216
     unsigned cpu_mode;//1219行
 	bool  user_pl; //1220行
@@ -528,7 +554,7 @@ public:
     BX_SMF void MOV_GbEbR(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void MOV_GdEdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void MOV_GwEwM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
-    BX_SMF void MOV_GwEwR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void MOV_GwEwR(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
 
     BX_SMF void MOV32_GdEdM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void MOV32_EdGdM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
@@ -3049,7 +3075,7 @@ public:
     BX_SMF void NOP(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void PAUSE(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void MOV_EbIbR(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
-    BX_SMF void MOV_EwIwR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void MOV_EwIwR(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void MOV_EdIdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
 
     BX_SMF void PUSH_EwR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
@@ -3497,6 +3523,7 @@ public:
         BX_CPP_AttrNoReturn();
     BX_SMF void init_SMRAM(void);//4773
     BX_SMF void reset(unsigned source); //4804
+    BX_SMF void handleInterruptMaskChange(void);
     BX_SMF void jump_protected(bxInstruction_c* i, Bit16u cs, bx_address disp) BX_CPP_AttrRegparmN(3);//4872
     BX_SMF void    load_seg_reg(bx_segment_reg_t* seg, Bit16u new_value) BX_CPP_AttrRegparmN(2); //4930
     BX_SMF void branch_near16(Bit16u new_IP) BX_CPP_AttrRegparmN(1);
@@ -3508,9 +3535,19 @@ public:
         return BX_CPU_THIS_PTR ia_extensions_bitmask[extension / 32] & (1 << (extension % 32));
     }
 	BX_SMF Bit32u get_laddr32(unsigned seg, Bit32u offset);//5049行
-
-    DECLARE_EFLAG_ACCESSOR(RF, 16) //5070行
+    DECLARE_EFLAG_ACCESSOR(ID, 21)
+    DECLARE_EFLAG_ACCESSOR(VIP, 20)
+    DECLARE_EFLAG_ACCESSOR(VIF, 19)
+    DECLARE_EFLAG_ACCESSOR(AC, 18)
+    DECLARE_EFLAG_ACCESSOR(VM, 17)
+    DECLARE_EFLAG_ACCESSOR(RF, 16)
+    DECLARE_EFLAG_ACCESSOR(NT, 14)
+    DECLARE_EFLAG_ACCESSOR_IOPL(12)
+    DECLARE_EFLAG_ACCESSOR(DF, 10)
+    DECLARE_EFLAG_ACCESSOR(IF, 9)
+    DECLARE_EFLAG_ACCESSOR(TF, 8)
     BX_SMF BX_CPP_INLINE bool protected_mode(void);//5079
+    BX_SMF BX_CPP_INLINE bool v8086_mode(void); //5080
     BX_SMF BX_CPP_INLINE bool long_mode(void);//5081
 
 #if BX_CPU_LEVEL >= 6    //5129
@@ -3642,6 +3679,11 @@ enum {
 }*/
 
 class bxInstruction_c;//5785行
+BX_CPP_INLINE bool BX_CPU_C::v8086_mode(void)
+{
+    return (BX_CPU_THIS_PTR cpu_mode == BX_MODE_IA32_V8086);
+}
+
 BX_CPP_INLINE bool BX_CPU_C::protected_mode(void)
 {
     //5797
@@ -3657,9 +3699,15 @@ BX_CPP_INLINE bool BX_CPU_C::long_mode(void)
 #endif
 }
 
-IMPLEMENT_EFLAG_ACCESSOR_IOPL(12) //5837
+__forceinline void BX_CPU_C::set_IOPL(Bit32u val) {
+    (&bx_cpu)->eflags &= ~(3 << 12); (&bx_cpu)->eflags |= ((3 & val) << 12);
+} __forceinline Bit32u BX_CPU_C::get_IOPL() {
+    return 3 & ((&bx_cpu)->eflags >> 12);
+} //5837
+IMPLEMENT_EFLAG_ACCESSOR(IF, 9) //5839
 IMPLEMENT_EFLAG_SET_ACCESSOR_RF(16) //5851行
-
+IMPLEMENT_EFLAG_SET_ACCESSOR(VIF, 19) //5844
+IMPLEMENT_EFLAG_SET_ACCESSOR_IF(9)//5854
 
 #define BX_NEXT_TRACE(i) { return; } //5914
 #define BX_NEXT_INSTR(i) { return; }

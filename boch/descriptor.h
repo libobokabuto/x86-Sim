@@ -76,3 +76,8 @@ typedef struct { //180ÐÐ
 	bx_selector_t    selector;
 	bx_descriptor_t  cache;
 } bx_segment_reg_t;
+
+typedef struct {
+    bx_address       base;   /* base address: 24bits=286,32bits=386,64bits=x86-64 */
+    Bit16u           limit;  /* limit, 16bits */
+} bx_global_segment_reg_t;

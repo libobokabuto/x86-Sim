@@ -62,10 +62,14 @@ public:
 };
 
 class VmxPinBasedVmexecControls {
+private:
+	Bit32u pin_vmexec_ctrls;
 public:
 #define VMX_PIN_BASED_VMEXEC_CTRL_EXTERNAL_INTERRUPT_VMEXIT   (1 << 0)
 #define VMX_PIN_BASED_VMEXEC_CTRL_NMI_EXITING                 (1 << 3)
 #define VMX_PIN_BASED_VMEXEC_CTRL_VIRTUAL_NMI                 (1 << 5) /* Virtual NMI */
 #define VMX_PIN_BASED_VMEXEC_CTRL_VMX_PREEMPTION_TIMER_VMEXIT (1 << 6) /* VMX preemption timer */
 #define VMX_PIN_BASED_VMEXEC_CTRL_PROCESS_POSTED_INTERRUPTS   (1 << 7) /* Posted Interrupts */
+
+	bool EXTERNAL_INTERRUPT_VMEXIT() const { return pin_vmexec_ctrls & VMX_PIN_BASED_VMEXEC_CTRL_EXTERNAL_INTERRUPT_VMEXIT; }
 };

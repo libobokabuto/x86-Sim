@@ -23,7 +23,7 @@ typedef struct bx_VMX_Cap //717
 typedef struct bx_VMCS   //750
 {
     //750
-
+    VmxPinBasedVmexecControls pin_vmexec_ctrls;
     VmxVmexec3Controls vmexec_ctrls3;
 
 } VMCS_CACHE;

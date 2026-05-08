@@ -1,5 +1,5 @@
 #pragma once
-struct bx_cr0_t {
+struct bx_cr0_t {//39
 #define IMPLEMENT_CRREG_ACCESSORS(name, bitnum)            \
   BX_CPP_INLINE bool get_##name() const {               \
     return 1 & (val32 >> bitnum);                          \
@@ -7,8 +7,44 @@ struct bx_cr0_t {
   BX_CPP_INLINE void set_##name(Bit8u val) {               \
     val32 = (val32 & ~(1<<bitnum)) | ((!!val) << bitnum);  \
   }
-};
-struct bx_efer_t {
+}; //87
+
+struct bx_cr4_t {
+    Bit32u  val32;
+    IMPLEMENT_CRREG_ACCESSORS(VME, 0);
+    IMPLEMENT_CRREG_ACCESSORS(PVI, 1);
+    IMPLEMENT_CRREG_ACCESSORS(TSD, 2);
+    IMPLEMENT_CRREG_ACCESSORS(DE, 3);
+    IMPLEMENT_CRREG_ACCESSORS(PSE, 4);
+    IMPLEMENT_CRREG_ACCESSORS(PAE, 5);
+    IMPLEMENT_CRREG_ACCESSORS(MCE, 6);
+    IMPLEMENT_CRREG_ACCESSORS(PGE, 7);
+    IMPLEMENT_CRREG_ACCESSORS(PCE, 8);
+    IMPLEMENT_CRREG_ACCESSORS(OSFXSR, 9);
+    IMPLEMENT_CRREG_ACCESSORS(OSXMMEXCPT, 10);
+    IMPLEMENT_CRREG_ACCESSORS(UMIP, 11);
+    IMPLEMENT_CRREG_ACCESSORS(LA57, 12);
+#if BX_SUPPORT_VMX
+    IMPLEMENT_CRREG_ACCESSORS(VMXE, 13);
+#endif
+    IMPLEMENT_CRREG_ACCESSORS(SMXE, 14);
+#if BX_SUPPORT_X86_64
+    IMPLEMENT_CRREG_ACCESSORS(FSGSBASE, 16);
+#endif
+    IMPLEMENT_CRREG_ACCESSORS(PCIDE, 17);
+    IMPLEMENT_CRREG_ACCESSORS(OSXSAVE, 18);
+    IMPLEMENT_CRREG_ACCESSORS(KEYLOCKER, 19);
+    IMPLEMENT_CRREG_ACCESSORS(SMEP, 20);
+    IMPLEMENT_CRREG_ACCESSORS(SMAP, 21);
+    IMPLEMENT_CRREG_ACCESSORS(PKE, 22);
+    IMPLEMENT_CRREG_ACCESSORS(CET, 23);
+    IMPLEMENT_CRREG_ACCESSORS(PKS, 24);
+    IMPLEMENT_CRREG_ACCESSORS(UINTR, 25);
+    IMPLEMENT_CRREG_ACCESSORS(LASS, 27);
+    IMPLEMENT_CRREG_ACCESSORS(LAM_SUPERVISOR, 28);
+
+};//156
+struct bx_efer_t { //229
     Bit32u val32;
     
 #if BX_SUPPORT_X86_64
@@ -21,7 +57,7 @@ struct bx_efer_t {
     BX_CPP_INLINE Bit32u get32() const { return val32; }
     BX_CPP_INLINE void set32(Bit32u val) { val32 = val; }
 };
-#if BX_CPU_LEVEL >= 6
+#if BX_CPU_LEVEL >= 6 //251
 
 const unsigned XSAVE_FPU_STATE_LEN = 160; //254
 const unsigned XSAVE_SSE_STATE_LEN = 256;

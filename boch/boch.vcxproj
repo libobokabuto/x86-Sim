@@ -149,6 +149,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="fetchdecode_opmap_evex.cc" />
+    <ClCompile Include="flag_ctrl_pro.cc" />
     <ClCompile Include="icache.cc" />
     <ClCompile Include="init.cc" />
     <ClCompile Include="jmp_far.cc" />
@@ -191,6 +192,7 @@
     <ClInclude Include="fetchdecode_x87.h" />
     <ClInclude Include="fetchdecode.h" />
     <ClInclude Include="fetchdecode_opmap.h" />
+    <ClInclude Include="i387.h" />
     <ClInclude Include="ia_opcodes.h" />
     <ClInclude Include="icache.h" />
     <ClInclude Include="instr.h" />

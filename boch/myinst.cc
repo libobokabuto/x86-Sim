@@ -142,3 +142,17 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::CLI(bxInstruction_c* i)
 
     BX_NEXT_INSTR(i);
 }
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::MOV_EwIwR(bxInstruction_c* i)
+{
+    BX_WRITE_16BIT_REG(i->dst(), i->Iw());
+
+    BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::MOV_GwEwR(bxInstruction_c* i)
+{
+    BX_WRITE_16BIT_REG(i->dst(), BX_READ_16BIT_REG(i->src()));
+
+    BX_NEXT_INSTR(i);
+}

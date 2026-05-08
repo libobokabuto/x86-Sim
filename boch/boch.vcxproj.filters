@@ -135,6 +135,9 @@
     <ClCompile Include="ctrl_xfer16.cc">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="flag_ctrl_pro.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bochs.h">
@@ -267,6 +270,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="MD5.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="i387.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
