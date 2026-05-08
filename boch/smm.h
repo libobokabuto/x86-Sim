@@ -1,4 +1,9 @@
 #pragma once
+struct BX_SMM_State
+{
+	bx_address gen_reg[BX_GENERAL_REGISTERS];
+};
+
 #define SMM_SAVE_STATE_MAP_SIZE 128
 
 #if BX_SUPPORT_X86_64 //107
@@ -99,5 +104,6 @@ enum SMMRAM_Fields {
 	SMRAM_FIELD_GS_SELECTOR_AR,
 	SMRAM_FIELD_LAST
 };
+
 #else
 #endif 

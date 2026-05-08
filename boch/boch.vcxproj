@@ -123,6 +123,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="coms.cc" />
     <ClCompile Include="cpu.cc" />
     <ClCompile Include="cpuid.cc" />
     <ClCompile Include="crregs.cc" />
@@ -151,6 +152,7 @@
     <ClCompile Include="init.cc" />
     <ClCompile Include="jmp_far.cc" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="MD5.cpp" />
     <ClCompile Include="memory_stub.cc" />
     <ClCompile Include="misc_mem.cc" />
     <ClCompile Include="msr.cc" />
@@ -173,6 +175,7 @@
   <ItemGroup>
     <ClInclude Include="bochs.h" />
     <ClInclude Include="bswap.h" />
+    <ClInclude Include="cmos.h" />
     <ClInclude Include="config.h" />
     <ClInclude Include="cpu.h" />
     <ClInclude Include="cpuid.h" />
@@ -193,6 +196,7 @@
     <ClInclude Include="instrument.h" />
     <ClInclude Include="iodev.h" />
     <ClInclude Include="lazy_flags.h" />
+    <ClInclude Include="MD5.h" />
     <ClInclude Include="memory-bochs.h" />
     <ClInclude Include="pci.h" />
     <ClInclude Include="osdep.h" />
@@ -209,6 +213,7 @@
     <ClInclude Include="svm.h" />
     <ClInclude Include="tlb.h" />
     <ClInclude Include="unmapped.h" />
+    <ClInclude Include="utctime.h" />
     <ClInclude Include="vcruntime.h" />
     <ClInclude Include="vmx.h" />
     <ClInclude Include="vmx_ctrls.h" />

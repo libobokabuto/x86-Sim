@@ -126,6 +126,12 @@
     <ClCompile Include="pci.cc">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="coms.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="MD5.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bochs.h">
@@ -249,6 +255,15 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="extplugin.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="cmos.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="utctime.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="MD5.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

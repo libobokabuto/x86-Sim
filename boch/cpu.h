@@ -3,6 +3,8 @@
 #include "decoder.h" //27ÐÐ
 #include "instrument.h" //29ÐÐ
 
+#define AL (BX_CPU_THIS_PTR gen_reg[0].word.byte.rl) //45
+
 #  define BX_SMF           static
 
 #define EIP (BX_CPU_THIS_PTR gen_reg[BX_32BIT_REG_EIP].dword.erx) //82ÐÐ

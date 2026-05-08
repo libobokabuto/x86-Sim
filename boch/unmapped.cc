@@ -4,6 +4,22 @@
 
 #include "debug.h"
 bx_unmapped_c* theUnmappedDevice = NULL;
+/*
+PLUGIN_ENTRY_FOR_MODULE(unmapped)
+{
+    if (mode == PLUGIN_INIT) {
+        theUnmappedDevice = new bx_unmapped_c();
+        BX_REGISTER_DEVICE_DEVMODEL(plugin, type, theUnmappedDevice, BX_PLUGIN_UNMAPPED);
+    }
+    else if (mode == PLUGIN_FINI) {
+        delete theUnmappedDevice;
+    }
+    else if (mode == PLUGIN_PROBE) {
+        return (int)PLUGTYPE_OPTIONAL;
+    }
+    return(0); // Success
+}
+*/
 void bx_unmapped_c::init(void)
 {
 	DEV_register_default_ioread_handler(this, read_handler, "Unmapped", 7);

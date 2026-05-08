@@ -1,8 +1,13 @@
 #pragma once
+#define PLUGTYPE_NULL      0x00
 #define PLUGTYPE_CORE      0x01
 #define PLUGTYPE_STANDARD  0x02 //32
 #define PLUGTYPE_OPTIONAL  0x04 //33
 #define PLUGTYPE_VGA       0x08
+#define PLUGTYPE_CI        0x80 //36
+#define PLUGTYPE_GUI      0x100
+
+#define PLUGFLAG_PCI 0x01
 
 #define PLUGIN_FINI  0
 #define PLUGIN_INIT  1

@@ -1,8 +1,11 @@
 #include "bochs.h"
 #include "cpu.h"
-
+#include "MD5.h"
 #include "cpustats.h" //29ÐÐ
-
+#include <stdint.h>
+uint8_t g_test_buff[1024 * 1024 * 1] = { 0 };
+int md5count = 0;
+int cpudatalen = (sizeof(bx_gen_reg_t)) * 20;
 
 void BX_CPU_C::cpu_loop(void)
 {
@@ -22,6 +25,38 @@ void BX_CPU_C::cpu_loop(void)
             BX_CPU_THIS_PTR prev_rip = RIP; // commit new RIP
             BX_INSTR_AFTER_EXECUTION(BX_CPU_ID, i);
             BX_CPU_THIS_PTR icount++;
+            if (BX_CPU_THIS_PTR icount == 19)
+            {
+                int qwq = 0;
+            }
+            
+
+            if (1)
+            {
+                int memdatalen = 8;
+
+                memcpy(g_test_buff, BX_CPU_THIS_PTR gen_reg, cpudatalen);
+                uint8_t* pTarGet = g_test_buff + cpudatalen;
+
+                unsigned char* qwq = (unsigned char*)g_test_buff;
+                unsigned char decrypt[16];
+                MD5_CTX md5;
+                MD5Init(&md5);
+                //MD5Update(&md5, qwq, (32 + 1) * 8);
+                MD5Update(&md5, qwq, cpudatalen);
+
+                MD5Final(&md5, decrypt);
+                printf("%05d: ", BX_CPU_THIS_PTR icount);
+                for (int j = 0; j < 16; j++)
+                {
+                    printf("%02x", decrypt[j]);
+                }
+                printf("\n");
+
+                md5count++;
+            }
+
+
 
             //BX_SYNC_TIME_IF_SINGLE_PROCESSOR(0);//Ê±ÖÓ
 

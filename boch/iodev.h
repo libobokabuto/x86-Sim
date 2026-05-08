@@ -5,6 +5,9 @@
 #include "pc_system.h"
 #include "memory-bochs.h"
 #include "siminterface.h"
+
+#define BX_MAX_IRQS 16 //39
+ 
 typedef Bit32u(*bx_read_handler_t)(void*, Bit32u, unsigned);//59
 typedef void   (*bx_write_handler_t)(void*, Bit32u, Bit32u, unsigned); //60
 
@@ -80,6 +83,44 @@ protected:
 
 };
 #endif
+//192
+#define STUBFUNC(dev,method) \
+   pluginlog->panic("%s called in %s stub. you must not have loaded the %s plugin", #dev, #method, #dev)
+
+class BOCHSAPI bx_cmos_stub_c : public bx_devmodel_c {
+public:
+    virtual Bit32u get_reg(Bit8u reg) {
+        //STUBFUNC(cmos, get_reg); 
+        return 0;
+    }
+    virtual void set_reg(Bit8u reg, Bit32u val) {
+        //STUBFUNC(cmos, set_reg);
+    }
+    virtual void checksum_cmos(void) {
+        //STUBFUNC(cmos, checksum);
+    }
+    virtual void enable_irq(bool enabled) {
+        //STUBFUNC(cmos, enable_irq);
+    }
+};
+
+class BOCHSAPI bx_pic_stub_c : public bx_devmodel_c {
+public:
+    virtual void raise_irq(unsigned irq_no) {
+        //STUBFUNC(pic, raise_irq);
+    }
+    virtual void lower_irq(unsigned irq_no) {
+        //STUBFUNC(pic, lower_irq);
+    }
+    virtual void set_mode(bool ma_sl, Bit8u mode) {
+        //STUBFUNC(pic, set_mode);
+    }
+    virtual Bit8u IAC(void) {
+        //STUBFUNC(pic, IAC);
+        return 0;
+    }
+};
+
 class BOCHSAPI bx_devices_c {
     //374-614
 public:
@@ -87,12 +128,18 @@ public:
 	~bx_devices_c();
     void init(BX_MEM_C*);//383
     BX_MEM_C* mem;//392
+    bool register_io_read_handler(void* this_ptr, bx_read_handler_t f,
+        Bit32u addr, const char* name, Bit8u mask); //393
+    bool register_io_write_handler(void* this_ptr, bx_write_handler_t f,
+        Bit32u addr, const char* name, Bit8u mask); //398
     bool register_default_io_read_handler(void* this_ptr, bx_read_handler_t f, const char* name, Bit8u mask);//411
     bool register_default_io_write_handler(void* this_ptr, bx_write_handler_t f, const char* name, Bit8u mask);//412
+    bool register_irq(unsigned irq, const char* name); //413
     Bit32u inp(Bit16u addr, unsigned io_len) BX_CPP_AttrRegparmN(2);
     void   outp(Bit16u addr, Bit32u value, unsigned io_len) BX_CPP_AttrRegparmN(3); //416
+    bx_cmos_stub_c* pluginCmosDevice; //453
+    bx_pic_stub_c* pluginPicDevice; //456
 private:
-
     struct io_handler_struct { //511
         struct io_handler_struct* next;
         struct io_handler_struct* prev;
@@ -107,6 +154,8 @@ private:
 #define PORTS 0x10000
     struct io_handler_struct** read_port_to_handler;
     struct io_handler_struct** write_port_to_handler; //524
+
+    char* irq_handler_name[BX_MAX_IRQS]; //528
     static Bit32u default_read_handler(void* this_ptr, Bit32u address, unsigned io_len);//535
     static void   default_write_handler(void* this_ptr, Bit32u address, Bit32u value, unsigned io_len);//536
 
