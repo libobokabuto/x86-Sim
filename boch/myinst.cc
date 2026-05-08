@@ -1,6 +1,13 @@
+#define NEED_CPU_REG_SHORTCUTS 1
+
 #include "bochs.h"
 #include "cpu.h"
 #include "iodev.h"
+#define LOG_THIS BX_CPU_THIS_PTR
+#if BX_SUPPORT_SVM
+#include "svm.h"
+#endif
+
 void BX_CPP_AttrRegparmN(1) BX_CPU_C::JMP_Ap(bxInstruction_c* i)
 {
     //BX_ASSERT(BX_CPU_THIS_PTR cpu_mode != BX_MODE_LONG_64);
@@ -87,9 +94,51 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::JZ_Jw(bxInstruction_c* i)
     if (get_ZF()) {
         Bit16u new_IP = (Bit16u)(EIP + i->Iw());
         branch_near16(new_IP);
-
+        BX_INSTR_CNEAR_BRANCH_TAKEN(BX_CPU_ID, PREV_RIP, new_IP);
         BX_NEXT_TRACE(i);
     }
+    BX_INSTR_CNEAR_BRANCH_NOT_TAKEN(BX_CPU_ID, PREV_RIP);
+    BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::CLI(bxInstruction_c* i)
+{
+    Bit32u IOPL = BX_CPU_THIS_PTR get_IOPL();
+
+    if (protected_mode())
+    {
+#if BX_CPU_LEVEL >= 5
+        if (BX_CPU_THIS_PTR cr4.get_PVI() && (CPL == 3))
+        {
+            if (IOPL < 3) {
+                BX_CPU_THIS_PTR clear_VIF();
+                BX_NEXT_INSTR(i);
+            }
+        }
+        else
+#endif
+        {
+            if (IOPL < CPL) {
+                //BX_DEBUG(("CLI: IOPL < CPL in protected mode"));
+                exception(BX_GP_EXCEPTION, 0);
+            }
+        }
+    }
+    else if (v8086_mode())
+    {
+        if (IOPL != 3) {
+#if BX_CPU_LEVEL >= 5
+            if (BX_CPU_THIS_PTR cr4.get_VME()) {
+                BX_CPU_THIS_PTR clear_VIF();
+                BX_NEXT_INSTR(i);
+            }
+#endif
+            //BX_DEBUG(("CLI: IOPL != 3 in v8086 mode"));
+            exception(BX_GP_EXCEPTION, 0);
+        }
+    }
+
+    BX_CPU_THIS_PTR clear_IF();
 
     BX_NEXT_INSTR(i);
 }

@@ -14,7 +14,7 @@
 #define BX_WRITE_16BIT_REG(index, val) {\
   BX_CPU_THIS_PTR gen_reg[index].word.rx = val; \
 }
-
+#define PREV_RIP (BX_CPU_THIS_PTR prev_rip) //131
 #if BX_SUPPORT_X86_64
 #define BX_READ_8BIT_REGx(index, extended) ((((index) & 4) == 0 || (extended)) ? \
   (BX_CPU_THIS_PTR gen_reg[index].word.byte.rl) : \
@@ -189,7 +189,7 @@ struct bxICacheEntry_c;
 #define DECLARE_EFLAG_ACCESSOR_IOPL(bitnum)                     \
   BX_SMF BX_CPP_INLINE void set_IOPL(Bit32u val);               \
   BX_SMF BX_CPP_INLINE Bit32u  get_IOPL(void);
-
+//592
 #define IMPLEMENT_EFLAG_ACCESSOR_IOPL(bitnum)                   \
   BX_CPP_INLINE void BX_CPU_C::set_IOPL(Bit32u val) {           \
     BX_CPU_THIS_PTR eflags &= ~(3<<bitnum);                     \
@@ -409,6 +409,8 @@ public:
     BX_SMF BX_CPP_INLINE void clear_event(Bit32u event) { //1189行
         
     }
+
+#define BX_ASYNC_EVENT_STOP_TRACE (1<<31) //1216
     unsigned cpu_mode;//1219行
 	bool  user_pl; //1220行
     Bit32u cpu_state_use_ok;//1225行
@@ -427,6 +429,18 @@ public:
 
 
 #if BX_INSTRUMENTATION
+    struct {
+        Bit16u prev_cs;
+        bx_address prev_rip;
+    } far_branch;
+
+#define FAR_BRANCH_PREV_CS (BX_CPU_THIS_PTR far_branch.prev_cs)
+#define FAR_BRANCH_PREV_RIP (BX_CPU_THIS_PTR far_branch.prev_rip)
+
+#define BX_INSTR_FAR_BRANCH_ORIGIN() { \
+  BX_CPU_THIS_PTR far_branch.prev_cs = BX_CPU_THIS_PTR sregs[BX_SEG_REG_CS].selector.value; \
+  BX_CPU_THIS_PTR far_branch.prev_rip = PREV_RIP; \
+}
 #else
 #define BX_INSTR_FAR_BRANCH_ORIGIN()
 #endif
@@ -649,7 +663,7 @@ public:
     BX_SMF void CMC(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void CLC(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void STC(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
-    BX_SMF void CLI(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void CLI(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void STI(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void CLD(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void STD(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
@@ -3643,6 +3657,7 @@ BX_CPP_INLINE bool BX_CPU_C::long_mode(void)
 #endif
 }
 
+IMPLEMENT_EFLAG_ACCESSOR_IOPL(12) //5837
 IMPLEMENT_EFLAG_SET_ACCESSOR_RF(16) //5851行
 
 

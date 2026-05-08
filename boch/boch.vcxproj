@@ -127,6 +127,7 @@
     <ClCompile Include="cpu.cc" />
     <ClCompile Include="cpuid.cc" />
     <ClCompile Include="crregs.cc" />
+    <ClCompile Include="ctrl_xfer16.cc" />
     <ClCompile Include="ctrl_xfer32.cc" />
     <ClCompile Include="dbg_main.cc" />
     <ClCompile Include="devices.cc" />
