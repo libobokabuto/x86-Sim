@@ -123,6 +123,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="access.cc" />
+    <ClCompile Include="access2.cc" />
     <ClCompile Include="coms.cc" />
     <ClCompile Include="cpu.cc" />
     <ClCompile Include="cpuid.cc" />
@@ -132,6 +134,7 @@
     <ClCompile Include="dbg_main.cc" />
     <ClCompile Include="devices.cc" />
     <ClCompile Include="disasm.cc" />
+    <ClCompile Include="event.cc" />
     <ClCompile Include="exception.cc" />
     <ClCompile Include="fetchdecode_opmap_xop.cc" />
     <ClCompile Include="fetchdecode32.cc" />
@@ -155,6 +158,7 @@
     <ClCompile Include="jmp_far.cc" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MD5.cpp" />
+    <ClCompile Include="memory.cc" />
     <ClCompile Include="memory_stub.cc" />
     <ClCompile Include="misc_mem.cc" />
     <ClCompile Include="msr.cc" />
@@ -170,11 +174,14 @@
     <ClCompile Include="siminterface.cc" />
     <ClCompile Include="smm.cc" />
     <ClCompile Include="unmapped.cc" />
+    <ClCompile Include="vapic.cc" />
     <ClCompile Include="vmcs.cc" />
     <ClCompile Include="vmx.cc" />
     <ClCompile Include="xsave.cc" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="access.h" />
+    <ClInclude Include="apic.h" />
     <ClInclude Include="bochs.h" />
     <ClInclude Include="bswap.h" />
     <ClInclude Include="cmos.h" />

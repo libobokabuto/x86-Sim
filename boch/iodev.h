@@ -104,6 +104,8 @@ public:
     }
 };
 
+
+
 class BOCHSAPI bx_pic_stub_c : public bx_devmodel_c {
 public:
     virtual void raise_irq(unsigned irq_no) {
@@ -120,6 +122,15 @@ public:
         return 0;
     }
 };
+
+
+#if BX_SUPPORT_IODEBUG
+class BOCHSAPI bx_iodebug_stub_c : public bx_devmodel_c {
+public:
+    virtual void mem_write(BX_CPU_C* cpu, bx_phy_address addr, unsigned len, void* data) {}
+    virtual void mem_read(BX_CPU_C* cpu, bx_phy_address addr, unsigned len, void* data) {}
+};
+#endif
 
 class BOCHSAPI bx_devices_c {
     //374-614
@@ -139,6 +150,10 @@ public:
     void   outp(Bit16u addr, Bit32u value, unsigned io_len) BX_CPP_AttrRegparmN(3); //416
     bx_cmos_stub_c* pluginCmosDevice; //453
     bx_pic_stub_c* pluginPicDevice; //456
+
+#if BX_SUPPORT_IODEBUG
+    bx_iodebug_stub_c* pluginIODebug;
+#endif
 private:
     struct io_handler_struct { //511
         struct io_handler_struct* next;
@@ -158,7 +173,6 @@ private:
     char* irq_handler_name[BX_MAX_IRQS]; //528
     static Bit32u default_read_handler(void* this_ptr, Bit32u address, unsigned io_len);//535
     static void   default_write_handler(void* this_ptr, Bit32u address, Bit32u value, unsigned io_len);//536
-
 };
 
 

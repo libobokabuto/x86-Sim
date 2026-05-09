@@ -1,4 +1,5 @@
 #include "bochs.h"
+#include "pc_system.h"
 #include "cpu.h"
 #include "memory-bochs.h"
 #define LOG_THIS BX_MEM(0)->
@@ -119,4 +120,74 @@ bool BX_MEMORY_STUB_C::is_monitor(bx_phy_address begin_addr, unsigned len)
 	}
 	
 	return false; // this is NOT monitored page
+}
+
+void BX_MEMORY_STUB_C::readPhysicalPage(BX_CPU_C* cpu, bx_phy_address addr, unsigned len, void* data)
+{
+	Bit8u* data_ptr;
+	bx_phy_address a20addr = A20ADDR(addr);
+
+	// Note: accesses should always be contained within a single page
+	if ((addr >> 12) != ((addr + len - 1) >> 12)) {
+		//BX_PANIC(("readPhysicalPage: cross page access at address 0x" FMT_PHY_ADDRX ", len=%d", addr, len));
+	}
+
+	if (a20addr < BX_MEM_THIS len) {
+		if (len == 8) {
+			*(Bit64u*)data = ReadHostQWordFromLittleEndian((Bit64u*)BX_MEM_THIS get_vector(a20addr));
+			return;
+		}
+		if (len == 4) {
+			*(Bit32u*)data = ReadHostDWordFromLittleEndian((Bit32u*)BX_MEM_THIS get_vector(a20addr));
+			return;
+		}
+		if (len == 2) {
+			*(Bit16u*)data = ReadHostWordFromLittleEndian((Bit16u*)BX_MEM_THIS get_vector(a20addr));
+			return;
+		}
+		if (len == 1) {
+			*(Bit8u*)data = *(BX_MEM_THIS get_vector(a20addr));
+			return;
+		}
+		// len == other case can just fall thru to special cases handling
+
+#ifdef BX_LITTLE_ENDIAN
+		data_ptr = (Bit8u*)data;
+#else // BX_BIG_ENDIAN
+		data_ptr = (Bit8u*)data + (len - 1);
+#endif
+
+		// addr *not* in range 000A0000 .. 000FFFFF
+		while (1) {
+			// Read in chunks of 8 bytes if we can
+			if ((len & 7) == 0) {
+				*((Bit64u*)data_ptr) = ReadHostQWordFromLittleEndian((Bit64u*)BX_MEM_THIS get_vector(a20addr));
+				len -= 8;
+				a20addr += 8;
+#ifdef BX_LITTLE_ENDIAN
+				data_ptr += 8;
+#else
+				data_ptr -= 8;
+#endif
+
+				if (len == 0) return;
+			}
+			else {
+				*data_ptr = *(BX_MEM_THIS get_vector(a20addr));
+				if (len == 1) return;
+				len--;
+				a20addr++;
+#ifdef BX_LITTLE_ENDIAN
+				data_ptr++;
+#else // BX_BIG_ENDIAN
+				data_ptr--;
+#endif
+			}
+		}
+	}
+	else  // access outside limits of physical memory
+	{
+		// bogus memory
+		memset(data, 0xFF, len);
+	}
 }

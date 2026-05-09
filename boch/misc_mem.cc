@@ -367,3 +367,31 @@ Bit8u* BX_MEM_C::getHostMemAddr(BX_CPU_C* cpu, bx_phy_address addr, unsigned rw)
 		}
 	}
 }
+
+Bit8u BX_MEM_C::flash_read(Bit32u addr)
+{  //909
+	Bit8u ret = 0;
+
+	switch (BX_MEM_THIS flash_wsm_state) {
+	case FLASH_INT_ID:
+		if (addr & 1) {
+			ret = (BX_MEM_THIS flash_type == 2) ? 0x7c : 0x94;
+		}
+		else {
+			ret = 0x89;
+		}
+		//BX_DEBUG(("flash read ID (address = 0x%08x value = 0x%02x)", addr, ret));
+		break;
+	case FLASH_READ_ARRAY:
+		//BX_DEBUG(("flash read from ROM (address = 0x%08x)", addr));
+		ret = BX_MEM_THIS rom[addr];
+		break;
+	default:
+		ret = BX_MEM_THIS flash_status;
+		if (BX_MEM_THIS flash_wsm_state == FLASH_ERASE) {
+			BX_MEM_THIS flash_status |= 0x80;
+		}
+		//BX_DEBUG(("flash read status (address = 0x%08x value = 0x%02x)", addr, ret));
+	}
+	return ret;
+}

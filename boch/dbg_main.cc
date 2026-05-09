@@ -42,4 +42,14 @@ void bx_debug_break()
     bx_guard.interrupt_requested = true;
 }
 
+void bx_dbg_lin_memory_access(unsigned cpu, bx_address lin, bx_phy_address phy, unsigned len, unsigned memtype, unsigned rw, Bit8u* data)
+{
+    //687
+}
+
+void bx_dbg_phy_memory_access(unsigned cpu, bx_phy_address phy, unsigned len, unsigned memtype, unsigned rw, unsigned access, Bit8u* data)
+{
+    //705
+}
+
 #endif /* if BX_DEBUGGER */ //最后一行

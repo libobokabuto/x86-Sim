@@ -8,6 +8,16 @@
 #ifdef __cplusplus //37
 
 BOCHSAPI_MSVCONLY void dbg_printf(const char* fmt, ...);
+typedef enum {
+    STOP_NO_REASON = 0,
+    STOP_TIME_BREAK_POINT,
+    STOP_READ_WATCH_POINT,
+    STOP_WRITE_WATCH_POINT,
+    STOP_MAGIC_BREAK_POINT,
+    STOP_MODE_BREAK_POINT,
+    STOP_VMEXIT_BREAK_POINT,
+    STOP_CPU_HALTED,
+} stop_reason_t;
 BOCHSAPI_MSVCONLY void bx_debug_break(void);//222
 struct bx_guard_t {//244-314
 

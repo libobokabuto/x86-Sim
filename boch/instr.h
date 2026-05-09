@@ -3,7 +3,7 @@
 
 class BX_CPU_C;
 class bxInstruction_c;
-
+extern bx_address bx_asize_mask[];
 typedef void (BX_CPP_AttrRegparmN(1)* BxExecutePtr_tR)(bxInstruction_c*);//40
 class bxInstruction_c {
 public:
@@ -219,7 +219,10 @@ public:
     BX_CPP_INLINE unsigned asize(void) const {
         return metaInfo.metaInfo1 & 0x3;
     }
-    
+
+    BX_CPP_INLINE bx_address asize_mask(void) const {
+        return bx_asize_mask[asize()];
+    }
 
 #if BX_SUPPORT_X86_64
     BX_CPP_INLINE unsigned extend8bitL(void) const {

@@ -9,7 +9,9 @@
 
 #define BX_INSTR_BEFORE_EXECUTION(cpu_id, i) //176
 #define BX_INSTR_AFTER_EXECUTION(cpu_id, i)
-
+#define BX_INSTR_LIN_ACCESS(cpu_id, lin, phy, len, memtype, rw) //181
+#define BX_INSTR_PHY_ACCESS(cpu_id, phy, len, memtype, rw)//184
 #define BX_INSTR_INP(addr, len)//187
 #define BX_INSTR_INP2(addr, len, val)//188
 #define BX_INSTR_OUTP(addr, len, val) //189
+#define BX_INSTR_VMEXIT(cpu_id, reason, qualification) //195

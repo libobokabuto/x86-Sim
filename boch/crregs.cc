@@ -7,6 +7,176 @@
 #if BX_SUPPORT_SVM
 #include "svm.h"
 #endif
+#if BX_SUPPORT_APIC
+#include "apic.h"
+#endif
+void BX_CPU_C::hwbreakpoint_match(bx_address laddr, unsigned len, unsigned rw)
+{
+    if (BX_CPU_THIS_PTR dr7.get_bp_enabled()) {
+        // Only compare debug registers if any breakpoints are enabled
+        unsigned opa, opb, write = rw & 1;
+        opa = BX_HWDebugMemRW; // Read or Write always compares vs 11b
+        if (!write) // only compares vs 11b
+            opb = opa;
+        else // BX_WRITE or BX_RW; also compare vs 01b
+            opb = BX_HWDebugMemW;
+        Bit32u dr6_bits = hwdebug_compare(laddr, len, opa, opb);
+        if (dr6_bits) {
+            BX_CPU_THIS_PTR debug_trap |= dr6_bits;
+            if (BX_CPU_THIS_PTR debug_trap & BX_DEBUG_TRAP_HIT) {
+                //BX_ERROR(("#DB: Code/Data breakpoint hit - report debug trap on next instruction"));
+                BX_CPU_THIS_PTR async_event = 1;
+            }
+        }
+    }
+}
+
+Bit32u BX_CPU_C::hwdebug_compare(bx_address laddr_0, unsigned size,
+    unsigned opa, unsigned opb)
+{
+    Bit32u dr7 = BX_CPU_THIS_PTR dr7.get32();
+
+    static bx_address alignment_mask[4] =
+        // 00b=1  01b=2  10b=undef(8)  11b=4
+    { 0x0,   0x1,   0x7,          0x3 };
+
+    bx_address laddr_n = laddr_0 + (size - 1);
+    Bit32u dr_op[4], dr_len[4];
+
+    // If *any* enabled breakpoints matched, then we need to
+    // set status bits for *all* breakpoints, even disabled ones,
+    // as long as they meet the other breakpoint criteria.
+    // dr6_mask is the return value.  These bits represent the bits
+    // to be OR'd into DR6 as a result of the debug event.
+    Bit32u dr6_mask = 0;
+
+    dr_len[0] = BX_CPU_THIS_PTR dr7.get_LEN0();
+    dr_len[1] = BX_CPU_THIS_PTR dr7.get_LEN1();
+    dr_len[2] = BX_CPU_THIS_PTR dr7.get_LEN2();
+    dr_len[3] = BX_CPU_THIS_PTR dr7.get_LEN3();
+
+    dr_op[0] = BX_CPU_THIS_PTR dr7.get_R_W0();
+    dr_op[1] = BX_CPU_THIS_PTR dr7.get_R_W1();
+    dr_op[2] = BX_CPU_THIS_PTR dr7.get_R_W2();
+    dr_op[3] = BX_CPU_THIS_PTR dr7.get_R_W3();
+
+    for (unsigned n = 0; n < 4; n++) {
+        bx_address dr_start = BX_CPU_THIS_PTR dr[n] & ~alignment_mask[dr_len[n]];
+        bx_address dr_end = dr_start + alignment_mask[dr_len[n]];
+
+        // See if this instruction address matches any breakpoints
+        if ((dr_op[n] == opa || dr_op[n] == opb) &&
+            (laddr_0 <= dr_end) &&
+            (laddr_n >= dr_start)) {
+            dr6_mask |= (1 << n);
+            // tell if breakpoint was enabled
+            if (dr7 & (3 << n * 2)) {
+                dr6_mask |= BX_DEBUG_TRAP_HIT;
+            }
+        }
+    }
+
+    return dr6_mask;
+}
+
+bool BX_CPP_AttrRegparmN(1) BX_CPU_C::check_CR0(bx_address cr0_val)
+{  //990
+    bx_cr0_t temp_cr0;
+
+#if BX_SUPPORT_X86_64
+    if (GET32H(cr0_val)) {
+        //BX_ERROR(("check_CR0(): trying to set CR0 > 32 bits"));
+        return false;
+    }
+#endif
+
+    temp_cr0.set32((Bit32u)cr0_val);
+
+#if BX_SUPPORT_SVM
+    if (!BX_CPU_THIS_PTR in_svm_guest) // it should be fine to enter paged real mode in SVM guest
+#endif
+    {
+        if (temp_cr0.get_PG() && !temp_cr0.get_PE()) {
+            //BX_ERROR(("check_CR0(0x%08x): attempt to set CR0.PG with CR0.PE cleared !", temp_cr0.get32()));
+            return false;
+        }
+    }
+
+#if BX_CPU_LEVEL >= 4
+    if (temp_cr0.get_NW() && !temp_cr0.get_CD()) {
+        //BX_ERROR(("check_CR0(0x%08x): attempt to set CR0.NW with CR0.CD cleared !", temp_cr0.get32()));
+        return false;
+    }
+#endif
+
+#if BX_SUPPORT_VMX
+    if (BX_CPU_THIS_PTR in_vmx) {
+        if (!temp_cr0.get_NE()) {
+            //BX_ERROR(("check_CR0(0x%08x): attempt to clear CR0.NE in vmx mode !", temp_cr0.get32()));
+            return false;
+        }
+        if (!BX_CPU_THIS_PTR in_vmx_guest && !BX_CPU_THIS_PTR vmcs.vmexec_ctrls2.UNRESTRICTED_GUEST()) {
+            if (!temp_cr0.get_PE() || !temp_cr0.get_PG()) {
+                //BX_ERROR(("check_CR0(0x%08x): attempt to clear CR0.PE/CR0.PG in vmx mode !", temp_cr0.get32()));
+                return false;
+            }
+        }
+    }
+#endif
+
+    return true;
+}
+
+bool BX_CPP_AttrRegparmN(1) BX_CPU_C::check_CR4(bx_address cr4_val)
+{
+    //1304
+    // check if trying to set undefined bits
+    if (cr4_val & ~((bx_address)BX_CPU_THIS_PTR cr4_suppmask)) {
+        //BX_ERROR(("check_CR4(): write of 0x%08x not supported (allowMask=0x%x)", (Bit32u)cr4_val, BX_CPU_THIS_PTR cr4_suppmask));
+        return false;
+    }
+
+    bx_cr4_t temp_cr4;
+    temp_cr4.set32((Bit32u)cr4_val);
+
+#if BX_SUPPORT_X86_64
+    if (long_mode()) {
+        if (!temp_cr4.get_PAE()) {
+            //BX_ERROR(("check_CR4(): attempt to clear CR4.PAE when EFER.LMA=1"));
+            return false;
+        }
+
+        if (temp_cr4.get_LA57() != BX_CPU_THIS_PTR cr4.get_LA57()) {
+            //BX_ERROR(("check_CR4(): attempt to change CR4.LA57 when EFER.LMA=1"));
+            return false;
+        }
+    }
+    else {
+        if (temp_cr4.get_PCIDE()) {
+            //BX_ERROR(("check_CR4(): attempt to set CR4.PCIDE when EFER.LMA=0"));
+            return false;
+        }
+    }
+#endif
+
+#if BX_SUPPORT_VMX
+    if (!temp_cr4.get_VMXE()) {
+        if (BX_CPU_THIS_PTR in_vmx) {
+            //BX_ERROR(("check_CR4(): attempt to clear CR4.VMXE in vmx mode"));
+            return false;
+        }
+    }
+    else {
+        if (BX_CPU_THIS_PTR in_smm) {
+            //BX_ERROR(("check_CR4(): attempt to set CR4.VMXE in smm mode"));
+            return false;
+        }
+    }
+#endif
+
+    return true;
+}
+
 
 #if BX_CPU_LEVEL >= 6  //1725-1933
 XSaveRestoreStateHelper xsave_restore[xcr0_t::BX_XCR0_LAST] = { {0, 0, NULL, NULL, NULL, NULL} };

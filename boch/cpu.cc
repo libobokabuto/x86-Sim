@@ -6,7 +6,7 @@
 uint8_t g_test_buff[1024 * 1024 * 1] = { 0 };
 int md5count = 0;
 int cpudatalen = (sizeof(bx_gen_reg_t)) * 20;
-
+jmp_buf BX_CPU_C::jmp_buf_env; //55
 void BX_CPU_C::cpu_loop(void)
 {
     while (1){

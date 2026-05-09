@@ -156,3 +156,35 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::MOV_GwEwR(bxInstruction_c* i)
 
     BX_NEXT_INSTR(i);
 }
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::MOV_SwEw(bxInstruction_c* i)
+{
+    Bit16u op2_16;
+
+    /* Attempt to load CS or nonexisting segment register */
+    if (i->dst() >= 6 || i->dst() == BX_SEG_REG_CS) {
+        //BX_INFO(("MOV_EwSw: can't use this segment register %d", i->dst()));
+        exception(BX_UD_EXCEPTION, 0);
+    }
+
+    if (i->modC0()) {
+        op2_16 = BX_READ_16BIT_REG(i->src());
+    }
+    else {
+        bx_address eaddr = BX_CPU_RESOLVE_ADDR(i);
+        /* pointer, segment address pair */
+        op2_16 = read_virtual_word(i->seg(), eaddr);
+    }
+
+    load_seg_reg(&BX_CPU_THIS_PTR sregs[i->dst()], op2_16);
+
+    if (i->dst() == BX_SEG_REG_SS) {
+        // MOV SS inhibits interrupts, debug exceptions and single-step
+        // trap exceptions until the execution boundary following the
+        // next instruction is reached.
+        // Same code as POP_SS()
+        inhibit_interrupts(BX_INHIBIT_INTERRUPTS_BY_MOVSS);
+    }
+
+    BX_NEXT_INSTR(i);
+}

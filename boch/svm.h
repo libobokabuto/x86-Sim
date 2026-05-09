@@ -1,4 +1,5 @@
 #pragma once
+#if BX_SUPPORT_SVM
 struct SVM_HOST_STATE
 {
 	bx_segment_reg_t sregs[4];
@@ -63,3 +64,8 @@ struct VMCB_CACHE
 #define SVM_HOST_IF (BX_CPU_THIS_PTR vmcb->host_state.eflags & EFlagsIFMask)
 
 #endif
+
+#define SVM_NESTED_PAGING_ENABLED (BX_CPU_THIS_PTR vmcb->ctrls.nested_paging)  //414
+
+#endif // BX_SUPPORT_SVM
+

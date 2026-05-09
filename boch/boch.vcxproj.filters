@@ -138,6 +138,21 @@
     <ClCompile Include="flag_ctrl_pro.cc">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="access.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="event.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="access2.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="vapic.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="memory.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bochs.h">
@@ -273,6 +288,12 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="i387.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="access.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="apic.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

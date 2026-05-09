@@ -8,7 +8,7 @@ typedef struct { /* bx_selector_t */ //41ÐÐ
 	Bit8u  ti;      /* table indicator bit extracted from value */
 	Bit8u  rpl;     /* RPL extracted from value */
 } bx_selector_t;
-
+#define BX_SELECTOR_RPL(selector) ((selector) & 0x03) //50
 typedef struct
 {
 
@@ -69,8 +69,65 @@ typedef struct
 } bx_descriptor_t;
 
 enum {
-    BX_DATA_READ_WRITE_ACCESSED = 0x3,
+    BX_GATE_TYPE_NONE = 0x0,
+    BX_SYS_SEGMENT_AVAIL_286_TSS = 0x1,
+    BX_SYS_SEGMENT_LDT = 0x2,
+    BX_SYS_SEGMENT_BUSY_286_TSS = 0x3,
+    BX_286_CALL_GATE = 0x4,
+    BX_TASK_GATE = 0x5,
+    BX_286_INTERRUPT_GATE = 0x6,
+    BX_286_TRAP_GATE = 0x7,
+    /* 0x8 reserved */
+    BX_SYS_SEGMENT_AVAIL_386_TSS = 0x9,
+    /* 0xa reserved */
+    BX_SYS_SEGMENT_BUSY_386_TSS = 0xb,
+    BX_386_CALL_GATE = 0xc,
+    /* 0xd reserved */
+    BX_386_INTERRUPT_GATE = 0xe,
+    BX_386_TRAP_GATE = 0xf,
 };
+
+enum {
+    BX_DATA_READ_ONLY = 0x0,
+    BX_DATA_READ_ONLY_ACCESSED = 0x1,
+    BX_DATA_READ_WRITE = 0x2,
+    BX_DATA_READ_WRITE_ACCESSED = 0x3,
+    BX_DATA_READ_ONLY_EXPAND_DOWN = 0x4,
+    BX_DATA_READ_ONLY_EXPAND_DOWN_ACCESSED = 0x5,
+    BX_DATA_READ_WRITE_EXPAND_DOWN = 0x6,
+    BX_DATA_READ_WRITE_EXPAND_DOWN_ACCESSED = 0x7,
+    BX_CODE_EXEC_ONLY = 0x8,
+    BX_CODE_EXEC_ONLY_ACCESSED = 0x9,
+    BX_CODE_EXEC_READ = 0xa,
+    BX_CODE_EXEC_READ_ACCESSED = 0xb,
+    BX_CODE_EXEC_ONLY_CONFORMING = 0xc,
+    BX_CODE_EXEC_ONLY_CONFORMING_ACCESSED = 0xd,
+    BX_CODE_EXEC_READ_CONFORMING = 0xe,
+    BX_CODE_EXEC_READ_CONFORMING_ACCESSED = 0xf
+};
+#define IS_PRESENT(descriptor) (descriptor.p) //152
+enum {
+    BX_SEGMENT_CODE = 0x8,
+    BX_SEGMENT_DATA_EXPAND_DOWN = 0x4,
+    BX_SEGMENT_CODE_CONFORMING = 0x4,
+    BX_SEGMENT_DATA_WRITE = 0x2,
+    BX_SEGMENT_CODE_READ = 0x2,
+    BX_SEGMENT_ACCESSED = 0x1
+};
+
+
+#define IS_CODE_SEGMENT(type)             ((type) & BX_SEGMENT_CODE)
+#define IS_CODE_SEGMENT_CONFORMING(type)  ((type) & BX_SEGMENT_CODE_CONFORMING)
+#define IS_DATA_SEGMENT_EXPAND_DOWN(type) ((type) & BX_SEGMENT_DATA_EXPAND_DOWN)
+#define IS_CODE_SEGMENT_READABLE(type)    ((type) & BX_SEGMENT_CODE_READ)
+#define IS_DATA_SEGMENT_WRITEABLE(type)   ((type) & BX_SEGMENT_DATA_WRITE)
+#define IS_SEGMENT_ACCESSED(type)         ((type) & BX_SEGMENT_ACCESSED)
+
+
+#define IS_DATA_SEGMENT(type) (! IS_CODE_SEGMENT(type))
+#define IS_CODE_SEGMENT_NON_CONFORMING(type) \
+            (! IS_CODE_SEGMENT_CONFORMING(type))
+
 
 typedef struct { //180ÐÐ
 	bx_selector_t    selector;
@@ -81,3 +138,7 @@ typedef struct {
     bx_address       base;   /* base address: 24bits=286,32bits=386,64bits=x86-64 */
     Bit16u           limit;  /* limit, 16bits */
 } bx_global_segment_reg_t;
+
+void  parse_selector(Bit16u raw_selector, bx_selector_t* selector);
+Bit8u get_ar_byte(const bx_descriptor_t* d);
+void  parse_descriptor(Bit32u dword1, Bit32u dword2, bx_descriptor_t* temp);
