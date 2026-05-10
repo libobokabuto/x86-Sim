@@ -210,3 +210,10 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::JNZ_Jw(bxInstruction_c* i)
     BX_INSTR_CNEAR_BRANCH_NOT_TAKEN(BX_CPU_ID, PREV_RIP);
     BX_NEXT_INSTR(i); // trace can continue over non-taken branch
 }
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::CLD(bxInstruction_c* i)
+{
+    BX_CPU_THIS_PTR clear_DF();
+
+    BX_NEXT_INSTR(i);
+}

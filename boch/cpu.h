@@ -157,6 +157,8 @@ struct bxICacheEntry_c;
     return BX_CPU_THIS_PTR eflags & (1 << bitnum);              \
   }
 
+
+
 #define IMPLEMENT_EFLAG_SET_ACCESSOR(name,bitnum)                   \
   BX_CPP_INLINE void BX_CPU_C::assert_##name () {                   \
     BX_CPU_THIS_PTR eflags |= (1<<bitnum);                          \
@@ -837,7 +839,7 @@ public:
     BX_SMF void REP_STOSB_YbAL(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void REP_LODSB_ALXb(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void REP_SCASB_ALYb(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
-    BX_SMF void REP_STOSW_YwAX(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void REP_STOSW_YwAX(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void REP_LODSW_AXXw(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void REP_SCASW_AXYw(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void REP_STOSD_YdEAX(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
@@ -931,7 +933,7 @@ public:
     BX_SMF void STC(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void CLI(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void STI(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
-    BX_SMF void CLD(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void CLD(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void STD(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
 
     BX_SMF void LAR_GvEw(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
@@ -3833,6 +3835,9 @@ public:
     DECLARE_EFLAG_ACCESSOR(DF, 10)
     DECLARE_EFLAG_ACCESSOR(IF, 9)
     DECLARE_EFLAG_ACCESSOR(TF, 8)
+
+
+    
     BX_SMF BX_CPP_INLINE bool real_mode(void); //5077
     BX_SMF BX_CPP_INLINE bool smm_mode(void);//5078
     BX_SMF BX_CPP_INLINE bool protected_mode(void);//5079
@@ -4155,6 +4160,7 @@ __forceinline void BX_CPU_C::set_IOPL(Bit32u val) {
 IMPLEMENT_EFLAG_ACCESSOR(IF, 9) //5839
 IMPLEMENT_EFLAG_ACCESSOR(AC, 18)
 IMPLEMENT_EFLAG_SET_ACCESSOR_RF(16) //5851行
+IMPLEMENT_EFLAG_SET_ACCESSOR(DF, 10) //5853
 IMPLEMENT_EFLAG_SET_ACCESSOR(VIF, 19) //5844
 #if BX_SUPPORT_ALIGNMENT_CHECK && BX_CPU_LEVEL >= 4
 IMPLEMENT_EFLAG_SET_ACCESSOR_AC(18)
