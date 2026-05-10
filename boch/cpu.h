@@ -5,7 +5,7 @@
 const Bit64u BX_PHY_ADDRESS_MASK = ((((Bit64u)(1)) << BX_PHY_ADDRESS_WIDTH) - 1);
 const Bit64u BX_PHY_ADDRESS_RESERVED_BITS = (~BX_PHY_ADDRESS_MASK); //33
 #define AL (BX_CPU_THIS_PTR gen_reg[0].word.byte.rl) //45
-
+#define IP (BX_CPU_THIS_PTR gen_reg[BX_16BIT_REG_IP].word.rx) //67
 #  define BX_SMF           static
 
 #define EIP (BX_CPU_THIS_PTR gen_reg[BX_32BIT_REG_EIP].dword.erx) //82行
@@ -4165,3 +4165,4 @@ IMPLEMENT_EFLAG_SET_ACCESSOR_IF(9)//5854
 
 #define BX_NEXT_TRACE(i) { return; } //5914
 #define BX_NEXT_INSTR(i) { return; }
+#define BX_LINK_TRACE(i) { return; }

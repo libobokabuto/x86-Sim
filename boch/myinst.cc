@@ -197,3 +197,16 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::MOV_EbGbM(bxInstruction_c* i)
 
     BX_NEXT_INSTR(i);
 }
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::JNZ_Jw(bxInstruction_c* i)
+{
+    if (!get_ZF()) {
+        Bit16u new_IP = IP + i->Iw();
+        branch_near16(new_IP);
+        BX_INSTR_CNEAR_BRANCH_TAKEN(BX_CPU_ID, PREV_RIP, new_IP);
+        BX_LINK_TRACE(i);
+    }
+
+    BX_INSTR_CNEAR_BRANCH_NOT_TAKEN(BX_CPU_ID, PREV_RIP);
+    BX_NEXT_INSTR(i); // trace can continue over non-taken branch
+}
