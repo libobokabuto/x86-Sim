@@ -35,6 +35,9 @@ typedef bx_ptr_equiv_t bx_hostpageaddr_t;//64ÐÐ
 #define isReadOK(tlbEntry, user) \
   (tlbEntry->accessBits & (0x01 << unsigned(user)))  //116
 
+#define isShadowStackWriteOK(tlbEntry, user) \
+  (tlbEntry->accessBits & (0x40 << unsigned(user)))
+
 enum {
 	BX_MEMTYPE_UC = 0,
 	BX_MEMTYPE_WC = 1,

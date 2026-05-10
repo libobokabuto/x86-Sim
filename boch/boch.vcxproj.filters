@@ -153,6 +153,12 @@
     <ClCompile Include="memory.cc">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="stack.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="cet.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bochs.h">
@@ -294,6 +300,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="apic.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="stack.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

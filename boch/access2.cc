@@ -26,6 +26,34 @@ BX_CPU_C::write_linear_byte(unsigned s, bx_address laddr, Bit8u data)
         exception(int_number(s), 0);
 }
 
+void BX_CPP_AttrRegparmN(3)
+BX_CPU_C::write_linear_word(unsigned s, bx_address laddr, Bit16u data)
+{
+    bx_TLB_entry* tlbEntry = BX_DTLB_ENTRY_OF(laddr, 1);
+#if BX_SUPPORT_ALIGNMENT_CHECK && BX_CPU_LEVEL >= 4
+    bx_address lpf = AlignedAccessLPFOf(laddr, (1 & BX_CPU_THIS_PTR alignment_check_mask));
+#else
+    bx_address lpf = LPFOf(laddr);
+#endif
+    if (tlbEntry->lpf == lpf) {
+        // See if the TLB entry privilege level allows us write access from this CPL
+        if (isWriteOK(tlbEntry, USER_PL)) {
+            bx_hostpageaddr_t hostPageAddr = tlbEntry->hostPageAddr;
+            Bit32u pageOffset = PAGE_OFFSET(laddr);
+            bx_phy_address pAddr = tlbEntry->ppf | pageOffset;
+            BX_NOTIFY_LIN_MEMORY_ACCESS(laddr, pAddr, 2, tlbEntry->get_memtype(), BX_WRITE, (Bit8u*)&data);
+            Bit16u* hostAddr = (Bit16u*)(hostPageAddr | pageOffset);
+            pageWriteStampTable.decWriteStamp(pAddr, 2);
+            WriteHostWordToLittleEndian(hostAddr, data);
+            return;
+        }
+    }
+
+    if (access_write_linear(laddr, 2, CPL, BX_WRITE, 0x1, (void*)&data) < 0)
+        exception(int_number(s), 0);
+}
+
+
 Bit16u BX_CPP_AttrRegparmN(2)
 BX_CPU_C::read_linear_word(unsigned s, bx_address laddr)
 {
@@ -53,4 +81,27 @@ BX_CPU_C::read_linear_word(unsigned s, bx_address laddr)
         exception(int_number(s), 0);
 
     return data;
+}
+
+void BX_CPP_AttrRegparmN(3) BX_CPU_C::shadow_stack_write_dword(bx_address offset, unsigned curr_pl, Bit32u data)
+{
+    bool user = (curr_pl == 3);
+    bx_TLB_entry* tlbEntry = BX_DTLB_ENTRY_OF(offset, 3);
+    bx_address lpf = AlignedAccessLPFOf(offset, 3);
+    if (tlbEntry->lpf == lpf) {
+        // See if the TLB entry privilege level allows us write access from this CPL
+        if (isShadowStackWriteOK(tlbEntry, user)) {
+            bx_hostpageaddr_t hostPageAddr = tlbEntry->hostPageAddr;
+            Bit32u pageOffset = PAGE_OFFSET(offset);
+            bx_phy_address pAddr = tlbEntry->ppf | pageOffset;
+            BX_NOTIFY_LIN_MEMORY_ACCESS(offset, pAddr, 4, tlbEntry->get_memtype(), BX_SHADOW_STACK_WRITE, (Bit8u*)&data);
+            Bit32u* hostAddr = (Bit32u*)(hostPageAddr | pageOffset);
+            pageWriteStampTable.decWriteStamp(pAddr, 4);
+            WriteHostDWordToLittleEndian(hostAddr, data);
+            return;
+        }
+    }
+
+    if (access_write_linear(offset, 4, curr_pl, BX_SHADOW_STACK_WRITE, 0, (void*)&data) < 0)
+        exception(BX_GP_EXCEPTION, 0);
 }

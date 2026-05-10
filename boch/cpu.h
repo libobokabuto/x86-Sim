@@ -5,14 +5,19 @@
 const Bit64u BX_PHY_ADDRESS_MASK = ((((Bit64u)(1)) << BX_PHY_ADDRESS_WIDTH) - 1);
 const Bit64u BX_PHY_ADDRESS_RESERVED_BITS = (~BX_PHY_ADDRESS_MASK); //33
 #define AL (BX_CPU_THIS_PTR gen_reg[0].word.byte.rl) //45
+#define AX (BX_CPU_THIS_PTR gen_reg[0].word.rx)  //57
 #define CX (BX_CPU_THIS_PTR gen_reg[1].word.rx) //58
+#define SP (BX_CPU_THIS_PTR gen_reg[4].word.rx) //61
+#define DI (BX_CPU_THIS_PTR gen_reg[7].word.rx)  //64
 #define IP (BX_CPU_THIS_PTR gen_reg[BX_16BIT_REG_IP].word.rx) //67
 #  define BX_SMF           static
 #define ECX (BX_CPU_THIS_PTR gen_reg[1].dword.erx) //73
+#define ESP (BX_CPU_THIS_PTR gen_reg[4].dword.erx) //76
+#define EDI (BX_CPU_THIS_PTR gen_reg[7].dword.erx) //79
 #define EIP (BX_CPU_THIS_PTR gen_reg[BX_32BIT_REG_EIP].dword.erx) //82行
 #define RCX (BX_CPU_THIS_PTR gen_reg[1].rrx) //90
 #define RSP (BX_CPU_THIS_PTR gen_reg[4].rrx) //93
-
+#define RDI (BX_CPU_THIS_PTR gen_reg[7].rrx) //96
 #define RIP (BX_CPU_THIS_PTR gen_reg[BX_64BIT_REG_RIP].rrx)  //107行
 
 #define SSP (BX_CPU_THIS_PTR gen_reg[BX_64BIT_REG_SSP].rrx) //109
@@ -71,6 +76,21 @@ const Bit64u BX_PHY_ADDRESS_RESERVED_BITS = (~BX_PHY_ADDRESS_MASK); //33
 enum AccessReason {
 BX_VMX_VAPIC_ACCESS,
 };
+enum BX_Instr_Branch {  //249
+    BX_INSTR_IS_JMP = 10,
+    BX_INSTR_IS_JMP_INDIRECT = 11,
+    BX_INSTR_IS_CALL = 12,
+    BX_INSTR_IS_CALL_INDIRECT = 13,
+    BX_INSTR_IS_RET = 14,
+    BX_INSTR_IS_IRET = 15,
+    BX_INSTR_IS_INT = 16,
+    BX_INSTR_IS_SYSCALL = 17,
+    BX_INSTR_IS_SYSRET = 18,
+    BX_INSTR_IS_SYSENTER = 19,
+    BX_INSTR_IS_SYSEXIT = 20,
+    BX_INSTR_IS_UIRET = 21
+};
+
 enum BX_Exception {
     //318
     BX_DE_EXCEPTION = 0, // Divide Error (fault)
@@ -488,8 +508,30 @@ struct monitor_addr_t {
     BX_CPP_INLINE bool armed(void) const { return armed_by != BX_MONITOR_NOT_ARMED; }
 };
 #endif
+#if BX_DEBUGGER
+typedef struct bx_dbg_guard_state_t {
+    Bit32u cs; // cs:eip and linear addr of instruction at guard point
+    bx_address eip;
+    bx_address laddr;
+    // 00 - 16 bit, 01 - 32 bit, 10 - 64-bit, 11 - illegal
+    unsigned code_32_64; // CS seg size at guard point
+} bx_dbg_guard_state_t;
 
-
+typedef struct bx_guard_found_t {
+    unsigned guard_found;
+    Bit64u icount_max; // stop after completing this many instructions
+    unsigned iaddr_index;
+    bx_dbg_guard_state_t guard_state;
+} bx_guard_found_t;
+typedef enum dbg_show_flags_t {
+    Flag_call = 0x1,
+    Flag_ret = 0x2,
+    Flag_softint = 0x4,
+    Flag_iret = 0x8,
+    Flag_intsig = 0x10,
+    Flag_mode = 0x20,
+} dbg_show_flags_t;
+#endif //882
 class bx_cpuid_t; //887行
 
 class BOCHSAPI BX_CPU_C{ //889-5377行
@@ -678,6 +720,9 @@ public:
     Bit32u     espPageWindowSize; //1267
     const Bit8u* espHostPtr;
     bx_phy_address pAddrStackPage; // Guest physical address of current stack page
+#if BX_SUPPORT_SMP == 0
+    Bit32u espPageFineGranularityMapping;
+#endif
 
 #if BX_CPU_LEVEL >= 4 && BX_SUPPORT_ALIGNMENT_CHECK  //1267
     unsigned alignment_check_mask;
@@ -687,6 +732,8 @@ public:
 #if BX_SUPPORT_VMX || BX_SUPPORT_SVM
     bool vmexit_break;//1294
 #endif
+    unsigned show_flag;
+    bx_guard_found_t guard_found;
 #endif//1298
 #if BX_INSTRUMENTATION  //1300
     struct {
@@ -886,10 +933,10 @@ public:
     BX_SMF void LODSD32_EAXXd(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
 
     BX_SMF void STOSB16_YbAL(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
-    BX_SMF void STOSW16_YwAX(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void STOSW16_YwAX(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void STOSD16_YdEAX(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void STOSB32_YbAL(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
-    BX_SMF void STOSW32_YwAX(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void STOSW32_YwAX(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void STOSD32_YdEAX(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
 
     BX_SMF void MOVSB16_YbXb(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
@@ -3470,7 +3517,7 @@ public:
     BX_SMF void LODSW64_AXXw(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void LODSD64_EAXXd(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void STOSB64_YbAL(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
-    BX_SMF void STOSW64_YwAX(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void STOSW64_YwAX(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void STOSD64_YdEAX(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void MOVSB64_YbXb(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void MOVSW64_YwXw(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
@@ -3781,9 +3828,17 @@ public:
     BX_SMF bool read_virtual_checks(bx_segment_reg_t* seg, Bit32u offset, unsigned len, bool align = false) BX_CPP_AttrRegparmN(4);//4514
     BX_SMF Bit16u read_linear_word(unsigned seg, bx_address offset) BX_CPP_AttrRegparmN(2); //4518
     BX_SMF void write_linear_byte(unsigned seg, bx_address offset, Bit8u data) BX_CPP_AttrRegparmN(3); //4530
+    BX_SMF void write_linear_word(unsigned seg, bx_address offset, Bit16u data) BX_CPP_AttrRegparmN(3); //4531
+    BX_SMF void write_virtual_word_32(unsigned seg, Bit32u offset, Bit16u data) BX_CPP_AttrRegparmN(3); //4561
     BX_SMF Bit16u read_virtual_word(unsigned seg, bx_address offset) BX_CPP_AttrRegparmN(2); //4574
     BX_SMF void write_virtual_byte(unsigned seg, bx_address offset, Bit8u data) BX_CPP_AttrRegparmN(3); //4586
+    BX_SMF void write_virtual_word(unsigned seg, bx_address offset, Bit16u data) BX_CPP_AttrRegparmN(3); //4587
 	BX_SMF bxICacheEntry_c* getICacheEntry(void);
+    BX_SMF void stack_write_word(bx_address offset, Bit16u data) BX_CPP_AttrRegparmN(2); //4635
+#if BX_SUPPORT_CET
+    BX_SMF void shadow_stack_write_dword(bx_address offset, unsigned curr_pl, Bit32u data) BX_CPP_AttrRegparmN(3); //4645
+#endif
+    BX_SMF void stackPrefetch(bx_address offset, unsigned len) BX_CPP_AttrRegparmN(2); //4656
     BX_SMF Bit64u system_read_qword(bx_address laddr) BX_CPP_AttrRegparmN(1); //4662
     BX_SMF void system_write_byte(bx_address laddr, Bit8u data) BX_CPP_AttrRegparmN(2); //4664
     BX_SMF void repeat(bxInstruction_c* i, BxRepIterationPtr_tR execute) BX_CPP_AttrRegparmN(2); //4696
@@ -3823,6 +3878,10 @@ public:
         Bit32u* dword1, Bit32u* dword2, unsigned exception_no); //4927
     BX_SMF void    load_seg_reg(bx_segment_reg_t* seg, Bit16u new_value) BX_CPP_AttrRegparmN(2); //4930
     BX_SMF void    load_null_selector(bx_segment_reg_t* seg, unsigned value) BX_CPP_AttrRegparmN(2); //4931
+    BX_SMF void    push_16(Bit16u value16) BX_CPP_AttrRegparmN(1); //4938
+#if BX_SUPPORT_CET //4946
+    BX_SMF void    shadow_stack_push_32(Bit32u value32) BX_CPP_AttrRegparmN(1); //4947
+#endif  //4952
     BX_SMF void branch_near16(Bit16u new_IP) BX_CPP_AttrRegparmN(1);
     BX_SMF void jmp_far32(bxInstruction_c* i, Bit16u cs_raw, Bit32u disp32);
     BX_SMF void    hwbreakpoint_match(bx_address laddr, unsigned len, unsigned rw); //4981
@@ -3834,6 +3893,7 @@ public:
         return BX_CPU_THIS_PTR ia_extensions_bitmask[extension / 32] & (1 << (extension % 32));
     }
     BX_SMF BX_CPP_INLINE Bit64u get_icount(void) { return BX_CPU_THIS_PTR icount; } //5000
+    BX_SMF bx_address get_laddr(unsigned seg, bx_address offset); //5047
 	BX_SMF Bit32u get_laddr32(unsigned seg, Bit32u offset);//5049行
 #if BX_SUPPORT_X86_64 //5050
     BX_SMF Bit64u get_laddr64(unsigned seg, Bit64u offset);
@@ -3941,6 +4001,9 @@ public:
 #endif //5205
     BX_SMF bool is_monitor(bx_phy_address addr, unsigned len);
     BX_SMF void check_monitor(bx_phy_address addr, unsigned len);
+#if BX_SUPPORT_CET
+    BX_SMF bool ShadowStackEnabled(unsigned cpl) BX_CPP_AttrRegparmN(1);
+#endif
     BX_SMF Bit32u VMread32(unsigned encoding) BX_CPP_AttrRegparmN(1); //5227
     BX_SMF void VMabort(VMX_vmabort_code error_code); //5245
     BX_SMF Bit32u LoadMSRs(Bit32u msr_cnt, bx_phy_address pAddr); //5247
@@ -4022,6 +4085,21 @@ BX_CPP_INLINE Bit32u BX_CPP_AttrRegparmN(1) BX_CPU_C::BxResolve32(bxInstruction_
     return eaddr & i->asize_mask();
 }
 
+#define RSP_COMMIT { BX_CPU_THIS_PTR speculative_rsp = false; } //5435
+#include "stack.h"
+#define PRESERVE_RSP { BX_CPU_THIS_PTR prev_rsp = RSP; }
+#if BX_SUPPORT_CET
+#define PRESERVE_SSP { BX_CPU_THIS_PTR prev_ssp = SSP; }
+#else
+#define PRESERVE_SSP
+#endif
+
+#define RSP_SPECULATIVE {                 \
+  BX_CPU_THIS_PTR speculative_rsp = true; \
+  PRESERVE_RSP;                           \
+  PRESERVE_SSP;                           \
+}
+
 BX_CPP_INLINE void BX_CPU_C::updateFetchModeMask(void)
 {
     BX_CPU_THIS_PTR fetchModeMask = BX_CPU_THIS_PTR cpu_state_use_ok |
@@ -4056,6 +4134,17 @@ BX_CPP_INLINE Bit64u BX_CPU_C::get_laddr64(unsigned seg, Bit64u offset)
         return BX_CPU_THIS_PTR sregs[seg].cache.u.segment.base + offset;
 }
 #endif
+
+BX_CPP_INLINE bx_address BX_CPU_C::get_laddr(unsigned seg, bx_address offset)
+{
+#if BX_SUPPORT_X86_64
+    if (BX_CPU_THIS_PTR cpu_mode == BX_MODE_LONG_64) {
+        return get_laddr64(seg, offset);
+    }
+#endif
+    return get_laddr32(seg, (Bit32u)offset);
+}
+
 //5570
 BX_CPP_INLINE Bit32u BX_CPU_C::agen_read32(unsigned s, Bit32u offset, unsigned len)
 {
@@ -4115,6 +4204,8 @@ BX_CPP_INLINE bx_address BX_CPU_C::agen_write(unsigned s, bx_address offset, uns
 #endif
     return agen_write32(s, (Bit32u)offset, len);
 }
+
+
 
 /*BX_CPP_INLINE bool BX_CPU_C::real_mode(void)
 {

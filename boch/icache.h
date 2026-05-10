@@ -4,14 +4,24 @@ extern void handleSMC(bx_phy_address pAddr, Bit32u mask);
 class bxPageWriteStampTable
 {
 	//29
+	const Bit32u PHY_MEM_PAGES_IN_4G_SPACE;
 	Bit32u* fineGranularityMapping;
 public:
-
+	bxPageWriteStampTable() : PHY_MEM_PAGES_IN_4G_SPACE(1024 * 1024) {
+		fineGranularityMapping = new Bit32u[PHY_MEM_PAGES_IN_4G_SPACE];
+		resetWriteStamps();
+	}
+	~bxPageWriteStampTable() { delete[] fineGranularityMapping; }
 
 BX_CPP_INLINE static Bit32u hash(bx_phy_address pAddr) {
 	//41
 	// can share writeStamps between multiple pages if >32 bit phy address
 	return ((Bit32u)pAddr) >> 12;
+}
+
+BX_CPP_INLINE Bit32u getFineGranularityMapping(bx_phy_address pAddr) const
+{
+	return fineGranularityMapping[hash(pAddr)];
 }
 
 BX_CPP_INLINE void markICacheMask(bx_phy_address pAddr, Bit32u mask)
@@ -35,9 +45,15 @@ BX_CPP_INLINE void decWriteStamp(bx_phy_address pAddr, unsigned len)
 		}
 	}
 }
-
+    BX_CPP_INLINE void resetWriteStamps(void);
 };
 
+BX_CPP_INLINE void bxPageWriteStampTable::resetWriteStamps(void)
+{
+	for (Bit32u i = 0; i < PHY_MEM_PAGES_IN_4G_SPACE; i++) {
+		fineGranularityMapping[i] = 0;
+	}
+}
 
 
 extern bxPageWriteStampTable pageWriteStampTable; //102

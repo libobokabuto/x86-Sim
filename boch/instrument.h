@@ -1,6 +1,7 @@
 #pragma once
 #define BX_INSTR_CNEAR_BRANCH_TAKEN(cpu_id, branch_eip, new_eip) //156
 #define BX_INSTR_CNEAR_BRANCH_NOT_TAKEN(cpu_id, branch_eip) //157
+#define BX_INSTR_UCNEAR_BRANCH(cpu_id, what, branch_eip, new_eip)
 #define BX_INSTR_FAR_BRANCH(cpu_id, what, prev_cs, prev_eip, new_cs, new_eip) //159
 /* decoding completed 161ÐÐ*/
 #define BX_INSTR_OPCODE(cpu_id, i, opcode, len, is32, is64)

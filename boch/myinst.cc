@@ -235,3 +235,81 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::REP_STOSW_YwAX(bxInstruction_c* i)
 
     BX_NEXT_INSTR(i);
 }
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::CALL_Jw(bxInstruction_c* i)
+{
+#if BX_DEBUGGER
+    BX_CPU_THIS_PTR show_flag |= Flag_call;
+#endif
+
+    RSP_SPECULATIVE;
+
+    /* push 16 bit EA of next instruction */
+    push_16(IP);
+#if BX_SUPPORT_CET
+    if (ShadowStackEnabled(CPL) && i->Iw())
+        shadow_stack_push_32(IP);
+#endif
+
+    Bit16u new_IP = IP + i->Iw();
+    branch_near16(new_IP);
+
+    RSP_COMMIT;
+
+    BX_INSTR_UCNEAR_BRANCH(BX_CPU_ID, BX_INSTR_IS_RET, PREV_RIP, EIP);
+
+    BX_LINK_TRACE(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::STOSW16_YwAX(bxInstruction_c* i)
+{
+    Bit16u di = DI;
+
+    write_virtual_word_32(BX_SEG_REG_ES, di, AX);
+
+    if (BX_CPU_THIS_PTR get_DF()) {
+        di -= 2;
+    }
+    else {
+        di += 2;
+    }
+
+    DI = di;
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::STOSW32_YwAX(bxInstruction_c* i)
+{
+    Bit32u edi = EDI;
+
+    write_virtual_word(BX_SEG_REG_ES, edi, AX);
+
+    if (BX_CPU_THIS_PTR get_DF()) {
+        edi -= 2;
+    }
+    else {
+        edi += 2;
+    }
+
+    // zero extension of RDI
+    RDI = edi;
+}
+
+#if BX_SUPPORT_X86_64
+/* 16 bit opsize mode, 32 bit address size */
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::STOSW64_YwAX(bxInstruction_c* i)
+{
+    Bit64u rdi = RDI;
+
+    write_linear_word(BX_SEG_REG_ES, rdi, AX);
+
+    if (BX_CPU_THIS_PTR get_DF()) {
+        rdi -= 2;
+    }
+    else {
+        rdi += 2;
+    }
+
+    RDI = rdi;
+}
+#endif
+

@@ -125,6 +125,7 @@
   <ItemGroup>
     <ClCompile Include="access.cc" />
     <ClCompile Include="access2.cc" />
+    <ClCompile Include="cet.cc" />
     <ClCompile Include="coms.cc" />
     <ClCompile Include="cpu.cc" />
     <ClCompile Include="cpuid.cc" />
@@ -173,6 +174,7 @@
     <ClCompile Include="segment_ctrl_pro.cc" />
     <ClCompile Include="siminterface.cc" />
     <ClCompile Include="smm.cc" />
+    <ClCompile Include="stack.cc" />
     <ClCompile Include="unmapped.cc" />
     <ClCompile Include="vapic.cc" />
     <ClCompile Include="vmcs.cc" />
@@ -220,6 +222,7 @@
     <ClInclude Include="siminterface.h" />
     <ClInclude Include="smm.h" />
     <ClInclude Include="softfloat.h" />
+    <ClInclude Include="stack.h" />
     <ClInclude Include="svm.h" />
     <ClInclude Include="tlb.h" />
     <ClInclude Include="unmapped.h" />
