@@ -1,6 +1,6 @@
 #pragma once
 class bxInstruction_c;
-
+extern void handleSMC(bx_phy_address pAddr, Bit32u mask);
 class bxPageWriteStampTable
 {
 	//29
@@ -20,7 +20,27 @@ BX_CPP_INLINE void markICacheMask(bx_phy_address pAddr, Bit32u mask)
 	fineGranularityMapping[hash(pAddr)] |= mask;
 }
 
+BX_CPP_INLINE void decWriteStamp(bx_phy_address pAddr, unsigned len)
+{
+	Bit32u index = hash(pAddr);
+
+	if (fineGranularityMapping[index]) {
+		Bit32u mask = 1 << (PAGE_OFFSET((Bit32u)pAddr) >> 7);
+		mask |= 1 << (PAGE_OFFSET((Bit32u)pAddr + len - 1) >> 7);
+
+		if (fineGranularityMapping[index] & mask) {
+			// one of the CPUs might be running trace from this page
+			handleSMC(pAddr, mask);
+			fineGranularityMapping[index] &= ~mask;
+		}
+	}
+}
+
 };
+
+
+
+extern bxPageWriteStampTable pageWriteStampTable; //102
 #define BxICacheEntries (64  * 1024) //104行
 #define BxICacheMemPool (576 * 1024) //105行
 
@@ -36,13 +56,13 @@ struct bxICacheEntry_c  //107行
 #define BX_MAX_TRACE_LENGTH 32  //116
 
 static const bx_phy_address BX_ICACHE_INVALID_PHY_ADDRESS = bx_phy_address(-1);//118
-
+void flushSMC(bxICacheEntry_c* e); //120
 class BOCHSAPI bxICache_c { //122-199行
 public:
 	bxICacheEntry_c entry[BxICacheEntries];
 	bxInstruction_c mpool[BxICacheMemPool];
 	unsigned mpindex;
-
+	Bit32u traceLinkTimeStamp; //128
 #define BX_ICACHE_PAGE_SPLIT_ENTRIES 8 
 	struct pageSplitEntryIndex {
 		bx_phy_address ppf; // Physical address of 2nd page of the trace
@@ -87,10 +107,89 @@ public:
 
 		nextPageSplitIndex = (nextPageSplitIndex + 1) & (BX_ICACHE_PAGE_SPLIT_ENTRIES - 1);
 	}
-
+	 //172
+	BX_CPP_INLINE void handleSMC(bx_phy_address pAddr, Bit32u mask);
+	BX_CPP_INLINE void flushICacheEntries(void);
 	BX_CPP_INLINE bxICacheEntry_c* get_entry(bx_phy_address pAddr, unsigned fetchModeMask)
 	{
 		//176
 		return &(entry[hash(pAddr, fetchModeMask)]);
 	}
+
+	BX_CPP_INLINE bool breakLinks()
+	{
+		// break all links bewteen traces
+		if (++traceLinkTimeStamp == 0xffffffff) {
+			flushICacheEntries();
+			return true;
+		}
+		return false;
+	}
+
 };
+ //201
+BX_CPP_INLINE void bxICache_c::flushICacheEntries(void)
+{
+	bxICacheEntry_c* e = entry;
+	unsigned i;
+
+	for (i = 0; i < BxICacheEntries; i++, e++) {
+		e->pAddr = BX_ICACHE_INVALID_PHY_ADDRESS;
+		e->traceMask = 0;
+	}
+
+	nextPageSplitIndex = 0;
+	for (i = 0; i < BX_ICACHE_PAGE_SPLIT_ENTRIES; i++)
+		pageSplitIndex[i].ppf = BX_ICACHE_INVALID_PHY_ADDRESS;
+
+	mpindex = 0;
+
+	traceLinkTimeStamp = 0;
+}
+
+
+//220
+BX_CPP_INLINE void bxICache_c::handleSMC(bx_phy_address pAddr, Bit32u mask)
+{
+	Bit32u pAddrIndex = bxPageWriteStampTable::hash(pAddr);
+
+	// break all links bewteen traces
+	if (breakLinks()) return;
+
+	// Need to invalidate all traces in the trace cache that might include an
+	// instruction that was modified.  But this is not enough, it is possible
+	// that some another trace is linked into  invalidated trace and it won't
+	// be invalidated. In order to solve this issue  replace all instructions
+	// from the invalidated trace with dummy EndOfTrace opcodes.
+
+	// Another corner case that has to be handled - pageWriteStampTable wrap.
+	// Multiple physical addresses could be mapped into single pageWriteStampTable
+	// entry and all of them have to be invalidated here now.
+
+	if (mask & 0x1) {
+		// the store touched 1st cache line in the page, check for
+		// page split traces to invalidate.
+		for (unsigned i = 0; i < BX_ICACHE_PAGE_SPLIT_ENTRIES; i++) {
+			if (pageSplitIndex[i].ppf != BX_ICACHE_INVALID_PHY_ADDRESS) {
+				if (pAddrIndex == bxPageWriteStampTable::hash(pageSplitIndex[i].ppf)) {
+					pageSplitIndex[i].ppf = BX_ICACHE_INVALID_PHY_ADDRESS;
+					flushSMC(pageSplitIndex[i].e);
+				}
+			}
+		}
+	}
+
+	bxICacheEntry_c* e = get_entry(LPFOf(pAddr), 0);
+
+	// go over 32 "cache lines" of 128 byte each
+	for (unsigned n = 0; n < 32; n++) {
+		Bit32u line_mask = (1 << n);
+		if (line_mask > mask) break;
+		for (unsigned index = 0; index < 128; index++, e++) {
+			if (pAddrIndex == bxPageWriteStampTable::hash(e->pAddr) && (e->traceMask & mask) != 0) {
+				flushSMC(e);
+			}
+		}
+	}
+}
+

@@ -1,6 +1,6 @@
 #include "bochs.h"
 #include "cpu.h"
-
+#include "cpustats.h"
 #include "siminterface.h"
 
 bxPageWriteStampTable pageWriteStampTable; //35
@@ -9,6 +9,31 @@ extern int fetchDecode32(const Bit8u* fetchPtr, bool is_32, bxInstruction_c* i, 
 #if BX_SUPPORT_X86_64
 extern int fetchDecode64(const Bit8u* fetchPtr, bxInstruction_c* i, unsigned remainingInPage);            //39
 #endif
+
+void handleSMC(bx_phy_address pAddr, Bit32u mask)
+{
+	INC_SMC_STAT(smc);
+
+	for (unsigned i = 0; i < BX_SMP_PROCESSORS; i++) {
+		BX_CPU(i)->async_event |= BX_ASYNC_EVENT_STOP_TRACE;
+		BX_CPU(i)->iCache.handleSMC(pAddr, mask);
+	}
+}
+
+void flushSMC(bxICacheEntry_c* e)
+{ //62
+	if (e->pAddr != BX_ICACHE_INVALID_PHY_ADDRESS) {
+		e->pAddr = BX_ICACHE_INVALID_PHY_ADDRESS;
+#if BX_SUPPORT_HANDLERS_CHAINING_SPEEDUPS
+		if (!bx_dbg.debugger_active) {
+			extern void genDummyICacheEntry(bxInstruction_c * i);
+			//    for (unsigned instr=0;instr < e->tlen; instr++)
+			//      genDummyICacheEntry(e->i + instr);
+			genDummyICacheEntry(e->i);
+		}
+#endif
+	}
+}
 bxICacheEntry_c* BX_CPU_C::serveICacheMiss(Bit32u eipBiased, bx_phy_address pAddr)
 {
 	//94

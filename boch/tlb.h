@@ -29,6 +29,8 @@ BX_CPP_INLINE bx_address PPFOf(bx_phy_address paddr) { return paddr & PPF_MASK; 
 
 typedef bx_ptr_equiv_t bx_hostpageaddr_t;//64ÐÐ
 
+#define isWriteOK(tlbEntry, user) \
+  (tlbEntry->accessBits & (0x04 << unsigned(user)))
 
 #define isReadOK(tlbEntry, user) \
   (tlbEntry->accessBits & (0x01 << unsigned(user)))  //116

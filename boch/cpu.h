@@ -788,7 +788,7 @@ public:
     BX_SMF void XCHG_EwGwM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void XCHG_EdGdM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
 
-    BX_SMF void MOV_EbGbM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void MOV_EbGbM(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void MOV_EwGwM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void MOV_GbEbM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void MOV_GbEbR(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
@@ -958,7 +958,7 @@ public:
     BX_SMF void JB_Jw(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void JNB_Jw(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void JZ_Jw(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
-    BX_SMF void JNZ_Jw(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void JNZ_Jw(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void JBE_Jw(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void JNBE_Jw(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void JS_Jw(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
@@ -3758,15 +3758,20 @@ public:
     BX_SMF BX_CPP_INLINE bool IsCanonical(bx_address addr) { return IsCanonicalToWidth(addr, BX_CPU_THIS_PTR linaddr_width); }
     BX_SMF bool IsCanonicalAccess(bx_address addr, unsigned rw, bool user) BX_CPP_AttrRegparmN(3);
 #endif
+    BX_SMF bool write_virtual_checks(bx_segment_reg_t* seg, Bit32u offset, unsigned len, bool align = false) BX_CPP_AttrRegparmN(4); //4513
     BX_SMF bool read_virtual_checks(bx_segment_reg_t* seg, Bit32u offset, unsigned len, bool align = false) BX_CPP_AttrRegparmN(4);//4514
     BX_SMF Bit16u read_linear_word(unsigned seg, bx_address offset) BX_CPP_AttrRegparmN(2); //4518
+    BX_SMF void write_linear_byte(unsigned seg, bx_address offset, Bit8u data) BX_CPP_AttrRegparmN(3); //4530
     BX_SMF Bit16u read_virtual_word(unsigned seg, bx_address offset) BX_CPP_AttrRegparmN(2); //4574
+    BX_SMF void write_virtual_byte(unsigned seg, bx_address offset, Bit8u data) BX_CPP_AttrRegparmN(3); //4586
 	BX_SMF bxICacheEntry_c* getICacheEntry(void);
     BX_SMF Bit64u system_read_qword(bx_address laddr) BX_CPP_AttrRegparmN(1); //4662
     BX_SMF void system_write_byte(bx_address laddr, Bit8u data) BX_CPP_AttrRegparmN(2); //4664
     BX_SMF int access_read_linear(bx_address laddr, unsigned len, unsigned curr_pl, unsigned xlate_rw, Bit32u ac_mask, void* data); //4700
+    BX_SMF int access_write_linear(bx_address laddr, unsigned len, unsigned curr_pl, unsigned xlate_rw, Bit32u ac_mask, void* data); //4701
     BX_SMF Bit64u read_physical_qword(bx_phy_address paddr, BxMemtype memtype, AccessReason reason); //4708
     BX_SMF void access_read_physical(bx_phy_address paddr, unsigned len, void* data);
+    BX_SMF void access_write_physical(bx_phy_address paddr, unsigned len, void* data); //4710
     BX_SMF bx_hostpageaddr_t getHostMemAddr(bx_phy_address addr, unsigned rw);//4716行
     BX_SMF bx_phy_address translate_linear(bx_TLB_entry* entry, bx_address laddr, unsigned user, unsigned rw);//4719行
     BX_SMF bx_phy_address translate_guest_physical(bx_phy_address guest_paddr, bx_address guest_laddr, bool guest_laddr_valid, bool is_page_walk,
@@ -3815,6 +3820,8 @@ public:
 #endif
     BX_SMF bx_address agen_read(unsigned seg, bx_address offset, unsigned len); //5054
     BX_SMF Bit32u agen_read32(unsigned seg, Bit32u offset, unsigned len); //5055
+    BX_SMF bx_address agen_write(unsigned seg, bx_address offset, unsigned len);//5060
+    BX_SMF Bit32u agen_write32(unsigned seg, Bit32u offset, unsigned len); //5061
     DECLARE_EFLAG_ACCESSOR(ID, 21)
     DECLARE_EFLAG_ACCESSOR(VIP, 20)
     DECLARE_EFLAG_ACCESSOR(VIF, 19)
@@ -4046,7 +4053,25 @@ BX_CPP_INLINE Bit32u BX_CPU_C::agen_read32(unsigned s, Bit32u offset, unsigned l
 
     return get_laddr32(s, offset);
 }
+BX_CPP_INLINE Bit32u BX_CPU_C::agen_write32(unsigned s, Bit32u offset, unsigned len)
+{
+    // 5610
+    bx_segment_reg_t* seg = &BX_CPU_THIS_PTR sregs[s];
 
+    if (seg->cache.valid & SegAccessWOK4G) {
+        return offset;
+    }
+
+    if (seg->cache.valid & SegAccessWOK) {
+        if (offset <= (seg->cache.u.segment.limit_scaled - len + 1)) {
+            return get_laddr32(s, offset);
+        }
+    }
+    if (!write_virtual_checks(seg, offset, len))
+        exception(int_number(s), 0);
+
+    return get_laddr32(s, offset);
+}
 //5650
 BX_CPP_INLINE bx_address BX_CPU_C::agen_read(unsigned s, bx_address offset, unsigned len)
 {
@@ -4057,6 +4082,17 @@ BX_CPP_INLINE bx_address BX_CPU_C::agen_read(unsigned s, bx_address offset, unsi
 #endif
     return agen_read32(s, (Bit32u)offset, len);
 }
+
+BX_CPP_INLINE bx_address BX_CPU_C::agen_write(unsigned s, bx_address offset, unsigned len)
+{
+#if BX_SUPPORT_X86_64
+    if (BX_CPU_THIS_PTR cpu_mode == BX_MODE_LONG_64) {
+        return get_laddr64(s, offset);
+    }
+#endif
+    return agen_write32(s, (Bit32u)offset, len);
+}
+
 /*BX_CPP_INLINE bool BX_CPU_C::real_mode(void)
 {
     //5780

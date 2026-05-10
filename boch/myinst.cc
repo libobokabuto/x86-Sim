@@ -173,7 +173,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::MOV_SwEw(bxInstruction_c* i)
     else {
         bx_address eaddr = BX_CPU_RESOLVE_ADDR(i);
         /* pointer, segment address pair */
-        op2_16 = read_virtual_word(i->seg(), eaddr);
+        op2_16 = read_virtual_word(i->seg(), eaddr);  //里面子函数的子函数没补全
     }
 
     load_seg_reg(&BX_CPU_THIS_PTR sregs[i->dst()], op2_16);
@@ -185,6 +185,15 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::MOV_SwEw(bxInstruction_c* i)
         // Same code as POP_SS()
         inhibit_interrupts(BX_INHIBIT_INTERRUPTS_BY_MOVSS);
     }
+
+    BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::MOV_EbGbM(bxInstruction_c* i)
+{
+    bx_address eaddr = BX_CPU_RESOLVE_ADDR(i);
+
+    write_virtual_byte(i->seg(), eaddr, BX_READ_8BIT_REGx(i->src(), i->extend8bitL()));//里面子函数的子函数没补全
 
     BX_NEXT_INSTR(i);
 }

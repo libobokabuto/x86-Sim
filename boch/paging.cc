@@ -299,7 +299,7 @@ bx_phy_address BX_CPU_C::translate_linear(bx_TLB_entry* tlbEntry, bx_address lad
 #if BX_SUPPORT_X86_64
 	if (!long_mode()) laddr &= 0xffffffff;
 #endif
-
+    //现在要补
 	// 当前先只补“未开启分页”的取指路径，足够跑第一条 BIOS 指令
 	bx_phy_address paddress = (bx_phy_address)laddr;
 	paddress = A20ADDR(paddress);
@@ -342,4 +342,26 @@ Bit64u BX_CPU_C::read_physical_qword(bx_phy_address paddr, BxMemtype memtype, Ac
     access_read_physical(paddr, 8, (Bit8u*)(&data));
     BX_NOTIFY_PHY_MEMORY_ACCESS(paddr, 8, memtype, BX_READ, reason, (Bit8u*)(&data));
     return data;
+}
+
+void BX_CPU_C::access_write_physical(bx_phy_address paddr, unsigned len, void* data)
+{   //2556
+    /*
+#if BX_SUPPORT_VMX && BX_SUPPORT_X86_64
+    if (is_virtual_apic_page(paddr)) {
+        VMX_Virtual_Apic_Write(paddr, len, data);
+        return;
+    }
+#endif
+
+#if BX_SUPPORT_APIC
+    if (BX_CPU_THIS_PTR lapic->is_selected(paddr)) {
+        BX_CPU_THIS_PTR lapic->write(paddr, data, len);
+        return;
+    }
+#endif
+
+    BX_MEM(0)->writePhysicalPage(BX_CPU_THIS, paddr, len, data);
+
+    */
 }
