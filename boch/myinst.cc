@@ -320,3 +320,35 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::PUSH_EwR(bxInstruction_c* i)
     BX_NEXT_INSTR(i);
 }
 
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::ADD_EwIwR(bxInstruction_c* i)
+{
+    Bit32u op1_16 = BX_READ_16BIT_REG(i->dst());
+    Bit32u op2_16 = i->Iw();
+    Bit32u sum_16 = op1_16 + op2_16;
+    BX_WRITE_16BIT_REG(i->dst(), sum_16);
+
+    SET_FLAGS_OSZAPC_ADD_16(op1_16, op2_16, sum_16);
+
+    BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::MOV_EwSwR(bxInstruction_c* i)
+{
+    /* Illegal to use nonexisting segments */
+    if (i->src() >= 6) {
+        //BX_INFO(("MOV_EwSw: using of nonexisting segment register %d", i->src()));
+        exception(BX_UD_EXCEPTION, 0);
+    }
+
+    Bit16u seg_reg = BX_CPU_THIS_PTR sregs[i->src()].selector.value;
+
+    if (i->os32L()) {
+        BX_WRITE_32BIT_REGZ(i->dst(), seg_reg);
+    }
+    else {
+        BX_WRITE_16BIT_REG(i->dst(), seg_reg);
+    }
+
+    BX_NEXT_INSTR(i);
+}
+

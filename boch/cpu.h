@@ -869,7 +869,7 @@ public:
     BX_SMF void MOV32S_EdGdM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
 
     BX_SMF void MOV_EwSwM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
-    BX_SMF void MOV_EwSwR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void MOV_EwSwR(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void MOV_SwEw(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
 
     BX_SMF void LEA_GdM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
