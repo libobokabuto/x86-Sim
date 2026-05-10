@@ -24,6 +24,8 @@ private:
 		Bit32u param;              // Device-specific value assigned to timer (optional)
 	} timer[BX_MAX_TIMERS];
 
+	unsigned   numTimers;
+	unsigned   triggeredTimer;
 	struct {
 		Bit32u     currCountdown;
 		Bit32u     currCountdownPeriod;
@@ -36,10 +38,15 @@ private:
 	// nomimal workload.
 	double     m_ips; // Millions of Instructions Per Second
 #endif
-
+	void   countdownEvent(void);
 public:
 	void   activate_timer(unsigned timer_index, Bit32u useconds, bool continuous); //97
 	void   deactivate_timer(unsigned timer_index); //99
+	static BX_CPP_INLINE void tick1(void) {  //106
+		if (--bx_pc_system.currCountdown == 0) {
+			bx_pc_system.countdownEvent();
+		}
+	}
 	void activate_timer_ticks(unsigned index, Bit64u instructions, bool continuous); //125
 	bool enable_a20; //157
 	bx_phy_address a20_mask; //166
@@ -55,6 +62,8 @@ public:
 	void    outp(Bit16u addr, Bit32u value, unsigned io_len) BX_CPP_AttrRegparmN(3);
 
 }; //189
+
+#define BX_TICK1()                  bx_pc_system.tick1()
 #define BX_SET_ENABLE_A20(enabled)  bx_pc_system.set_enable_a20(enabled)
 #define BX_GET_ENABLE_A20()         bx_pc_system.get_enable_a20()
 

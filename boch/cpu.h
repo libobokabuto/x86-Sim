@@ -5,10 +5,12 @@
 const Bit64u BX_PHY_ADDRESS_MASK = ((((Bit64u)(1)) << BX_PHY_ADDRESS_WIDTH) - 1);
 const Bit64u BX_PHY_ADDRESS_RESERVED_BITS = (~BX_PHY_ADDRESS_MASK); //33
 #define AL (BX_CPU_THIS_PTR gen_reg[0].word.byte.rl) //45
+#define CX (BX_CPU_THIS_PTR gen_reg[1].word.rx) //58
 #define IP (BX_CPU_THIS_PTR gen_reg[BX_16BIT_REG_IP].word.rx) //67
 #  define BX_SMF           static
-
+#define ECX (BX_CPU_THIS_PTR gen_reg[1].dword.erx) //73
 #define EIP (BX_CPU_THIS_PTR gen_reg[BX_32BIT_REG_EIP].dword.erx) //82行
+#define RCX (BX_CPU_THIS_PTR gen_reg[1].rrx) //90
 #define RSP (BX_CPU_THIS_PTR gen_reg[4].rrx) //93
 
 #define RIP (BX_CPU_THIS_PTR gen_reg[BX_64BIT_REG_RIP].rrx)  //107行
@@ -20,6 +22,12 @@ const Bit64u BX_PHY_ADDRESS_RESERVED_BITS = (~BX_PHY_ADDRESS_MASK); //33
 }
 #define PREV_RIP (BX_CPU_THIS_PTR prev_rip) //131
 #define BX_READ_32BIT_REG(index) (BX_CPU_THIS_PTR gen_reg[index].dword.erx) //148
+#if BX_SUPPORT_X86_64
+#define BX_CLEAR_64BIT_HIGH(index) {\
+  BX_CPU_THIS_PTR gen_reg[index].dword.hrx = 0; \
+}
+#else
+#endif
 #if BX_SUPPORT_X86_64
 #define BX_READ_8BIT_REGx(index, extended) ((((index) & 4) == 0 || (extended)) ? \
   (BX_CPU_THIS_PTR gen_reg[index].word.byte.rl) : \
@@ -119,12 +127,21 @@ class bxInstruction_c;//393行
 class bx_local_apic_c; //394
 struct bxICacheEntry_c;
 
+#if BX_USE_CPU_SMF
+typedef void (BX_CPP_AttrRegparmN(1)* BxRepIterationPtr_tR)(bxInstruction_c*);
+#else
+typedef void (BX_CPU_C::* BxRepIterationPtr_tR)(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
+#endif
+#if BX_USE_CPU_SMF == 0
+#else
 #  define BX_CPU_THIS_PTR  BX_CPU(0)->    //421行
 #  define BX_CPU_THIS      BX_CPU(0)
+#  define BX_SMF           static
 #  define BX_CPU_CALL_METHOD(func, args) \
             ((BxExecutePtr_tR) (func)) args
-
-
+#  define BX_CPU_CALL_REP_ITERATION(func, args) \
+            ((BxRepIterationPtr_tR) (func)) args
+#endif
 #if BX_SUPPORT_X86_64  //447
 #  define BX_CPU_RESOLVE_ADDR(i) \
             ((i)->as64L() ? BxResolve64(i) : BxResolve32(i))
@@ -915,7 +932,7 @@ public:
     BX_SMF void OUT_IbAL(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void OUT_IbAX(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void OUT_IbEAX(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
-    BX_SMF void CALL_Jw(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void CALL_Jw(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void CALL_Jd(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void JMP_Jd(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void JMP_Jw(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
@@ -3769,6 +3786,7 @@ public:
 	BX_SMF bxICacheEntry_c* getICacheEntry(void);
     BX_SMF Bit64u system_read_qword(bx_address laddr) BX_CPP_AttrRegparmN(1); //4662
     BX_SMF void system_write_byte(bx_address laddr, Bit8u data) BX_CPP_AttrRegparmN(2); //4664
+    BX_SMF void repeat(bxInstruction_c* i, BxRepIterationPtr_tR execute) BX_CPP_AttrRegparmN(2); //4696
     BX_SMF int access_read_linear(bx_address laddr, unsigned len, unsigned curr_pl, unsigned xlate_rw, Bit32u ac_mask, void* data); //4700
     BX_SMF int access_write_linear(bx_address laddr, unsigned len, unsigned curr_pl, unsigned xlate_rw, Bit32u ac_mask, void* data); //4701
     BX_SMF Bit64u read_physical_qword(bx_phy_address paddr, BxMemtype memtype, AccessReason reason); //4708

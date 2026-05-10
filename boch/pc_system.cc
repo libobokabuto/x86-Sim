@@ -5,19 +5,19 @@
 #define MinAllowableTimerPeriod 1 //37
 Bit32u BX_CPP_AttrRegparmN(2)
 bx_pc_system_c::inp(Bit16u addr, unsigned io_len)
-{
+{  //107
     Bit32u ret = bx_devices.inp(addr, io_len);
     return ret;
 }
 
 void BX_CPP_AttrRegparmN(3)
 bx_pc_system_c::outp(Bit16u addr, Bit32u value, unsigned io_len)
-{
+{ //118
     bx_devices.outp(addr, value, io_len);
 }
 
 void bx_pc_system_c::set_enable_a20(bool value)
-{
+{  //123
 #if BX_SUPPORT_A20
     enable_a20 = value ? true : false;
 
@@ -47,7 +47,7 @@ void bx_pc_system_c::set_enable_a20(bool value)
 }
 
 bool bx_pc_system_c::get_enable_a20(void)
-{
+{  //163
 #if BX_SUPPORT_A20
     return enable_a20;
 #else
@@ -56,14 +56,82 @@ bool bx_pc_system_c::get_enable_a20(void)
 }
 
 int bx_pc_system_c::Reset(unsigned type)
-{
+{  //187
     set_enable_a20(1);
     BX_CPU(0)->reset(type);
     return 0;
 }
 
-void bx_pc_system_c::deactivate_timer(unsigned i)
+void bx_pc_system_c::countdownEvent(void)
 {
+    unsigned i, first = numTimers, last = 0;
+    Bit64u   minTimeToFire;
+    bool  triggered[BX_MAX_TIMERS];
+
+    // The countdown decremented to 0.  We need to service all the active
+    // timers, and invoke callbacks from those timers which have fired.
+#if BX_TIMER_DEBUG
+    if (currCountdown != 0)
+        BX_PANIC(("countdownEvent: ticks!=0"));
+#endif
+
+    // Increment global ticks counter by number of ticks which have
+    // elapsed since the last update.
+    ticksTotal += Bit64u(currCountdownPeriod);
+    minTimeToFire = (Bit64u)-1;
+
+    for (i = 0; i < numTimers; i++) {
+        triggered[i] = 0; // Reset triggered flag.
+        if (timer[i].active) {
+#if BX_TIMER_DEBUG
+            if (ticksTotal > timer[i].timeToFire)
+                BX_PANIC(("countdownEvent: ticksTotal > timeToFire[%u], D " FMT_LL "u", i,
+                    timer[i].timeToFire - ticksTotal));
+#endif
+            if (ticksTotal == timer[i].timeToFire) {
+                // This timer is ready to fire.
+                triggered[i] = 1;
+
+                if (timer[i].continuous == 0) {
+                    // If triggered timer is one-shot, deactive.
+                    timer[i].active = 0;
+                }
+                else {
+                    // Continuous timer, increment time-to-fire by period.
+                    timer[i].timeToFire += timer[i].period;
+                    if (timer[i].timeToFire < minTimeToFire)
+                        minTimeToFire = timer[i].timeToFire;
+                }
+                if (i < first) first = i;
+                last = i;
+            }
+            else {
+                // This timer is not ready to fire yet.
+                if (timer[i].timeToFire < minTimeToFire)
+                    minTimeToFire = timer[i].timeToFire;
+            }
+        }
+    }
+
+    // Calculate next countdown period.  We need to do this before calling
+    // any of the callbacks, as they may call timer features, which need
+    // to be advanced to the next countdown cycle.
+    currCountdown = currCountdownPeriod =
+        Bit32u(minTimeToFire - ticksTotal);
+
+    for (i = first; i <= last; i++) {
+        // Call requested timer function.  It may request a different
+        // timer period or deactivate etc.
+        if (triggered[i] && (timer[i].funct != NULL)) {
+            triggeredTimer = i;
+            timer[i].funct(timer[i].this_ptr);
+            triggeredTimer = 0;
+        }
+    }
+}
+
+void bx_pc_system_c::deactivate_timer(unsigned i)
+{ //563
 #if BX_TIMER_DEBUG
     if (i >= numTimers)
         BX_PANIC(("deactivate_timer: timer %u OOB", i));

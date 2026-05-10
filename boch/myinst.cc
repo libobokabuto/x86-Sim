@@ -217,3 +217,21 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::CLD(bxInstruction_c* i)
 
     BX_NEXT_INSTR(i);
 }
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::REP_STOSW_YwAX(bxInstruction_c* i)
+{
+#if BX_SUPPORT_X86_64
+    if (i->as64L())
+        BX_CPU_THIS_PTR repeat(i, &BX_CPU_C::STOSW64_YwAX);
+    else
+#endif
+        if (i->as32L()) {
+            BX_CPU_THIS_PTR repeat(i, &BX_CPU_C::STOSW32_YwAX);
+            BX_CLEAR_64BIT_HIGH(BX_64BIT_REG_RDI); // always clear upper part of RDI
+        }
+        else {
+            BX_CPU_THIS_PTR repeat(i, &BX_CPU_C::STOSW16_YwAX);
+        }
+
+    BX_NEXT_INSTR(i);
+}

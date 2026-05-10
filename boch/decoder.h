@@ -46,7 +46,26 @@ enum BxRegs16 {
     BX_16BIT_REG_R15,
 #endif
 };
-
+#if BX_SUPPORT_X86_64
+enum BxRegs64 {  //123
+    BX_64BIT_REG_RAX,
+    BX_64BIT_REG_RCX,
+    BX_64BIT_REG_RDX,
+    BX_64BIT_REG_RBX,
+    BX_64BIT_REG_RSP,
+    BX_64BIT_REG_RBP,
+    BX_64BIT_REG_RSI,
+    BX_64BIT_REG_RDI,
+    BX_64BIT_REG_R8,
+    BX_64BIT_REG_R9,
+    BX_64BIT_REG_R10,
+    BX_64BIT_REG_R11,
+    BX_64BIT_REG_R12,
+    BX_64BIT_REG_R13,
+    BX_64BIT_REG_R14,
+    BX_64BIT_REG_R15,
+};
+#endif
 #if BX_SUPPORT_X86_64        //144ÐÐ
 # define BX_GENERAL_REGISTERS 16
 #else
