@@ -25,7 +25,7 @@ void BX_CPU_C::cpu_loop(void)
             BX_CPU_THIS_PTR prev_rip = RIP; // commit new RIP
             BX_INSTR_AFTER_EXECUTION(BX_CPU_ID, i);
             BX_CPU_THIS_PTR icount++;
-            if (BX_CPU_THIS_PTR icount == 20)
+            if (BX_CPU_THIS_PTR icount == 25)
             {
                 int qwq = 0;
             }
@@ -73,6 +73,7 @@ void BX_CPU_C::cpu_loop(void)
                 last = i + (entry->tlen);
             }
         }
+        BX_CPU_THIS_PTR async_event &= ~BX_ASYNC_EVENT_STOP_TRACE;
     }
 }
 

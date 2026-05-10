@@ -2030,9 +2030,9 @@ int BX_CPU_C::assignHandler(bxInstruction_c* i, Bit32u fetchModeMask)
 {
     //2061
     unsigned ia_opcode = i->getIaOpcode();
-    if (0) {
-        /*
-        判断条件是! i->modC0(）
+    if (!i->modC0()) {
+
+        //判断条件是! i->modC0(）
         i->execute1 = BxOpcodesTable[ia_opcode].execute1;
         i->handlers.execute2 = BxOpcodesTable[ia_opcode].execute2;
 
@@ -2044,7 +2044,7 @@ int BX_CPU_C::assignHandler(bxInstruction_c* i, Bit32u fetchModeMask)
             if (i->seg() == BX_SEG_REG_SS)
                 i->execute1 = &BX_CPU_C::MOV32S_EdGdM;
         }
-        */
+
     }
     else {
         i->execute1 = BxOpcodesTable[ia_opcode].execute2;
