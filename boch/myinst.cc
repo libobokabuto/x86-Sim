@@ -313,3 +313,10 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::STOSW64_YwAX(bxInstruction_c* i)
 }
 #endif
 
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::PUSH_EwR(bxInstruction_c* i)
+{
+    push_16(BX_READ_16BIT_REG(i->dst()));
+
+    BX_NEXT_INSTR(i);
+}
+

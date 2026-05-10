@@ -1224,7 +1224,7 @@ public:
     BX_SMF void XOR_EwIwM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void CMP_EwIwM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
 
-    BX_SMF void ADD_EwIwR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void ADD_EwIwR(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void OR_EwIwR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void ADC_EwIwR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void SBB_EwIwR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
@@ -3384,7 +3384,7 @@ public:
     BX_SMF void MOV_EwIwR(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void MOV_EdIdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
 
-    BX_SMF void PUSH_EwR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void PUSH_EwR(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void PUSH_EwM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void PUSH_EdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void PUSH_EdM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
@@ -4266,6 +4266,7 @@ __forceinline void BX_CPU_C::set_IOPL(Bit32u val) {
 } __forceinline Bit32u BX_CPU_C::get_IOPL() {
     return 3 & ((&bx_cpu)->eflags >> 12);
 } //5837
+IMPLEMENT_EFLAG_ACCESSOR(DF, 10)
 IMPLEMENT_EFLAG_ACCESSOR(IF, 9) //5839
 IMPLEMENT_EFLAG_ACCESSOR(AC, 18)
 IMPLEMENT_EFLAG_SET_ACCESSOR_RF(16) //5851行
