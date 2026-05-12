@@ -414,3 +414,87 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::INC_EwR(bxInstruction_c* i)
 
     BX_NEXT_INSTR(i);
 }
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::MOV_EwGwM(bxInstruction_c* i)
+{
+    bx_address eaddr = BX_CPU_RESOLVE_ADDR(i);
+
+    write_virtual_word(i->seg(), eaddr, BX_READ_16BIT_REG(i->src()));
+
+    BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::LEA_GwM(bxInstruction_c* i)
+{
+    bx_address eaddr = BX_CPU_RESOLVE_ADDR(i);
+
+    BX_WRITE_16BIT_REG(i->dst(), (Bit16u)eaddr);
+
+    BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::MOV_GbEbM(bxInstruction_c* i)
+{
+    bx_address eaddr = BX_CPU_RESOLVE_ADDR(i);
+
+    Bit8u val8 = read_virtual_byte(i->seg(), eaddr);
+    BX_WRITE_8BIT_REGx(i->dst(), i->extend8bitL(), val8);
+
+    BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::AND_EbIbR(bxInstruction_c* i)
+{
+    Bit8u op1, op2 = i->Ib();
+
+    op1 = BX_READ_8BIT_REGx(i->dst(), i->extend8bitL());
+    op1 &= op2;
+    BX_WRITE_8BIT_REGx(i->dst(), i->extend8bitL(), op1);
+
+    SET_FLAGS_OSZAPC_LOGIC_8(op1);
+
+    BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::JMP_Jw(bxInstruction_c* i)
+{
+    Bit16u new_IP = IP + i->Iw();
+    branch_near16(new_IP);
+    BX_INSTR_UCNEAR_BRANCH(BX_CPU_ID, BX_INSTR_IS_JMP, PREV_RIP, new_IP);
+
+    BX_LINK_TRACE(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::MOV_GwEwM(bxInstruction_c* i)
+{
+    bx_address eaddr = BX_CPU_RESOLVE_ADDR(i);
+    Bit16u val16 = read_virtual_word(i->seg(), eaddr);
+    BX_WRITE_16BIT_REG(i->dst(), val16);
+
+    BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::TEST_EbGbR(bxInstruction_c* i)
+{
+    Bit8u op1, op2;
+
+    op1 = BX_READ_8BIT_REGx(i->dst(), i->extend8bitL());
+    op2 = BX_READ_8BIT_REGx(i->src(), i->extend8bitL());
+    op1 &= op2;
+
+    SET_FLAGS_OSZAPC_LOGIC_8(op1);
+
+    BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::TEST_EwGwR(bxInstruction_c* i)
+{
+    Bit16u op1_16, op2_16;
+
+    op1_16 = BX_READ_16BIT_REG(i->dst());
+    op2_16 = BX_READ_16BIT_REG(i->src());
+    op1_16 &= op2_16;
+    SET_FLAGS_OSZAPC_LOGIC_16(op1_16);
+
+    BX_NEXT_INSTR(i);
+}
