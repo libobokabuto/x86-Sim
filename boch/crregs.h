@@ -1,4 +1,17 @@
 #pragma once
+
+#define BX_CR0_PE_MASK         (1 <<  0)
+#define BX_CR0_MP_MASK         (1 <<  1)
+#define BX_CR0_EM_MASK         (1 <<  2)
+#define BX_CR0_TS_MASK         (1 <<  3)
+#define BX_CR0_ET_MASK         (1 <<  4)
+#define BX_CR0_NE_MASK         (1 <<  5)
+#define BX_CR0_WP_MASK         (1 << 16)
+#define BX_CR0_AM_MASK         (1 << 18)
+#define BX_CR0_NW_MASK         (1 << 29)
+#define BX_CR0_CD_MASK         (1 << 30)
+#define BX_CR0_PG_MASK         (1 << 31)
+
 struct bx_cr0_t {//39
     Bit32u  val32;
 #define IMPLEMENT_CRREG_ACCESSORS(name, bitnum)            \
@@ -27,6 +40,37 @@ struct bx_cr0_t {//39
     BX_CPP_INLINE void set32(Bit32u val) { val32 = val | 0x10; }
 
 }; //87
+
+
+#if BX_CPU_LEVEL >= 5
+
+#define BX_CR4_VME_MASK             (1 << 0)
+#define BX_CR4_PVI_MASK             (1 << 1)
+#define BX_CR4_TSD_MASK             (1 << 2)
+#define BX_CR4_DE_MASK              (1 << 3)
+#define BX_CR4_PSE_MASK             (1 << 4)
+#define BX_CR4_PAE_MASK             (1 << 5)
+#define BX_CR4_MCE_MASK             (1 << 6)
+#define BX_CR4_PGE_MASK             (1 << 7)
+#define BX_CR4_PCE_MASK             (1 << 8)
+#define BX_CR4_OSFXSR_MASK          (1 << 9)
+#define BX_CR4_OSXMMEXCPT_MASK      (1 << 10)
+#define BX_CR4_UMIP_MASK            (1 << 11)
+#define BX_CR4_LA57_MASK            (1 << 12)
+#define BX_CR4_VMXE_MASK            (1 << 13)
+#define BX_CR4_SMXE_MASK            (1 << 14)
+#define BX_CR4_FSGSBASE_MASK        (1 << 16)
+#define BX_CR4_PCIDE_MASK           (1 << 17)
+#define BX_CR4_OSXSAVE_MASK         (1 << 18)
+#define BX_CR4_KEYLOCKER_MASK       (1 << 19)
+#define BX_CR4_SMEP_MASK            (1 << 20)
+#define BX_CR4_SMAP_MASK            (1 << 21)
+#define BX_CR4_PKE_MASK             (1 << 22)
+#define BX_CR4_CET_MASK             (1 << 23)
+#define BX_CR4_PKS_MASK             (1 << 24)
+#define BX_CR4_UINTR_MASK           (1 << 25)
+#define BX_CR4_LASS_MASK            (1 << 27)
+#define BX_CR4_LAM_SUPERVISOR_MASK  (1 << 28)
 
 struct bx_cr4_t {
     Bit32u  val32;
@@ -64,7 +108,7 @@ struct bx_cr4_t {
     BX_CPP_INLINE Bit32u get32() const { return val32; }
     BX_CPP_INLINE void set32(Bit32u val) { val32 = val; }
 };//156
-
+#endif  // #if BX_CPU_LEVEL >= 5
 struct bx_dr6_t {
     Bit32u val32; // 32bit value of register
 
@@ -138,6 +182,8 @@ struct bx_efer_t { //229
     IMPLEMENT_CRREG_ACCESSORS(LME, 8);
     IMPLEMENT_CRREG_ACCESSORS(LMA, 10);
 #endif
+    IMPLEMENT_CRREG_ACCESSORS(NXE, 11);
+
     
 
 
@@ -203,6 +249,52 @@ struct xcr0_t {
         BX_XCR0_APX_BIT = 19,
         BX_XCR0_LAST // make sure it is < 32
     };
+
+#define BX_XCR0_FPU_MASK       (1 << xcr0_t::BX_XCR0_FPU_BIT)
+#define BX_XCR0_SSE_MASK       (1 << xcr0_t::BX_XCR0_SSE_BIT)
+#define BX_XCR0_YMM_MASK       (1 << xcr0_t::BX_XCR0_YMM_BIT)
+#define BX_XCR0_BNDREGS_MASK   (1 << xcr0_t::BX_XCR0_BNDREGS_BIT)
+#define BX_XCR0_BNDCFG_MASK    (1 << xcr0_t::BX_XCR0_BNDCFG_BIT)
+#define BX_XCR0_OPMASK_MASK    (1 << xcr0_t::BX_XCR0_OPMASK_BIT)
+#define BX_XCR0_ZMM_HI256_MASK (1 << xcr0_t::BX_XCR0_ZMM_HI256_BIT)
+#define BX_XCR0_HI_ZMM_MASK    (1 << xcr0_t::BX_XCR0_HI_ZMM_BIT)
+#define BX_XCR0_PT_MASK        (1 << xcr0_t::BX_XCR0_PT_BIT)
+#define BX_XCR0_PKRU_MASK      (1 << xcr0_t::BX_XCR0_PKRU_BIT)
+#define BX_XCR0_PASID_MASK     (1 << xcr0_t::BX_XCR0_PASID_BIT)
+#define BX_XCR0_CET_U_MASK     (1 << xcr0_t::BX_XCR0_CET_U_BIT)
+#define BX_XCR0_CET_S_MASK     (1 << xcr0_t::BX_XCR0_CET_S_BIT)
+#define BX_XCR0_HDC_MASK       (1 << xcr0_t::BX_XCR0_HDC_BIT)
+#define BX_XCR0_UINTR_MASK     (1 << xcr0_t::BX_XCR0_UINTR_BIT)
+#define BX_XCR0_LBR_MASK       (1 << xcr0_t::BX_XCR0_LBR_BIT)
+#define BX_XCR0_HWP_MASK       (1 << xcr0_t::BX_XCR0_HWP_BIT)
+#define BX_XCR0_XTILECFG_MASK  (1 << xcr0_t::BX_XCR0_XTILECFG_BIT)
+#define BX_XCR0_XTILEDATA_MASK (1 << xcr0_t::BX_XCR0_XTILEDATA_BIT)
+#define BX_XCR0_APX_MASK       (1 << xcr0_t::BX_XCR0_APX_BIT)
+
+#define BX_XCR0_XTILE_BITS_MASK (BX_XCR0_XTILECFG_MASK | BX_XCR0_XTILEDATA_MASK)
+
+    IMPLEMENT_CRREG_ACCESSORS(FPU, BX_XCR0_FPU_BIT);
+    IMPLEMENT_CRREG_ACCESSORS(SSE, BX_XCR0_SSE_BIT);
+    IMPLEMENT_CRREG_ACCESSORS(YMM, BX_XCR0_YMM_BIT);
+    IMPLEMENT_CRREG_ACCESSORS(BNDREGS, BX_XCR0_BNDREGS_BIT);
+    IMPLEMENT_CRREG_ACCESSORS(BNDCFG, BX_XCR0_BNDCFG_BIT);
+    IMPLEMENT_CRREG_ACCESSORS(OPMASK, BX_XCR0_OPMASK_BIT);
+    IMPLEMENT_CRREG_ACCESSORS(ZMM_HI256, BX_XCR0_ZMM_HI256_BIT);
+    IMPLEMENT_CRREG_ACCESSORS(HI_ZMM, BX_XCR0_HI_ZMM_BIT);
+    IMPLEMENT_CRREG_ACCESSORS(PT, BX_XCR0_PT_BIT);
+    IMPLEMENT_CRREG_ACCESSORS(PKRU, BX_XCR0_PKRU_BIT);
+    IMPLEMENT_CRREG_ACCESSORS(PASID, BX_XCR0_PASID_BIT);
+    IMPLEMENT_CRREG_ACCESSORS(CET_U, BX_XCR0_CET_U_BIT);
+    IMPLEMENT_CRREG_ACCESSORS(CET_S, BX_XCR0_CET_S_BIT);
+    IMPLEMENT_CRREG_ACCESSORS(UINTR, BX_XCR0_UINTR_BIT);
+    IMPLEMENT_CRREG_ACCESSORS(LBR, BX_XCR0_LBR_BIT);
+    IMPLEMENT_CRREG_ACCESSORS(HWP, BX_XCR0_HWP_BIT);
+    IMPLEMENT_CRREG_ACCESSORS(XTILECFG, BX_XCR0_XTILECFG_BIT);
+    IMPLEMENT_CRREG_ACCESSORS(XTILEDATA, BX_XCR0_XTILEDATA_BIT);
+    IMPLEMENT_CRREG_ACCESSORS(APX, BX_XCR0_APX_BIT);
+
+    BX_CPP_INLINE Bit32u get32() const { return val32; }
+    BX_CPP_INLINE void set32(Bit32u val) { val32 = val; }
 
 };
 

@@ -1,4 +1,24 @@
 #pragma once
+#if BX_SUPPORT_APIC
+enum {
+	APIC_EDGE_TRIGGERED = 0,
+	APIC_LEVEL_TRIGGERED = 1
+};
+const bx_phy_address BX_LAPIC_BASE_ADDR = 0xfee00000;
+
+#define BX_NUM_LOCAL_APICS  BX_SMP_PROCESSORS
+
+enum {
+	BX_APIC_GLOBALLY_DISABLED = 0,
+	BX_APIC_STATE_INVALID = 1,
+	BX_APIC_XAPIC_MODE = 2,
+	BX_APIC_X2APIC_MODE = 3
+};
+
+const Bit32u BX_XAPIC_EXT_SUPPORT_IER = (1 << 0);
+const Bit32u BX_XAPIC_EXT_SUPPORT_SEOI = (1 << 1);
+
+typedef Bit32u apic_dest_t; /* same definition in ioapic.h */
 enum {
 	BX_LAPIC_ID = 0x020,
 	BX_LAPIC_VERSION = 0x030,
@@ -63,6 +83,17 @@ enum {
 	BX_LAPIC_IER8 = 0x4F0
 };
 enum {
+	APIC_DM_FIXED = 0,
+	APIC_DM_LOWPRI = 1,
+	APIC_DM_SMI = 2,
+	APIC_DM_RESERVED = 3,
+	APIC_DM_NMI = 4,
+	APIC_DM_INIT = 5,
+	APIC_DM_SIPI = 6,
+	APIC_DM_EXTINT = 7
+};
+
+enum {
 	APIC_LVT_TIMER = 0,
 	APIC_LVT_THERMAL = 1,
 	APIC_LVT_PERFMON = 2,
@@ -72,6 +103,7 @@ enum {
 	APIC_LVT_CMCI = 6,
 	APIC_LVT_ENTRIES
 };
+
 class BOCHSAPI bx_local_apic_c 
 {
 	bx_phy_address base_addr;
@@ -154,4 +186,68 @@ class BOCHSAPI bx_local_apic_c
 #endif
 
 	BX_CPU_C* cpu;
+
+public:
+
+	bx_local_apic_c(BX_CPU_C* cpu, unsigned id);
+	~bx_local_apic_c() {}
+
+
+	static bool get_vector(const Bit32u* reg, unsigned vector);
+	static void set_vector(Bit32u* reg, unsigned vector);
+	static void clear_vector(Bit32u* reg, unsigned vector);
+
+	void reset(unsigned type);
+	bx_phy_address get_base(void) const { return base_addr; }
+	void set_base(bx_phy_address newbase);
+	Bit32u get_id() const { return apic_id; }
+	bool is_xapic() const { return xapic; }
+	int highest_priority_int(const Bit32u* array) const;
+	void receive_EOI(Bit32u value = 0);
+	void send_ipi(apic_dest_t dest, Bit32u lo_cmd);
+	void write_spurious_interrupt_register(Bit32u value);
+	void service_local_apic(void);
+	void print_status(void);
+	bool match_logical_addr(apic_dest_t address);
+	bool deliver(Bit8u vector, Bit8u delivery_mode, Bit8u trig_mode);
+	Bit8u get_tpr(void) const { return task_priority; }
+	void  set_tpr(Bit8u tpr);
+	Bit8u get_ppr(void) const;
+	Bit8u get_apr(void);
+	bool is_focus(Bit8u vector) const;
+	void set_lvt_entry(unsigned apic_reg, Bit32u val);
+	bool is_selected(bx_phy_address addr);
+
+
+	void read(bx_phy_address addr, void* data, unsigned len);
+	void write(bx_phy_address addr, void* data, unsigned len);
+	void write_aligned(bx_phy_address addr, Bit32u data);
+	
+	Bit32u read_aligned(bx_phy_address address);
+	void trigger_irq(Bit8u vector, unsigned trigger_mode, bool bypass_irr_isr = 0); //248
+	
+	static void periodic_smf(void*); //266
+	void periodic(void);
+	void set_divide_configuration(Bit32u value);
+	void set_initial_timer_count(Bit32u value);
+	Bit32u get_current_timer_count(void);
+#if BX_CPU_LEVEL >= 6 //272
+	void receive_SEOI(Bit8u vec);
+	void enable_xapic_extensions(void);
+	
+#endif
+	void startup_msg(Bit8u vector);
+#if BX_SUPPORT_VMX >= 2
+	void deactivate_vmx_preemption_timer(void);
+	static void vmx_preemption_timer_expired(void*);
+#endif
+#if BX_SUPPORT_MONITOR_MWAIT
+	void deactivate_mwaitx_timer(void);
+	static void mwaitx_timer_expired(void*);
+#endif
 };
+
+bool apic_bus_deliver_lowest_priority(Bit8u vector, apic_dest_t dest, bool trig_mode, bool broadcast);
+BOCHSAPI_MSVCONLY bool apic_bus_deliver_interrupt(Bit8u vector, apic_dest_t dest, Bit8u delivery_mode, bool logical_dest, bool level, bool trig_mode);
+bool apic_bus_broadcast_interrupt(Bit8u vector, Bit8u delivery_mode, bool trig_mode, int exclude_cpu);
+#endif // if BX_SUPPORT_APIC

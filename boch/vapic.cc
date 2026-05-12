@@ -47,6 +47,15 @@ bool BX_CPP_AttrRegparmN(2) BX_CPU_C::virtual_apic_access_vmexit(unsigned offset
     BX_CPU_THIS_PTR vmcs.apic_access = offset;
     return false;
 }
+
+void BX_CPU_C::VMX_Write_Virtual_APIC(unsigned offset, int len, Bit8u* val)
+{
+    bx_phy_address pAddr = BX_CPU_THIS_PTR vmcs.virtual_apic_page_addr + offset;
+    // must avoid recursive call to the function when VMX APIC access page = VMX Virtual Apic Page
+    BX_MEM(0)->writePhysicalPage(BX_CPU_THIS, pAddr, len, val);
+    BX_NOTIFY_PHY_MEMORY_ACCESS(pAddr, len, MEMTYPE(resolve_memtype(pAddr)), BX_WRITE, BX_VMX_VAPIC_ACCESS, val);
+}
+
 bx_phy_address BX_CPU_C::VMX_Virtual_Apic_Read(bx_phy_address paddr, unsigned len, void* data)
 {
     //90
@@ -130,6 +139,79 @@ bx_phy_address BX_CPU_C::VMX_Virtual_Apic_Read(bx_phy_address paddr, unsigned le
     paddr = vm->virtual_apic_page_addr + offset;
     BX_NOTIFY_PHY_MEMORY_ACCESS(paddr, len, MEMTYPE(resolve_memtype(paddr)), BX_READ, BX_VMX_VAPIC_ACCESS, (Bit8u*)data);
     return paddr;
+}
+
+void BX_CPU_C::VMX_Virtual_Apic_Write(bx_phy_address paddr, unsigned len, void* data)
+{  //245
+    VMCS_CACHE* vm = &BX_CPU_THIS_PTR vmcs;
+
+    //BX_ASSERT(vm->vmexec_ctrls2.VIRTUALIZE_APIC_ACCESSES());
+    //BX_INFO(("Virtual Apic WR 0x" FMT_ADDRX " len = %d", paddr, len));
+
+    Bit32u offset = PAGE_OFFSET(paddr);
+
+    bool vmexit = virtual_apic_access_vmexit(offset, len);
+
+    if (!vmexit) {
+
+        if (offset == BX_LAPIC_TPR) {
+            Bit8u vtpr = *((Bit8u*)data);
+            VMX_Write_Virtual_APIC(BX_LAPIC_TPR, vtpr);
+            signal_event(BX_EVENT_VMX_VTPR_UPDATE);
+            return;
+        }
+
+#if BX_SUPPORT_VMX >= 2
+        if (vm->vmexec_ctrls2.VIRTUAL_INT_DELIVERY()) {
+            if (offset == BX_LAPIC_EOI) {
+                signal_event(BX_EVENT_VMX_VEOI_UPDATE);
+            }
+        }
+
+        bool virtualize_access = false;
+        switch (offset & 0x3fc) {
+        case BX_LAPIC_ID:
+        case BX_LAPIC_TPR:
+        case BX_LAPIC_LDR:
+        case BX_LAPIC_DESTINATION_FORMAT:
+        case BX_LAPIC_SPURIOUS_VECTOR:
+        case BX_LAPIC_ESR:
+        case BX_LAPIC_ICR_HI:
+        case BX_LAPIC_LVT_TIMER:
+        case BX_LAPIC_LVT_THERMAL:
+        case BX_LAPIC_LVT_PERFMON:
+        case BX_LAPIC_LVT_LINT0:
+        case BX_LAPIC_LVT_LINT1:
+        case BX_LAPIC_LVT_ERROR:
+        case BX_LAPIC_TIMER_INITIAL_COUNT:
+        case BX_LAPIC_TIMER_DIVIDE_CFG:
+            if (vm->vmexec_ctrls2.VIRTUALIZE_APIC_REGISTERS()) {
+                virtualize_access = true;
+            }
+            break;
+
+        case BX_LAPIC_EOI:
+        case BX_LAPIC_ICR_LO:
+            if (vm->vmexec_ctrls2.VIRTUALIZE_APIC_REGISTERS() || vm->vmexec_ctrls2.VIRTUAL_INT_DELIVERY()) {
+                virtualize_access = true;
+            }
+            break;
+
+        default:
+            break;
+        }
+
+        if (virtualize_access) {
+            VMX_Write_Virtual_APIC(offset, len, (Bit8u*)data);
+            signal_event(BX_EVENT_VMX_VIRTUAL_APIC_WRITE);
+            return;
+        }
+#endif
+    }
+
+    Bit32u qualification = offset |
+        ((BX_CPU_THIS_PTR in_event) ? VMX_APIC_ACCESS_DURING_EVENT_DELIVERY : VMX_APIC_WRITE_INSTRUCTION_EXECUTION);
+    VMexit(VMX_VMEXIT_APIC_ACCESS, qualification);
 }
 
 #endif

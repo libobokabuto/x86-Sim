@@ -10,6 +10,17 @@ extern int fetchDecode32(const Bit8u* fetchPtr, bool is_32, bxInstruction_c* i, 
 extern int fetchDecode64(const Bit8u* fetchPtr, bxInstruction_c* i, unsigned remainingInPage);            //39
 #endif
 
+
+void flushICaches(void)
+{
+	for (unsigned i = 0; i < BX_SMP_PROCESSORS; i++) {
+		BX_CPU(i)->iCache.flushICacheEntries();
+		BX_CPU(i)->async_event |= BX_ASYNC_EVENT_STOP_TRACE;
+	}
+
+	pageWriteStampTable.resetWriteStamps();
+}
+
 void handleSMC(bx_phy_address pAddr, Bit32u mask)
 {
 	INC_SMC_STAT(smc);

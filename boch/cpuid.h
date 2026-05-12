@@ -54,4 +54,24 @@ protected:
 #define BX_VMX_TSC_SCALING                      (1 << 24)
 #define BX_VMX_MBE_CONTROL                      (1 << 26)
 #define BX_VMX_SPEC_CTRL_VIRTUALIZATION         (1 << 27)
+
+
+#define BX_CPUID_SVM_NESTED_PAGING           (1 <<  0)  //817
+#define BX_CPUID_SVM_LBR_VIRTUALIZATION      (1 <<  1)
+#define BX_CPUID_SVM_SVM_LOCK                (1 <<  2)
+#define BX_CPUID_SVM_NRIP_SAVE               (1 <<  3)
+#define BX_CPUID_SVM_TSCRATE                 (1 <<  4)
+#define BX_CPUID_SVM_VMCB_CLEAN_BITS         (1 <<  5)
+#define BX_CPUID_SVM_FLUSH_BY_ASID           (1 <<  6)
+#define BX_CPUID_SVM_DECODE_ASSIST           (1 <<  7)
+#define BX_CPUID_SVM_RESERVED8               (1 <<  8)
+#define BX_CPUID_SVM_RESERVED9               (1 <<  9)
+#define BX_CPUID_SVM_PAUSE_FILTER            (1 << 10)
+#define BX_CPUID_SVM_RESERVED11              (1 << 11)
+#define BX_CPUID_SVM_PAUSE_FILTER_THRESHOLD  (1 << 12)
+#define BX_CPUID_SVM_AVIC                    (1 << 13)
+#define BX_CPUID_SVM_RESERVED14              (1 << 14)
+#define BX_CPUID_SVM_NESTED_VIRTUALIZATION   (1 << 15)
+#define BX_CPUID_SVM_VIRTUAL_GIF             (1 << 16)
+#define BX_CPUID_SVM_CMET                    (1 << 17)
 };

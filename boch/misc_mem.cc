@@ -395,3 +395,73 @@ Bit8u BX_MEM_C::flash_read(Bit32u addr)
 	}
 	return ret;
 }
+
+void BX_MEM_C::flash_write(Bit32u addr, Bit8u data)
+{  //936
+	Bit32u flash_addr;
+	int i;
+
+	if (BX_MEM_THIS flash_type == 2) {
+		flash_addr = addr & 0x3ffff;
+	}
+	else {
+		flash_addr = addr & 0x1ffff;
+	}
+	if (BX_MEM_THIS flash_wsm_state == FLASH_PROG_SETUP) {
+		//BX_DEBUG(("flash write to ROM (address = 0x%08x, data = 0x%02x)", flash_addr, data));
+		BX_MEM_THIS rom[addr] &= data;
+		BX_MEM_THIS flash_wsm_state = FLASH_READ_STATUS;
+		BX_MEM_THIS flash_modified = true;
+	}
+	else {
+		//BX_DEBUG(("flash write command (address = 0x%08x, code = 0x%02x)", flash_addr, data));
+		switch (data) {
+		case FLASH_INT_ID:
+		case FLASH_READ_ARRAY:
+		case FLASH_ERASE_SETUP:
+		case FLASH_ERASE_SUSP:
+		case FLASH_PROG_SETUP:
+			BX_MEM_THIS flash_wsm_state = data;
+			break;
+		case FLASH_READ_STATUS:
+			if (BX_MEM_THIS flash_wsm_state != FLASH_ERASE) {
+				BX_MEM_THIS flash_wsm_state = data;
+			}
+			break;
+		case FLASH_CLR_STATUS:
+			BX_MEM_THIS flash_status &= ~0x38;
+			BX_MEM_THIS flash_wsm_state = FLASH_READ_ARRAY;
+			break;
+		case FLASH_ERASE:
+			if (BX_MEM_THIS flash_wsm_state == FLASH_ERASE_SETUP) {
+				BX_MEM_THIS flash_status &= ~0xc0;
+				BX_MEM_THIS flash_wsm_state = FLASH_ERASE;
+				if ((BX_MEM_THIS flash_type == 1) &&
+					((flash_addr == 0x1c000) || (flash_addr == 0x1d000))) {
+					for (i = 0; i < 0x1000; i++) {
+						BX_MEM_THIS rom[addr + i] = 0xff;
+					}
+					BX_MEM_THIS flash_modified = true;
+				}
+				else if ((BX_MEM_THIS flash_type == 2) &&
+					((flash_addr == 0x38000) || (flash_addr == 0x3a000))) {
+					for (i = 0; i < 0x2000; i++) {
+						BX_MEM_THIS rom[addr + i] = 0xff;
+					}
+					BX_MEM_THIS flash_modified = true;
+				}
+			}
+			else if (BX_MEM_THIS flash_wsm_state == FLASH_ERASE_SUSP) {
+				BX_MEM_THIS flash_status &= ~0x40;
+				BX_MEM_THIS flash_wsm_state = FLASH_ERASE;
+			}
+			else {
+				//BX_DEBUG(("flash_write(): unexpected ERASE CONFIRM / ERASE RESUME"));
+			}
+			break;
+		default:
+			//BX_DEBUG(("flash_write(): unsupported code 0x%02x", data));
+			break;
+		}
+	}
+}

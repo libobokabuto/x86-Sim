@@ -47,6 +47,8 @@ public:
 			bx_pc_system.countdownEvent();
 		}
 	}
+	int register_timer_ticks(void* this_ptr, bx_timer_handler_t, Bit64u ticks,
+		bool continuous, bool active, const char* id);
 	void activate_timer_ticks(unsigned index, Bit64u instructions, bool continuous); //125
 	bool enable_a20; //157
 	bx_phy_address a20_mask; //166

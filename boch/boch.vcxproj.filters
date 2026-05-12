@@ -159,6 +159,15 @@
     <ClCompile Include="cet.cc">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="apic.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="svm.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="vmexit.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bochs.h">
@@ -303,6 +312,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="stack.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="scalar_arith.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

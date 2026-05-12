@@ -15,6 +15,7 @@ const Bit64u BX_PHY_ADDRESS_RESERVED_BITS = (~BX_PHY_ADDRESS_MASK); //33
 #define ESP (BX_CPU_THIS_PTR gen_reg[4].dword.erx) //76
 #define EDI (BX_CPU_THIS_PTR gen_reg[7].dword.erx) //79
 #define EIP (BX_CPU_THIS_PTR gen_reg[BX_32BIT_REG_EIP].dword.erx) //82行
+#define RAX (BX_CPU_THIS_PTR gen_reg[0].rrx) //89
 #define RCX (BX_CPU_THIS_PTR gen_reg[1].rrx) //90
 #define RSP (BX_CPU_THIS_PTR gen_reg[4].rrx) //93
 #define RDI (BX_CPU_THIS_PTR gen_reg[7].rrx) //96
@@ -58,6 +59,11 @@ const Bit64u BX_PHY_ADDRESS_RESERVED_BITS = (~BX_PHY_ADDRESS_MASK); //33
   else \
     BX_CPU_THIS_PTR gen_reg[(index)-4].word.byte.rh = val; \
 }
+
+#define BX_WRITE_32BIT_REGZ(index, val) {\
+  BX_CPU_THIS_PTR gen_reg[index].rrx = (Bit32u) val; \
+}//167-169
+
 #define BX_CLEAR_64BIT_HIGH(index) {\
   BX_CPU_THIS_PTR gen_reg[index].dword.hrx = 0; \
 } //174-176行 
@@ -73,9 +79,18 @@ const Bit64u BX_PHY_ADDRESS_RESERVED_BITS = (~BX_PHY_ADDRESS_MASK); //33
 #define BX_CPU_ID (0)
 #endif
 
-enum AccessReason {
-BX_VMX_VAPIC_ACCESS,
+enum BX_Instr_TLBControl {
+    BX_INSTR_MOV_CR0 = 10,
+    BX_INSTR_MOV_CR3 = 11,
+    BX_INSTR_MOV_CR4 = 12,
+    BX_INSTR_TASK_SWITCH = 13,
+    BX_INSTR_CONTEXT_SWITCH = 14,
+    BX_INSTR_INVLPG = 15,
+    BX_INSTR_INVEPT = 16,
+    BX_INSTR_INVVPID = 17,
+    BX_INSTR_INVPCID = 18
 };
+
 enum BX_Instr_Branch {  //249
     BX_INSTR_IS_JMP = 10,
     BX_INSTR_IS_JMP_INDIRECT = 11,
@@ -89,6 +104,49 @@ enum BX_Instr_Branch {  //249
     BX_INSTR_IS_SYSENTER = 19,
     BX_INSTR_IS_SYSEXIT = 20,
     BX_INSTR_IS_UIRET = 21
+};
+
+enum AccessReason {
+    BX_ACCESS_REASON_NOT_SPECIFIED = 0,
+    BX_PDPTR0_ACCESS = 1,
+    BX_PDPTR1_ACCESS,
+    BX_PDPTR2_ACCESS,
+    BX_PDPTR3_ACCESS,
+    BX_NESTED_PDPTR0_ACCESS,
+    BX_NESTED_PDPTR1_ACCESS,
+    BX_NESTED_PDPTR2_ACCESS,
+    BX_NESTED_PDPTR3_ACCESS,
+    BX_PTE_ACCESS,
+    BX_PDE_ACCESS,
+    BX_PDTE_ACCESS,
+    BX_PML4E_ACCESS,
+    BX_PML5E_ACCESS,
+    BX_NESTED_PTE_ACCESS,
+    BX_NESTED_PDE_ACCESS,
+    BX_NESTED_PDTE_ACCESS,
+    BX_NESTED_PML4E_ACCESS,
+    BX_NESTED_PML5E_ACCESS,
+    BX_EPT_PTE_ACCESS,
+    BX_EPT_PDE_ACCESS,
+    BX_EPT_PDTE_ACCESS,
+    BX_EPT_PML4E_ACCESS,
+    BX_EPT_PML5E_ACCESS, // place holder
+    BX_EPT_SPP_PTE_ACCESS,
+    BX_EPT_SPP_PDE_ACCESS,
+    BX_EPT_SPP_PDTE_ACCESS,
+    BX_EPT_SPP_PML4E_ACCESS,
+    BX_VMCS_ACCESS,
+    BX_SHADOW_VMCS_ACCESS,
+    BX_MSR_BITMAP_ACCESS,
+    BX_IO_BITMAP_ACCESS,
+    BX_VMREAD_BITMAP_ACCESS,
+    BX_VMWRITE_BITMAP_ACCESS,
+    BX_VMX_LOAD_MSR_ACCESS,
+    BX_VMX_STORE_MSR_ACCESS,
+    BX_VMX_VAPIC_ACCESS,
+    BX_VMX_PML_WRITE,
+    BX_VMX_PID,
+    BX_SMRAM_ACCESS
 };
 
 enum BX_Exception {
@@ -115,17 +173,31 @@ enum BX_Exception {
     BX_SX_EXCEPTION = 30  // SVM Security Exception (fault)
 };
 
+
+enum CP_Exception_Error_Code {  //341
+    BX_CP_NEAR_RET = 1,
+    BX_CP_FAR_RET_IRET = 2,
+    BX_CP_ENDBRANCH = 3,
+    BX_CP_RSTORSSP = 4,
+    BX_CP_SETSSBSY = 5
+};
+
 const unsigned BX_CPU_HANDLED_EXCEPTIONS = 32; //349
 
 enum ExceptionClass {
     //351
+    BX_EXCEPTION_CLASS_TRAP = 0,
     BX_EXCEPTION_CLASS_FAULT = 1,
+    BX_EXCEPTION_CLASS_ABORT = 2
 };
 enum BxCpuMode {
-    BX_MODE_IA32_REAL = 0,
-    BX_MODE_IA32_V8086 = 1,
-    BX_MODE_IA32_PROTECTED = 2,
-    BX_MODE_LONG_64 = 4           // EFER.LMA = 1, CR0.PE=1, CS.L=1,362行
+    
+    BX_MODE_IA32_REAL = 0,        // CR0.PE=0                |
+    BX_MODE_IA32_V8086 = 1,       // CR0.PE=1, EFLAGS.VM=1   | EFER.LMA=0
+    BX_MODE_IA32_PROTECTED = 2,   // CR0.PE=1, EFLAGS.VM=0   |
+    BX_MODE_LONG_COMPAT = 3,      // EFER.LMA = 1, CR0.PE=1, CS.L=0
+    BX_MODE_LONG_64 = 4           // EFER.LMA = 1, CR0.PE=1, CS.L=1
+
 };
 
 const unsigned BX_MSR_MAX_INDEX = 0x1000; //365
@@ -139,6 +211,16 @@ BX_CPP_INLINE bool IsCanonicalToWidth(bx_address addr, unsigned LIN_ADDRESS_WIDT
 BX_CPP_INLINE bool IsCanonical48(bx_address addr) { return IsCanonicalToWidth(addr, 48); }
 BX_CPP_INLINE bool IsCanonical57(bx_address addr) { return IsCanonicalToWidth(addr, 57); }
 #endif
+
+BX_CPP_INLINE bool IsValidPhyAddr(bx_phy_address addr)
+{
+    return ((addr & BX_PHY_ADDRESS_RESERVED_BITS) == 0);
+}
+
+BX_CPP_INLINE bool IsValidPageAlignedPhyAddr(bx_phy_address addr)
+{
+    return ((addr & (BX_PHY_ADDRESS_RESERVED_BITS | 0xfff)) == 0);
+}
 
 const Bit32u CACHE_LINE_SIZE = 64;
 
@@ -309,8 +391,33 @@ BOCHSAPI extern BX_CPU_C  bx_cpu;         //465行
   BX_DBG_LIN_MEMORY_ACCESS(BX_CPU_ID, (laddr), (paddr), (size), (memtype), (rw), (dataptr)); \
 }  //472
 
-const Bit32u EFlagsIFMask = (1 << 9); //607
-const Bit32u EFlagsRFMask = (1 << 16); //612行
+const Bit32u EFlagsCFMask = (1 << 0);
+const Bit32u EFlagsPFMask = (1 << 2);
+const Bit32u EFlagsAFMask = (1 << 4);
+const Bit32u EFlagsZFMask = (1 << 6);
+const Bit32u EFlagsSFMask = (1 << 7);
+const Bit32u EFlagsTFMask = (1 << 8);
+const Bit32u EFlagsIFMask = (1 << 9);
+const Bit32u EFlagsDFMask = (1 << 10);
+const Bit32u EFlagsOFMask = (1 << 11);
+const Bit32u EFlagsIOPLMask = (3 << 12);
+const Bit32u EFlagsNTMask = (1 << 14);
+const Bit32u EFlagsRFMask = (1 << 16);
+const Bit32u EFlagsVMMask = (1 << 17);
+const Bit32u EFlagsACMask = (1 << 18);
+const Bit32u EFlagsVIFMask = (1 << 19);
+const Bit32u EFlagsVIPMask = (1 << 20);
+const Bit32u EFlagsIDMask = (1 << 21);
+
+const Bit32u EFlagsOSZAPCMask = \
+(EFlagsCFMask | EFlagsPFMask | EFlagsAFMask | EFlagsZFMask | EFlagsSFMask | EFlagsOFMask);
+
+const Bit32u EFlagsOSZAPMask = \
+(EFlagsPFMask | EFlagsAFMask | EFlagsZFMask | EFlagsSFMask | EFlagsOFMask);
+
+const Bit32u EFlagsValidMask = 0x003f7fd5; // only supported bits for EFLAGS
+
+
 #if BX_SUPPORT_FPU
 #include "i387.h"
 #endif
@@ -505,7 +612,10 @@ struct monitor_addr_t {
 
     bx_phy_address monitor_addr;
     unsigned armed_by;
+    BX_CPP_INLINE void reset_monitor(void) { armed_by = BX_MONITOR_NOT_ARMED; }
     BX_CPP_INLINE bool armed(void) const { return armed_by != BX_MONITOR_NOT_ARMED; }
+
+
 };
 #endif
 #if BX_DEBUGGER
@@ -532,6 +642,7 @@ typedef enum dbg_show_flags_t {
     Flag_mode = 0x20,
 } dbg_show_flags_t;
 #endif //882
+struct bx_cpu_statistics;
 class bx_cpuid_t; //887行
 
 class BOCHSAPI BX_CPU_C{ //889-5377行
@@ -559,7 +670,7 @@ public:
 
 	BX_CPU_C(unsigned id = 0);
 	~BX_CPU_C();
-    BX_SMF BX_CPP_INLINE unsigned get_ZF(void) { return BX_CPU_THIS_PTR oszapc.result == 0; }
+    
     bx_gen_reg_t gen_reg[BX_GENERAL_REGISTERS + 4]; //930行
 
     Bit32u eflags;//940行
@@ -572,6 +683,7 @@ public:
     bool    speculative_rsp;//953
 
     Bit64u icount;
+    Bit64u icount_last_sync;
 
 #define BX_INHIBIT_INTERRUPTS        0x01
 #define BX_INHIBIT_DEBUG             0x02
@@ -605,6 +717,7 @@ public:
     unsigned linaddr_width;
 #endif
     bx_efer_t efer; //996
+    Bit32u efer_suppmask;
 #endif
 
 #if BX_CPU_LEVEL >= 5  //1000
@@ -618,12 +731,21 @@ public:
     Bit64s tsc_offset;
 #endif
 #endif
+
+#if BX_CPU_LEVEL >= 6
+    xcr0_t xcr0;
+    Bit32u xcr0_suppmask, ia32_xss_suppmask;
+#endif
+
 #if BX_SUPPORT_MONITOR_MWAIT
     monitor_addr_t monitor;
 #endif
 #if BX_SUPPORT_APIC //1085
     bx_local_apic_c *lapic;
 #endif
+
+    Bit32u smbase;  //1090
+
 #if BX_CPU_LEVEL >= 5//1092
     bx_regs_msr_t msr;
 #endif
@@ -634,13 +756,19 @@ public:
 #if BX_SUPPORT_VMX //1104
     bool in_vmx;
     bool in_vmx_guest;
-
+    bx_hostpageaddr_t vmcshostptr;
+#if BX_SUPPORT_MEMTYPE
+    BxMemtype vmcs_memtype;
+#endif
     VMCS_CACHE vmcs; //1116
     VMX_CAP vmx_cap;
     VMCS_Mapping* vmcs_map; //118
 #endif
 #if BX_SUPPORT_SVM//1121
     bool in_svm_guest; //1122
+    bool svm_gif;
+    bx_phy_address  vmcbptr;
+    bx_hostpageaddr_t vmcbhostptr;
     VMCB_CACHE* vmcb;
 #else//1134
 #endif//1138
@@ -688,7 +816,10 @@ public:
     Bit32u  pending_event;//1180行
     Bit32u  event_mask;
     Bit32u  async_event; //1182
-
+    BX_SMF BX_CPP_INLINE void signal_event(Bit32u event) {  //1184
+        BX_CPU_THIS_PTR pending_event |= event;
+        if (!is_masked_event(event)) BX_CPU_THIS_PTR async_event = 1;
+    }
     BX_SMF BX_CPP_INLINE void clear_event(Bit32u event) { //1189行
         BX_CPU_THIS_PTR pending_event &= ~event;
     }
@@ -699,6 +830,11 @@ public:
         BX_CPU_THIS_PTR event_mask &= ~event;
         if (is_pending(event)) BX_CPU_THIS_PTR async_event = 1;
     }
+
+    BX_SMF BX_CPP_INLINE bool is_masked_event(Bit32u event) {
+        return (BX_CPU_THIS_PTR event_mask & event) != 0;
+    }
+
     BX_SMF BX_CPP_INLINE bool is_pending(Bit32u event) { //1205
         return (BX_CPU_THIS_PTR pending_event & event) != 0;
     }
@@ -707,6 +843,31 @@ public:
     unsigned cpu_mode;//1219行
 	bool  user_pl; //1220行
     Bit32u cpu_state_use_ok;//1225行
+
+    BX_SMF void set_fpu_mmx_ok();
+    BX_SMF void clear_fpu_mmx_ok();
+    BX_SMF bool get_fpu_mmx_ok();
+
+    BX_SMF void set_sse_ok();
+    BX_SMF void clear_sse_ok();
+    BX_SMF bool get_sse_ok();
+
+    BX_SMF void set_avx_ok();
+    BX_SMF void clear_avx_ok();
+    BX_SMF bool get_avx_ok();
+
+    BX_SMF void set_opmask_ok();
+    BX_SMF void clear_opmask_ok();
+    BX_SMF bool get_opmask_ok();
+
+    BX_SMF void set_evex_ok();
+    BX_SMF void clear_evex_ok();
+    BX_SMF bool get_evex_ok();
+
+    BX_SMF void set_amx_ok();
+    BX_SMF void clear_amx_ok();
+    BX_SMF bool get_amx_ok();
+
     static jmp_buf jmp_buf_env; //1252
     unsigned last_exception_type; //1253
     // Boundaries of current code page, based on EIP
@@ -727,8 +888,11 @@ public:
 #if BX_CPU_LEVEL >= 4 && BX_SUPPORT_ALIGNMENT_CHECK  //1267
     unsigned alignment_check_mask;
 #endif
+    bx_cpu_statistics *stats;
+
 #if BX_DEBUGGER
     Bit8u stop_reason;
+    bool mode_break;
 #if BX_SUPPORT_VMX || BX_SUPPORT_SVM
     bool vmexit_break;//1294
 #endif
@@ -783,9 +947,57 @@ public:
 #endif
     } address_xlation;
 
+    BX_SMF void setEFlags(Bit32u val) BX_CPP_AttrRegparmN(1); //1359
+
+    BX_SMF BX_CPP_INLINE void setEFlagsOSZAPC(Bit32u flags32) {
+        set_OF(1 & ((flags32) >> 11));
+        set_SF(1 & ((flags32) >> 7));
+        set_ZF(1 & ((flags32) >> 6));
+        set_AF(1 & ((flags32) >> 4));
+        set_PF(1 & ((flags32) >> 2));
+        set_CF(1 & ((flags32) >> 0));
+    }
+
     BX_SMF BX_CPP_INLINE void clearEFlagsOSZAPC(void) {
         SET_FLAGS_OSZAPC_LOGIC_32(1);
     }
+
+    BX_SMF BX_CPP_INLINE unsigned getB_OF(void) { return BX_CPU_THIS_PTR oszapc.getB_OF(); }
+    BX_SMF BX_CPP_INLINE unsigned get_OF(void) { return BX_CPU_THIS_PTR oszapc.get_OF(); }
+    BX_SMF BX_CPP_INLINE void set_OF(bool val) { BX_CPU_THIS_PTR oszapc.set_OF(val); }
+    BX_SMF BX_CPP_INLINE void clear_OF(void) { BX_CPU_THIS_PTR oszapc.clear_OF(); }
+    BX_SMF BX_CPP_INLINE void assert_OF(void) { BX_CPU_THIS_PTR oszapc.assert_OF(); }
+
+    BX_SMF BX_CPP_INLINE unsigned getB_SF(void) { return BX_CPU_THIS_PTR oszapc.getB_SF(); }
+    BX_SMF BX_CPP_INLINE unsigned get_SF(void) { return BX_CPU_THIS_PTR oszapc.get_SF(); }
+    BX_SMF BX_CPP_INLINE void set_SF(bool val) { BX_CPU_THIS_PTR oszapc.set_SF(val); }
+    BX_SMF BX_CPP_INLINE void clear_SF(void) { BX_CPU_THIS_PTR oszapc.clear_SF(); }
+    BX_SMF BX_CPP_INLINE void assert_SF(void) { BX_CPU_THIS_PTR oszapc.assert_SF(); }
+
+    BX_SMF BX_CPP_INLINE unsigned getB_ZF(void) { return BX_CPU_THIS_PTR oszapc.getB_ZF(); }
+    BX_SMF BX_CPP_INLINE unsigned get_ZF(void) { return BX_CPU_THIS_PTR oszapc.get_ZF(); }
+    BX_SMF BX_CPP_INLINE void set_ZF(bool val) { BX_CPU_THIS_PTR oszapc.set_ZF(val); }
+    BX_SMF BX_CPP_INLINE void clear_ZF(void) { BX_CPU_THIS_PTR oszapc.clear_ZF(); }
+    BX_SMF BX_CPP_INLINE void assert_ZF(void) { BX_CPU_THIS_PTR oszapc.assert_ZF(); }
+
+    BX_SMF BX_CPP_INLINE unsigned getB_AF(void) { return BX_CPU_THIS_PTR oszapc.getB_AF(); }
+    BX_SMF BX_CPP_INLINE unsigned get_AF(void) { return BX_CPU_THIS_PTR oszapc.get_AF(); }
+    BX_SMF BX_CPP_INLINE void set_AF(bool val) { BX_CPU_THIS_PTR oszapc.set_AF(val); }
+    BX_SMF BX_CPP_INLINE void clear_AF(void) { BX_CPU_THIS_PTR oszapc.clear_AF(); }
+    BX_SMF BX_CPP_INLINE void assert_AF(void) { BX_CPU_THIS_PTR oszapc.assert_AF(); }
+
+    BX_SMF BX_CPP_INLINE unsigned getB_PF(void) { return BX_CPU_THIS_PTR oszapc.getB_PF(); }
+    BX_SMF BX_CPP_INLINE unsigned get_PF(void) { return BX_CPU_THIS_PTR oszapc.get_PF(); }
+    BX_SMF BX_CPP_INLINE void set_PF(bool val) { BX_CPU_THIS_PTR oszapc.set_PF(val); }
+    BX_SMF BX_CPP_INLINE void clear_PF(void) { BX_CPU_THIS_PTR oszapc.clear_PF(); }
+    BX_SMF BX_CPP_INLINE void assert_PF(void) { BX_CPU_THIS_PTR oszapc.assert_PF(); }
+
+    BX_SMF BX_CPP_INLINE unsigned getB_CF(void) { return BX_CPU_THIS_PTR oszapc.getB_CF(); }
+    BX_SMF BX_CPP_INLINE unsigned get_CF(void) { return BX_CPU_THIS_PTR oszapc.get_CF(); }
+    BX_SMF BX_CPP_INLINE void set_CF(bool val) { BX_CPU_THIS_PTR oszapc.set_CF(val); }
+    BX_SMF BX_CPP_INLINE void clear_CF(void) { BX_CPU_THIS_PTR oszapc.clear_CF(); }
+    BX_SMF BX_CPP_INLINE void assert_CF(void) { BX_CPU_THIS_PTR oszapc.assert_CF(); }
+
 	void initialize(void);
 	BX_SMF void cpu_loop(void);
     void init_statistics(void);//1416
@@ -3314,7 +3526,7 @@ public:
 
     BX_SMF void CMPXCHG8B(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void RETnear32_Iw(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
-    BX_SMF void RETnear16_Iw(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void RETnear16_Iw(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void RETfar32_Iw(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void RETfar16_Iw(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
 
@@ -3812,6 +4024,10 @@ public:
     //4442 <TAG-CLASS-CPU-END>
 #endif
 
+#if BX_LARGE_RAMFILE
+    BX_SMF bool check_addr_in_tlb_buffers(const Bit8u* addr, const Bit8u* end);
+#endif
+
     BX_SMF void boundaryFetch(const Bit8u* fetchPtr, unsigned remainingInPage, bxInstruction_c*);//4488
 
     BX_SMF bxICacheEntry_c* serveICacheMiss(Bit32u eipBiased, bx_phy_address pAddr);//4490行
@@ -3835,22 +4051,67 @@ public:
     BX_SMF void write_virtual_word(unsigned seg, bx_address offset, Bit16u data) BX_CPP_AttrRegparmN(3); //4587
 	BX_SMF bxICacheEntry_c* getICacheEntry(void);
     BX_SMF void stack_write_word(bx_address offset, Bit16u data) BX_CPP_AttrRegparmN(2); //4635
-#if BX_SUPPORT_CET
+    BX_SMF Bit16u stack_read_word(bx_address offset) BX_CPP_AttrRegparmN(1);  //4640
+#if BX_SUPPORT_CET  //4644
     BX_SMF void shadow_stack_write_dword(bx_address offset, unsigned curr_pl, Bit32u data) BX_CPP_AttrRegparmN(3); //4645
-#endif
+    BX_SMF Bit32u shadow_stack_read_dword(bx_address offset, unsigned curr_pl) BX_CPP_AttrRegparmN(2); //4648
+#endif//4654
     BX_SMF void stackPrefetch(bx_address offset, unsigned len) BX_CPP_AttrRegparmN(2); //4656
     BX_SMF Bit64u system_read_qword(bx_address laddr) BX_CPP_AttrRegparmN(1); //4662
     BX_SMF void system_write_byte(bx_address laddr, Bit8u data) BX_CPP_AttrRegparmN(2); //4664
     BX_SMF void repeat(bxInstruction_c* i, BxRepIterationPtr_tR execute) BX_CPP_AttrRegparmN(2); //4696
     BX_SMF int access_read_linear(bx_address laddr, unsigned len, unsigned curr_pl, unsigned xlate_rw, Bit32u ac_mask, void* data); //4700
     BX_SMF int access_write_linear(bx_address laddr, unsigned len, unsigned curr_pl, unsigned xlate_rw, Bit32u ac_mask, void* data); //4701
+    BX_SMF void page_fault(unsigned fault, bx_address laddr, unsigned user, unsigned rw);
+
+    BX_SMF Bit32u read_physical_dword(bx_phy_address paddr, BxMemtype memtype, AccessReason reason); //4707
     BX_SMF Bit64u read_physical_qword(bx_phy_address paddr, BxMemtype memtype, AccessReason reason); //4708
     BX_SMF void access_read_physical(bx_phy_address paddr, unsigned len, void* data);
     BX_SMF void access_write_physical(bx_phy_address paddr, unsigned len, void* data); //4710
+    BX_SMF void write_physical_byte(bx_phy_address paddr, Bit8u val_8, BxMemtype memtype, AccessReason reason); //4711
+    BX_SMF void write_physical_word(bx_phy_address paddr, Bit16u val_16, BxMemtype memtype, AccessReason reason);
+    BX_SMF void write_physical_dword(bx_phy_address paddr, Bit32u val_32, BxMemtype memtype, AccessReason reason); //4713
+    BX_SMF void write_physical_qword(bx_phy_address paddr, Bit64u val_64, BxMemtype memtype, AccessReason reason);//4714
     BX_SMF bx_hostpageaddr_t getHostMemAddr(bx_phy_address addr, unsigned rw);//4716行
     BX_SMF bx_phy_address translate_linear(bx_TLB_entry* entry, bx_address laddr, unsigned user, unsigned rw);//4719行
+    BX_SMF bx_phy_address translate_linear_legacy(bx_address laddr, Bit32u& lpf_mask, unsigned user, unsigned rw);//4720
+    BX_SMF void update_access_dirty(bx_phy_address* entry_addr, Bit32u* entry, BxMemtype* entry_memtype, unsigned leaf, unsigned write); //4721
+    BX_SMF Bit32u check_leaf_entry_faults(bx_address laddr, Bit64u leaf_entry, Bit32u combined_access, unsigned user, unsigned rw, bool nx_page = false); //4722
+#if BX_CPU_LEVEL >= 6
+    BX_SMF bx_phy_address translate_linear_load_PDPTR(bx_address laddr, unsigned user, unsigned rw);
+    BX_SMF bx_phy_address translate_linear_PAE(bx_address laddr, Bit32u& lpf_mask, unsigned user, unsigned rw);
+    BX_SMF int check_entry_PAE(const char* s, int leaf, Bit64u entry, Bit64u reserved, unsigned rw, bool* nx_page);
+    BX_SMF void update_access_dirty_PAE(bx_phy_address* entry_addr, Bit64u* entry, BxMemtype* entry_memtype, unsigned max_level, unsigned leaf, unsigned write);
+#endif
+#if BX_SUPPORT_X86_64 //4729
+    BX_SMF bx_phy_address translate_linear_long_mode(bx_address laddr, Bit32u& lpf_mask, Bit32u& pkey, unsigned user, unsigned rw);
+#if BX_SUPPORT_PKEYS
+    BX_SMF Bit32u handle_pkeys(bx_address laddr, Bit64u entry, unsigned user, unsigned rw);
+#endif
+#endif//4734
     BX_SMF bx_phy_address translate_guest_physical(bx_phy_address guest_paddr, bx_address guest_laddr, bool guest_laddr_valid, bool is_page_walk,
         bool user_page, bool writeable_page, bool nx_page, unsigned rw, bool supervisor_shadow_stack = false, bool* spp_walk = NULL); //4736
+
+#if BX_SUPPORT_VMX >= 2 //4735
+    
+    BX_SMF void update_ept_access_dirty(bx_phy_address* entry_addr, Bit64u* entry, BxMemtype eptptr_memtype, unsigned leaf, unsigned write);
+    BX_SMF bool is_eptptr_valid(Bit64u eptptr);
+    BX_SMF bool spp_walk(bx_phy_address guest_paddr, bx_address guest_laddr, BxMemtype memtype);
+#endif
+
+#if BX_SUPPORT_SVM   
+    BX_SMF void nested_page_fault(unsigned fault, bx_phy_address guest_paddr, unsigned rw, unsigned is_page_walk);
+    BX_SMF bx_phy_address nested_walk_long_mode(bx_phy_address guest_paddr, unsigned rw, bool is_page_walk);
+    BX_SMF bx_phy_address nested_walk_PAE(bx_phy_address guest_paddr, unsigned rw, bool is_page_walk);
+    BX_SMF bx_phy_address nested_walk_legacy(bx_phy_address guest_paddr, unsigned rw, bool is_page_walk);
+    BX_SMF bx_phy_address nested_walk(bx_phy_address guest_paddr, unsigned rw, bool is_page_walk);//4747
+#endif
+#if BX_SUPPORT_MEMTYPE
+    BX_SMF BxMemtype memtype_by_mtrr(bx_phy_address paddr) BX_CPP_AttrRegparmN(1);
+    BX_SMF BxMemtype memtype_by_pat(unsigned pat) BX_CPP_AttrRegparmN(1);
+    BX_SMF BxMemtype resolve_memtype(BxMemtype mtrr_memtype, BxMemtype pat_memtype = BX_MEMTYPE_WB) BX_CPP_AttrRegparmN(2);
+#endif
+
     BX_SMF void TLB_flush(void); //4758
     BX_SMF void inhibit_interrupts(unsigned mask); //4760
     BX_SMF bool interrupts_inhibited(unsigned mask); //4761
@@ -3863,29 +4124,54 @@ public:
     BX_SMF int  int_number(unsigned s); //4774
     BX_SMF bool check_CR0(bx_address val) BX_CPP_AttrRegparmN(1);//4777
     BX_SMF bool check_CR4(bx_address val) BX_CPP_AttrRegparmN(1); //4781
+    BX_SMF Bit32u get_cr4_allow_mask(void);  //4782
 #if BX_CPU_LEVEL >= 6   //4784
     BX_SMF bool CheckPDPTR(bx_phy_address cr3_val) BX_CPP_AttrRegparmN(1);
 #endif
+#if BX_SUPPORT_VMX >= 2 //4787
+    BX_SMF bool CheckPDPTR(const Bit64u* pdptr) BX_CPP_AttrRegparmN(1);
+#endif
+#if BX_CPU_LEVEL >= 5
+    BX_SMF Bit32u get_efer_allow_mask(void);  //4792
+#endif
     BX_SMF void reset(unsigned source); //4804
+    BX_SMF void shutdown(void);
+    BX_SMF void enter_sleep_state(unsigned state); //4806
+    BX_SMF void handleCpuModeChange(void);
     BX_SMF void handleCpuContextChange(void);//4808
     BX_SMF void handleInterruptMaskChange(void);
 #if BX_CPU_LEVEL >= 4
     BX_SMF void handleAlignmentCheck(void);
 #endif
+#if BX_CPU_LEVEL >= 6
+    BX_SMF void handleAvxModeChange(void);
+#endif
     BX_SMF void jump_protected(bxInstruction_c* i, Bit16u cs, bx_address disp) BX_CPP_AttrRegparmN(3);//4872
+    BX_SMF Bit32u force_flags(void);//4913
+    BX_SMF Bit32u read_eflags(void) { return BX_CPU_THIS_PTR force_flags(); } //4914
+    BX_SMF Bit32u  get_descriptor_h(const bx_descriptor_t*) BX_CPP_AttrRegparmN(1); //4918
     BX_SMF void    touch_segment(bx_selector_t* selector, bx_descriptor_t* descriptor) BX_CPP_AttrRegparmN(2);//4925
     BX_SMF void    fetch_raw_descriptor(const bx_selector_t* selector,
         Bit32u* dword1, Bit32u* dword2, unsigned exception_no); //4927
     BX_SMF void    load_seg_reg(bx_segment_reg_t* seg, Bit16u new_value) BX_CPP_AttrRegparmN(2); //4930
     BX_SMF void    load_null_selector(bx_segment_reg_t* seg, unsigned value) BX_CPP_AttrRegparmN(2); //4931
     BX_SMF void    push_16(Bit16u value16) BX_CPP_AttrRegparmN(1); //4938
+    BX_SMF Bit16u  pop_16(void);
 #if BX_SUPPORT_CET //4946
     BX_SMF void    shadow_stack_push_32(Bit32u value32) BX_CPP_AttrRegparmN(1); //4947
+    BX_SMF Bit32u  shadow_stack_pop_32(void); //4948
 #endif  //4952
+    BX_SMF void    deliver_INIT(void);//4963
+    BX_SMF void    deliver_NMI(void);
+    BX_SMF void    deliver_SMI(void);
+    BX_SMF void    deliver_SIPI(unsigned vector);
     BX_SMF void branch_near16(Bit16u new_IP) BX_CPP_AttrRegparmN(1);
     BX_SMF void jmp_far32(bxInstruction_c* i, Bit16u cs_raw, Bit32u disp32);
+#if BX_X86_DEBUGGER
+    BX_SMF bool hwbreakpoint_check(bx_address laddr, unsigned opa, unsigned opb); //4976
     BX_SMF void    hwbreakpoint_match(bx_address laddr, unsigned len, unsigned rw); //4981
     BX_SMF Bit32u  hwdebug_compare(bx_address laddr, unsigned len, unsigned opa, unsigned opb); //4982
+#endif
     BX_SMF void init_FetchDecodeTables(void); //4985
     BX_SMF int  assignHandler(bxInstruction_c* i, Bit32u fetchModeMask); //4986
     BX_SMF BX_CPP_INLINE bool is_cpu_extension_supported(unsigned extension) {
@@ -3925,9 +4211,13 @@ public:
 #if BX_SUPPORT_ALIGNMENT_CHECK && BX_CPU_LEVEL >= 4  //5085
     BX_SMF BX_CPP_INLINE bool alignment_check(void);
 #endif
-
+#if BX_CPU_LEVEL >= 5 //5089
+    BX_SMF void   set_TSC(Bit64u tsc);//509
+#endif //5096
 #if BX_CPU_LEVEL >= 6    //5129
     BX_SMF void xsave_xrestor_init(void); //5130
+    BX_SMF Bit32u get_xcr0_allow_mask(void);
+    BX_SMF Bit32u get_ia32_xss_allow_mask(void);
     BX_SMF bool xsave_x87_state_xinuse(void); //5135
     BX_SMF void xsave_x87_state(bxInstruction_c* i, bx_address offset);
     BX_SMF void xrstor_x87_state(bxInstruction_c* i, bx_address offset);
@@ -4004,6 +4294,10 @@ public:
 #if BX_SUPPORT_CET
     BX_SMF bool ShadowStackEnabled(unsigned cpl) BX_CPP_AttrRegparmN(1);
 #endif
+#if BX_SUPPORT_MONITOR_MWAIT
+    BX_SMF void wakeup_monitor(void);
+#endif
+#if BX_SUPPORT_VMX //5225
     BX_SMF Bit32u VMread32(unsigned encoding) BX_CPP_AttrRegparmN(1); //5227
     BX_SMF void VMabort(VMX_vmabort_code error_code); //5245
     BX_SMF Bit32u LoadMSRs(Bit32u msr_cnt, bx_phy_address pAddr); //5247
@@ -4029,11 +4323,38 @@ public:
     BX_SMF void init_secondary_vmexit_ctrls(void);
     BX_SMF void init_vmentry_ctrls(void);//5271
     BX_SMF void init_VMCS(void);//5272
-#if BX_SUPPORT_X86_64
+#if BX_SUPPORT_X86_64 //5278
     BX_SMF bool is_virtual_apic_page(bx_phy_address paddr) BX_CPP_AttrRegparmN(1); //5279
     BX_SMF bool virtual_apic_access_vmexit(unsigned offset, unsigned len) BX_CPP_AttrRegparmN(2);
     BX_SMF bx_phy_address VMX_Virtual_Apic_Read(bx_phy_address paddr, unsigned len, void* data); //5281
+    BX_SMF void VMX_Virtual_Apic_Write(bx_phy_address paddr, unsigned len, void* data); //5282
+    BX_SMF void VMX_Write_Virtual_APIC(unsigned offset, int len, Bit8u* val); //5284
+    BX_SMF void VMX_Write_Virtual_APIC(unsigned offset, Bit32u val32) { VMX_Write_Virtual_APIC(offset, 4, (Bit8u*)(&val32)); }
+    BX_SMF void VMX_Write_Virtual_X2APIC(unsigned offset, Bit64u val64) { VMX_Write_Virtual_APIC(offset, 8, (Bit8u*)(&val64)); }
+#if BX_SUPPORT_VMX >= 2
+    BX_SMF void vmx_page_modification_logging(Bit64u guest_laddr, Bit64u guest_paddr, unsigned dirty_update);
+#endif
+
 #endif//5313
+#if BX_SUPPORT_VMX >= 2
+    BX_SMF void Virtualization_Exception(Bit64u qualification, Bit64u guest_physical, Bit64u guest_linear); //5334
+   
+#endif
+    BX_SMF void VMexit_Event(unsigned type, unsigned vector,
+        Bit16u errcode, bool errcode_valid, Bit64u qualification = 0); //5316
+#endif //5337
+#if BX_SUPPORT_SVM
+    BX_SMF void Svm_Vmexit(int reason, Bit64u exitinfo1 = 0, Bit64u exitinfo2 = 0); //5345
+    BX_SMF void SvmExitSaveGuestState(void);
+    BX_SMF void SvmExitLoadHostState(SVM_HOST_STATE* host); //5346
+    BX_SMF void vmcb_write8(unsigned offset, Bit8u val_8); //5352
+    BX_SMF void vmcb_write16(unsigned offset, Bit16u val_16); //5353
+    BX_SMF void vmcb_write32(unsigned offset, Bit32u val_32); //5354
+    BX_SMF void vmcb_write64(unsigned offset, Bit64u val_64);//5355
+    BX_SMF void svm_segment_write(bx_segment_reg_t* seg, unsigned offset);  //5357
+    BX_SMF void SvmInterceptException(unsigned type, unsigned vector,
+        Bit16u errcode, bool errcode_valid, Bit64u qualification = 0); //5358
+#endif //5367
 #if BX_CPU_LEVEL >= 5 //5369
     void init_MSRs();//5370
     void destroy_MSRs();
@@ -4058,13 +4379,7 @@ BX_CPP_INLINE void BX_CPU_C::invalidate_stack_cache(void)
     BX_CPU_THIS_PTR espPageWindowSize = 0;
 }
 #include "access.h"
-enum {
-    BX_FETCH_MODE_FPU_MMX_OK = (1 << 2),
-    BX_FETCH_MODE_SSE_OK = (1 << 3),
-    BX_FETCH_MODE_AVX_OK = (1 << 4),
-    BX_FETCH_MODE_OPMASK_OK = (1 << 5),
-    BX_FETCH_MODE_EVEX_OK = (1 << 6),
-};
+
 
 #if BX_SUPPORT_X86_64  //5402
 BX_CPP_INLINE Bit64u BX_CPP_AttrRegparmN(1) BX_CPU_C::BxResolve64(bxInstruction_c* i)
@@ -4099,6 +4414,42 @@ BX_CPP_INLINE Bit32u BX_CPP_AttrRegparmN(1) BX_CPU_C::BxResolve32(bxInstruction_
   PRESERVE_RSP;                           \
   PRESERVE_SSP;                           \
 }
+
+enum {
+    BX_FETCH_MODE_IS32_MASK = (1 << 0),
+    BX_FETCH_MODE_IS64_MASK = (1 << 1),
+    BX_FETCH_MODE_FPU_MMX_OK = (1 << 2),
+    BX_FETCH_MODE_SSE_OK = (1 << 3),
+    BX_FETCH_MODE_AVX_OK = (1 << 4),
+    BX_FETCH_MODE_OPMASK_OK = (1 << 5),
+    BX_FETCH_MODE_EVEX_OK = (1 << 6),
+    BX_FETCH_MODE_AMX_OK = (1 << 7)
+};
+
+BX_CPP_INLINE void BX_CPU_C::set_fpu_mmx_ok() { BX_CPU_THIS_PTR cpu_state_use_ok |= BX_FETCH_MODE_FPU_MMX_OK; }
+BX_CPP_INLINE void BX_CPU_C::clear_fpu_mmx_ok() { BX_CPU_THIS_PTR cpu_state_use_ok &= ~BX_FETCH_MODE_FPU_MMX_OK; }
+BX_CPP_INLINE bool BX_CPU_C::get_fpu_mmx_ok() { return (BX_CPU_THIS_PTR cpu_state_use_ok & BX_FETCH_MODE_FPU_MMX_OK); }
+
+BX_CPP_INLINE void BX_CPU_C::set_sse_ok() { BX_CPU_THIS_PTR cpu_state_use_ok |= BX_FETCH_MODE_SSE_OK; }
+BX_CPP_INLINE void BX_CPU_C::clear_sse_ok() { BX_CPU_THIS_PTR cpu_state_use_ok &= ~BX_FETCH_MODE_SSE_OK; }
+BX_CPP_INLINE bool BX_CPU_C::get_sse_ok() { return (BX_CPU_THIS_PTR cpu_state_use_ok & BX_FETCH_MODE_SSE_OK); }
+
+BX_CPP_INLINE void BX_CPU_C::set_avx_ok() { BX_CPU_THIS_PTR cpu_state_use_ok |= BX_FETCH_MODE_AVX_OK; }
+BX_CPP_INLINE void BX_CPU_C::clear_avx_ok() { BX_CPU_THIS_PTR cpu_state_use_ok &= ~(BX_FETCH_MODE_AVX_OK | BX_FETCH_MODE_EVEX_OK | BX_FETCH_MODE_OPMASK_OK); }
+BX_CPP_INLINE bool BX_CPU_C::get_avx_ok() { return (BX_CPU_THIS_PTR cpu_state_use_ok & BX_FETCH_MODE_AVX_OK); }
+
+BX_CPP_INLINE void BX_CPU_C::set_opmask_ok() { BX_CPU_THIS_PTR cpu_state_use_ok |= BX_FETCH_MODE_OPMASK_OK; }
+BX_CPP_INLINE void BX_CPU_C::clear_opmask_ok() { BX_CPU_THIS_PTR cpu_state_use_ok &= ~BX_FETCH_MODE_OPMASK_OK; }
+BX_CPP_INLINE bool BX_CPU_C::get_opmask_ok() { return (BX_CPU_THIS_PTR cpu_state_use_ok & BX_FETCH_MODE_OPMASK_OK); }
+
+BX_CPP_INLINE void BX_CPU_C::set_evex_ok() { BX_CPU_THIS_PTR cpu_state_use_ok |= BX_FETCH_MODE_EVEX_OK; }
+BX_CPP_INLINE void BX_CPU_C::clear_evex_ok() { BX_CPU_THIS_PTR cpu_state_use_ok &= ~BX_FETCH_MODE_EVEX_OK; }
+BX_CPP_INLINE bool BX_CPU_C::get_evex_ok() { return (BX_CPU_THIS_PTR cpu_state_use_ok & BX_FETCH_MODE_EVEX_OK); }
+
+BX_CPP_INLINE void BX_CPU_C::set_amx_ok() { BX_CPU_THIS_PTR cpu_state_use_ok |= BX_FETCH_MODE_AMX_OK; }
+BX_CPP_INLINE void BX_CPU_C::clear_amx_ok() { BX_CPU_THIS_PTR cpu_state_use_ok &= ~BX_FETCH_MODE_AMX_OK; }
+BX_CPP_INLINE bool BX_CPU_C::get_amx_ok() { return (BX_CPU_THIS_PTR cpu_state_use_ok & BX_FETCH_MODE_AMX_OK); }
+
 
 BX_CPP_INLINE void BX_CPU_C::updateFetchModeMask(void)
 {
@@ -4266,18 +4617,34 @@ __forceinline void BX_CPU_C::set_IOPL(Bit32u val) {
 } __forceinline Bit32u BX_CPU_C::get_IOPL() {
     return 3 & ((&bx_cpu)->eflags >> 12);
 } //5837
+IMPLEMENT_EFLAG_ACCESSOR(VM, 17)
+IMPLEMENT_EFLAG_ACCESSOR(RF, 16)
 IMPLEMENT_EFLAG_ACCESSOR(DF, 10)
 IMPLEMENT_EFLAG_ACCESSOR(IF, 9) //5839
+IMPLEMENT_EFLAG_ACCESSOR(TF, 8)
 IMPLEMENT_EFLAG_ACCESSOR(AC, 18)
+
+IMPLEMENT_EFLAG_SET_ACCESSOR(VIF, 19) //5844
+IMPLEMENT_EFLAG_SET_ACCESSOR_VM(17)
 IMPLEMENT_EFLAG_SET_ACCESSOR_RF(16) //5851行
 IMPLEMENT_EFLAG_SET_ACCESSOR(DF, 10) //5853
-IMPLEMENT_EFLAG_SET_ACCESSOR(VIF, 19) //5844
+
 #if BX_SUPPORT_ALIGNMENT_CHECK && BX_CPU_LEVEL >= 4
 IMPLEMENT_EFLAG_SET_ACCESSOR_AC(18)
 #else
 IMPLEMENT_EFLAG_SET_ACCESSOR(AC, 18)
 #endif
 IMPLEMENT_EFLAG_SET_ACCESSOR_IF(9)//5854
+IMPLEMENT_EFLAG_SET_ACCESSOR_TF(8)
+
+enum {
+    BX_EXTERNAL_INTERRUPT = 0,
+    BX_NMI = 2,
+    BX_HARDWARE_EXCEPTION = 3,  // all exceptions except #BP and #OF
+    BX_SOFTWARE_INTERRUPT = 4,
+    BX_PRIVILEGED_SOFTWARE_INTERRUPT = 5,
+    BX_SOFTWARE_EXCEPTION = 6
+};
 
 #define BX_NEXT_TRACE(i) { return; } //5914
 #define BX_NEXT_INSTR(i) { return; }

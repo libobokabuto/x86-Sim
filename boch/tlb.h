@@ -29,15 +29,39 @@ BX_CPP_INLINE bx_address PPFOf(bx_phy_address paddr) { return paddr & PPF_MASK; 
 
 typedef bx_ptr_equiv_t bx_hostpageaddr_t;//64ÐÐ
 
+#if BX_SUPPORT_X86_64
+const bx_address BX_INVALID_TLB_ENTRY = BX_CONST64(0xffffffffffffffff);
+#else
+const bx_address BX_INVALID_TLB_ENTRY = 0xffffffff;
+#endif
+
+const Bit32u TLB_SysReadOK = 0x01;
+const Bit32u TLB_UserReadOK = 0x02;
+const Bit32u TLB_SysWriteOK = 0x04;
+const Bit32u TLB_UserWriteOK = 0x08;
+
+const Bit32u TLB_SysReadShadowStackOK = 0x10;
+const Bit32u TLB_UserReadShadowStackOK = 0x20;
+const Bit32u TLB_SysWriteShadowStackOK = 0x40;
+const Bit32u TLB_UserWriteShadowStackOK = 0x80;
+
+// accessBits in ITLB
+const Bit32u TLB_SysExecuteOK = 0x01;
+const Bit32u TLB_UserExecuteOK = 0x02;
+// global
+const Bit32u TLB_GlobalPage = 0x80000000;
+
 #define isWriteOK(tlbEntry, user) \
   (tlbEntry->accessBits & (0x04 << unsigned(user)))
 
 #define isReadOK(tlbEntry, user) \
   (tlbEntry->accessBits & (0x01 << unsigned(user)))  //116
-
+#if BX_SUPPORT_CET
 #define isShadowStackWriteOK(tlbEntry, user) \
   (tlbEntry->accessBits & (0x40 << unsigned(user)))
-
+#define isShadowStackReadOK(tlbEntry, user) \
+  (tlbEntry->accessBits & (0x10 << unsigned(user)))
+#endif
 enum {
 	BX_MEMTYPE_UC = 0,
 	BX_MEMTYPE_WC = 1,
@@ -65,14 +89,37 @@ struct bx_TLB_entry
 	bx_phy_address ppf;   // physical page frame
 	bx_hostpageaddr_t hostPageAddr;
 	Bit32u accessBits;
+	Bit32u lpf_mask;
+	bx_TLB_entry() { invalidate(); }
 
+	BX_CPP_INLINE bool valid() const { return lpf != BX_INVALID_TLB_ENTRY; }
+
+	BX_CPP_INLINE void invalidate() {
+		lpf = BX_INVALID_TLB_ENTRY;
+		accessBits = 0;
+	}
 	BX_CPP_INLINE Bit32u get_memtype() const { return MEMTYPE(memtype); }
 };
 template <unsigned size>
 struct TLB {
 	//179ÐÐ
 	bx_TLB_entry entry[size];
+#if BX_CPU_LEVEL >= 5
+	bool split_large;
+#endif
+
 	public:
+		TLB() { flush(); }
+
+		BX_CPP_INLINE void flush(void)
+		{
+			for (unsigned n = 0; n < size; n++)
+			    entry[n].invalidate();
+
+		#if BX_CPU_LEVEL >= 5
+			split_large = false;  // flushing whole TLB
+		#endif
+		}
 		BX_CPP_INLINE unsigned get_index_of(bx_address lpf, unsigned len = 0)
 		{
 			const Bit32u tlb_mask = ((size - 1) << 12);

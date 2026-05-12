@@ -13,6 +13,7 @@ typedef void   (*bx_write_handler_t)(void*, Bit32u, Bit32u, unsigned); //60
 
 class BOCHSAPI bx_devmodel_c {
 public:
+    virtual ~bx_devmodel_c() {}
     virtual void init(void) {}
 };
 
@@ -87,6 +88,11 @@ protected:
 #define STUBFUNC(dev,method) \
    pluginlog->panic("%s called in %s stub. you must not have loaded the %s plugin", #dev, #method, #dev)
 
+
+class BOCHSAPI bx_hard_drive_stub_c : public bx_devmodel_c {
+    //196
+public:
+};
 class BOCHSAPI bx_cmos_stub_c : public bx_devmodel_c {
 public:
     virtual Bit32u get_reg(Bit8u reg) {
@@ -103,8 +109,14 @@ public:
         //STUBFUNC(cmos, enable_irq);
     }
 };
-
-
+class BOCHSAPI bx_pit_stub_c : public bx_devmodel_c {
+    //228
+public:
+};
+class BOCHSAPI bx_dma_stub_c : public bx_devmodel_c {
+    //235
+public:
+};
 
 class BOCHSAPI bx_pic_stub_c : public bx_devmodel_c {
 public:
@@ -122,13 +134,48 @@ public:
         return 0;
     }
 };
+class BOCHSAPI bx_vga_stub_c
+#if BX_SUPPORT_PCI
+    : public bx_pci_device_c
+#else
+    : public bx_devmodel_c
+#endif
+{
+};
+class BOCHSAPI bx_speaker_stub_c : public bx_devmodel_c {
+public:
+};
+#if BX_SUPPORT_PCI
+class BOCHSAPI bx_pci2isa_stub_c : public bx_pci_device_c {
+public:
+};
 
-
+class BOCHSAPI bx_pci_ide_stub_c : public bx_pci_device_c {
+public:
+};
+class BOCHSAPI bx_acpi_ctrl_stub_c : public bx_pci_device_c {
+public:
+};
+#endif
 #if BX_SUPPORT_IODEBUG
 class BOCHSAPI bx_iodebug_stub_c : public bx_devmodel_c {
 public:
     virtual void mem_write(BX_CPU_C* cpu, bx_phy_address addr, unsigned len, void* data) {}
     virtual void mem_read(BX_CPU_C* cpu, bx_phy_address addr, unsigned len, void* data) {}
+};
+#endif
+#if BX_SUPPORT_APIC
+class BOCHSAPI bx_ioapic_stub_c : public bx_devmodel_c {
+public:
+
+    virtual void receive_eoi(Bit8u vector) {}//359
+};
+#endif
+
+#if BX_SUPPORT_GAMEPORT
+class BOCHSAPI bx_game_stub_c : public bx_devmodel_c {
+public:
+
 };
 #endif
 
@@ -137,6 +184,7 @@ class BOCHSAPI bx_devices_c {
 public:
 	bx_devices_c();
 	~bx_devices_c();
+    void init_stubs(void);
     void init(BX_MEM_C*);//383
     BX_MEM_C* mem;//392
     bool register_io_read_handler(void* this_ptr, bx_read_handler_t f,
@@ -148,11 +196,48 @@ public:
     bool register_irq(unsigned irq, const char* name); //413
     Bit32u inp(Bit16u addr, unsigned io_len) BX_CPP_AttrRegparmN(2);
     void   outp(Bit16u addr, Bit32u value, unsigned io_len) BX_CPP_AttrRegparmN(3); //416
-    bx_cmos_stub_c* pluginCmosDevice; //453
-    bx_pic_stub_c* pluginPicDevice; //456
-
+    bx_cmos_stub_c* pluginCmosDevice;
+    bx_dma_stub_c* pluginDmaDevice;
+    bx_hard_drive_stub_c* pluginHardDrive;
+    bx_pic_stub_c* pluginPicDevice;
+    bx_pit_stub_c* pluginPitDevice;
+    bx_speaker_stub_c* pluginSpeaker;
+    bx_vga_stub_c* pluginVgaDevice;
 #if BX_SUPPORT_IODEBUG
     bx_iodebug_stub_c* pluginIODebug;
+#endif
+#if BX_SUPPORT_APIC
+    bx_ioapic_stub_c* pluginIOAPIC;
+#endif
+#if BX_SUPPORT_GAMEPORT
+    bx_game_stub_c* pluginGameport;
+#endif
+#if BX_SUPPORT_PCI
+    bx_pci2isa_stub_c* pluginPci2IsaBridge;
+    bx_pci_ide_stub_c* pluginPciIdeController;
+    bx_acpi_ctrl_stub_c* pluginACPIController;
+#endif
+
+    bx_cmos_stub_c stubCmos;  //477
+    bx_dma_stub_c  stubDma;
+    bx_hard_drive_stub_c stubHardDrive;
+    bx_pic_stub_c  stubPic;
+    bx_pit_stub_c  stubPit;
+    bx_speaker_stub_c stubSpeaker;
+    bx_vga_stub_c  stubVga;
+#if BX_SUPPORT_IODEBUG
+    bx_iodebug_stub_c stubIODebug;
+#endif
+#if BX_SUPPORT_APIC
+    bx_ioapic_stub_c stubIOAPIC;
+#endif
+#if BX_SUPPORT_GAMEPORT
+    bx_game_stub_c stubGameport;
+#endif
+#if BX_SUPPORT_PCI
+    bx_pci2isa_stub_c stubPci2Isa;
+    bx_pci_ide_stub_c stubPciIde;
+    bx_acpi_ctrl_stub_c stubACPIController;
 #endif
 private:
     struct io_handler_struct { //511
@@ -173,6 +258,9 @@ private:
     char* irq_handler_name[BX_MAX_IRQS]; //528
     static Bit32u default_read_handler(void* this_ptr, Bit32u address, unsigned io_len);//535
     static void   default_write_handler(void* this_ptr, Bit32u address, Bit32u value, unsigned io_len);//536
+    int timer_handle;
+    
+    Bit8u sound_device_count; //610
 };
 
 

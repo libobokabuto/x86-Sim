@@ -22,6 +22,9 @@ bool bx_user_quit;
 void bx_init_hardware(void);//70ÐÐ
 int bx_init_main(int argc, char* argv[]);
 
+Bit32u apic_id_mask;  //82
+bool simulate_xapic;
+
 
 bx_pc_system_c bx_pc_system;
 

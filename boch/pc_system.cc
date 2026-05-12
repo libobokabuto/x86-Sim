@@ -1,3 +1,4 @@
+#define _CRT_SECURE_NO_WARNINGS
 #include "bochs.h"
 #include "cpu.h"
 #include "iodev.h"
@@ -60,6 +61,65 @@ int bx_pc_system_c::Reset(unsigned type)
     set_enable_a20(1);
     BX_CPU(0)->reset(type);
     return 0;
+}
+int bx_pc_system_c::register_timer_ticks(void* this_ptr, bx_timer_handler_t funct,
+    Bit64u ticks, bool continuous, bool active, const char* id)
+{
+    unsigned i;
+
+    // If the timer frequency is rediculously low, make it more sane.
+    // This happens when 'ips' is too low.
+    if (ticks < MinAllowableTimerPeriod) {
+        //BX_INFO(("register_timer_ticks: adjusting ticks of %llu to min of %u",
+        //          ticks, MinAllowableTimerPeriod));
+        ticks = MinAllowableTimerPeriod;
+    }
+
+    // search for new timer (i = 0 is reserved for NullTimer)
+    for (i = 1; i < numTimers; i++) {
+        if (timer[i].inUse == 0)
+            break;
+    }
+
+    if (numTimers >= BX_MAX_TIMERS) {
+        //BX_PANIC(("register_timer: too many registered timers"));
+        return -1;
+    }
+#if BX_TIMER_DEBUG
+    if (this_ptr == NULL)
+        BX_PANIC(("register_timer_ticks: this_ptr is NULL!"));
+    if (funct == NULL)
+        BX_PANIC(("register_timer_ticks: funct is NULL!"));
+#endif
+
+    timer[i].inUse = 1;
+    timer[i].period = ticks;
+    timer[i].timeToFire = (ticksTotal + Bit64u(currCountdownPeriod - currCountdown)) + ticks;
+    timer[i].active = active;
+    timer[i].continuous = continuous;
+    timer[i].funct = funct;
+    timer[i].this_ptr = this_ptr;
+    strncpy(timer[i].id, id, BxMaxTimerIDLen);
+    timer[i].id[BxMaxTimerIDLen - 1] = 0; // Null terminate if not already.
+    timer[i].param = 0;
+
+    if (active) {
+        if (ticks < Bit64u(currCountdown)) {
+            // This new timer needs to fire before the current countdown.
+            // Skew the current countdown and countdown period to be smaller
+            // by the delta.
+            currCountdownPeriod -= (currCountdown - Bit32u(ticks));
+            currCountdown = Bit32u(ticks);
+        }
+    }
+
+    //BX_DEBUG(("timer id %d registered for '%s'", i, id));
+    // If we didn't find a free slot, increment the bound, numTimers.
+    if (i == numTimers)
+        numTimers++; // One new timer installed.
+
+    // Return timer id.
+    return i;
 }
 
 void bx_pc_system_c::countdownEvent(void)

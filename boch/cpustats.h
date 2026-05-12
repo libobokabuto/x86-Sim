@@ -8,6 +8,10 @@
 
 struct bx_cpu_statistics
 {
+	Bit64u iCacheLookups;
+	Bit64u iCachePrefetch;
+	Bit64u iCacheMisses;
+
 	Bit64u tlbLookups;
 	Bit64u tlbExecuteLookups;
 	Bit64u tlbWriteLookups;
@@ -24,15 +28,30 @@ struct bx_cpu_statistics
 
 	// self modifying code statistics
 	Bit64u smc;
-	
-};
 
+	bx_cpu_statistics() :
+		iCacheLookups(0), iCachePrefetch(0), iCacheMisses(0),
+		tlbLookups(0), tlbExecuteLookups(0), tlbWriteLookups(0),
+		tlbMisses(0), tlbExecuteMisses(0), tlbWriteMisses(0),
+		tlbGlobalFlushes(0), tlbNonGlobalFlushes(0),
+		stackPrefetch(0), smc(0) {}
+};
+#define INC_CPU_STAT(stat) INC_STAT(BX_CPU_THIS_PTR stats -> stat)
 #if InstrumentICACHE
 #define INC_ICACHE_STAT(stat) INC_CPU_STAT(stat)
 #else
 #define INC_ICACHE_STAT(stat)
 #endif
-
+#if InstrumentTLBFlush
+#define INC_TLBFLUSH_STAT(stat) INC_CPU_STAT(stat)
+#else
+#define INC_TLBFLUSH_STAT(stat)
+#endif
+#if InstrumentTLB
+#define INC_TLB_STAT(stat) INC_CPU_STAT(stat)
+#else
+#define INC_TLB_STAT(stat)
+#endif
 #if InstrumentStackPrefetch
 #define INC_STACK_PREFETCH_STAT(stat) INC_CPU_STAT(stat)
 #else

@@ -30,6 +30,16 @@ BX_CPP_INLINE void markICacheMask(bx_phy_address pAddr, Bit32u mask)
 	fineGranularityMapping[hash(pAddr)] |= mask;
 }
 
+BX_CPP_INLINE void decWriteStamp(bx_phy_address pAddr)
+{
+	Bit32u index = hash(pAddr);
+
+	if (fineGranularityMapping[index]) {
+		handleSMC(pAddr, 0xffffffff); // one of the CPUs might be running trace from this page
+		fineGranularityMapping[index] = 0;
+	}
+}
+
 BX_CPP_INLINE void decWriteStamp(bx_phy_address pAddr, unsigned len)
 {
 	Bit32u index = hash(pAddr);
@@ -208,4 +218,7 @@ BX_CPP_INLINE void bxICache_c::handleSMC(bx_phy_address pAddr, Bit32u mask)
 		}
 	}
 }
+
+
+extern void flushICaches(void);  //264
 

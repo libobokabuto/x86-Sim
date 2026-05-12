@@ -109,7 +109,7 @@ void BX_CPP_AttrRegparmN(2) BX_CPU_C::stackPrefetch(bx_address offset, unsigned 
 }
 
 void BX_CPP_AttrRegparmN(2) BX_CPU_C::stack_write_word(bx_address offset, Bit16u data)
-{
+{  //161
     bx_address espBiased = offset + BX_CPU_THIS_PTR espPageBias;
 
     if (espBiased >= BX_CPU_THIS_PTR espPageWindowSize) {
@@ -137,6 +137,37 @@ void BX_CPP_AttrRegparmN(2) BX_CPU_C::stack_write_word(bx_address offset, Bit16u
         WriteHostWordToLittleEndian(hostPageAddr, data);
     }
     else {
-        write_virtual_byte(BX_SEG_REG_SS, offset, data);
+        write_virtual_word(BX_SEG_REG_SS, offset, data);
+    }
+}
+
+Bit16u BX_CPP_AttrRegparmN(1) BX_CPU_C::stack_read_word(bx_address offset)
+{  //282
+    bx_address espBiased = offset + BX_CPU_THIS_PTR espPageBias;
+
+    if (espBiased >= BX_CPU_THIS_PTR espPageWindowSize) {
+        stackPrefetch(offset, 2);
+        espBiased = offset + BX_CPU_THIS_PTR espPageBias;
+    }
+
+    if (BX_CPU_THIS_PTR espHostPtr) {
+        Bit16u* hostPageAddr = (Bit16u*)(BX_CPU_THIS_PTR espHostPtr + espBiased), data;
+#if BX_CPU_LEVEL >= 4 && BX_SUPPORT_ALIGNMENT_CHECK
+        if (BX_CPU_THIS_PTR alignment_check()) {
+            bx_phy_address pAddr = BX_CPU_THIS_PTR pAddrStackPage + espBiased;
+            if (pAddr & 1) {
+                //BX_ERROR(("stack_read_word(): #AC misaligned access"));
+                exception(BX_AC_EXCEPTION, 0);
+            }
+        }
+#endif
+        data = ReadHostWordFromLittleEndian(hostPageAddr);
+        BX_NOTIFY_LIN_MEMORY_ACCESS(get_laddr(BX_SEG_REG_SS, offset),
+            (BX_CPU_THIS_PTR pAddrStackPage + espBiased), 2,
+            MEMTYPE(BX_CPU_THIS_PTR espPageMemtype), BX_READ, (Bit8u*)&data);
+        return data;
+    }
+    else {
+        return read_virtual_word(BX_SEG_REG_SS, offset);
     }
 }

@@ -8,12 +8,64 @@ bx_devices_c bx_devices;
 
 bx_devices_c::bx_devices_c()
 {
-    //52
+    //put("devices", "DEV");
+
+    read_port_to_handler = NULL;
+    write_port_to_handler = NULL;
+    io_read_handlers.next = NULL;
+    io_read_handlers.handler_name = NULL;
+    io_write_handlers.next = NULL;
+    io_write_handlers.handler_name = NULL;
+    init_stubs();
+
+    for (unsigned i = 0; i < BX_MAX_IRQS; i++) {
+        irq_handler_name[i] = NULL;
+    }
+    sound_device_count = 0;
 }
 
 bx_devices_c::~bx_devices_c()
 {
-    //70
+#if 0
+    timer_handle = BX_NULL_TIMER_HANDLE;
+    bx_hdimage_ctl.exit();
+#if BX_NETWORKING
+    bx_netmod_ctl.exit();
+#endif
+#if BX_SUPPORT_SOUNDLOW
+    bx_soundmod_ctl.exit();
+#endif
+#if BX_SUPPORT_PCIUSB
+    bx_usbdev_ctl.exit();
+#endif
+#endif
+
+}
+
+
+void bx_devices_c::init_stubs()
+{
+    pluginCmosDevice = &stubCmos;
+    pluginDmaDevice = &stubDma;
+    pluginHardDrive = &stubHardDrive;
+    pluginPicDevice = &stubPic;
+    pluginPitDevice = &stubPit;
+    pluginSpeaker = &stubSpeaker;
+    pluginVgaDevice = &stubVga;
+#if BX_SUPPORT_IODEBUG
+    pluginIODebug = &stubIODebug;
+#endif
+#if BX_SUPPORT_APIC
+    pluginIOAPIC = &stubIOAPIC;
+#endif
+#if BX_SUPPORT_GAMEPORT
+    pluginGameport = &stubGameport;
+#endif
+#if BX_SUPPORT_PCI
+    pluginPci2IsaBridge = &stubPci2Isa;
+    pluginPciIdeController = &stubPciIde;
+    pluginACPIController = &stubACPIController;
+#endif
 }
 
 

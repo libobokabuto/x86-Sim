@@ -83,8 +83,35 @@ BX_CPU_C::read_linear_word(unsigned s, bx_address laddr)
     return data;
 }
 
-void BX_CPP_AttrRegparmN(3) BX_CPU_C::shadow_stack_write_dword(bx_address offset, unsigned curr_pl, Bit32u data)
+#if BX_SUPPORT_CET  //1126
+Bit32u BX_CPP_AttrRegparmN(2) BX_CPU_C::shadow_stack_read_dword(bx_address offset, unsigned curr_pl)
 {
+    Bit32u data;
+
+    bool user = (curr_pl == 3);
+    bx_TLB_entry* tlbEntry = BX_DTLB_ENTRY_OF(offset, 3);
+    bx_address lpf = AlignedAccessLPFOf(offset, 3);
+    if (tlbEntry->lpf == lpf) {
+        // See if the TLB entry privilege level allows us read access from this CPL
+        if (isShadowStackReadOK(tlbEntry, user)) {
+            bx_hostpageaddr_t hostPageAddr = tlbEntry->hostPageAddr;
+            Bit32u pageOffset = PAGE_OFFSET(offset);
+            Bit32u* hostAddr = (Bit32u*)(hostPageAddr | pageOffset);
+            data = ReadHostDWordFromLittleEndian(hostAddr);
+            BX_NOTIFY_LIN_MEMORY_ACCESS(offset, (tlbEntry->ppf | pageOffset), 4, tlbEntry->get_memtype(), BX_SHADOW_STACK_READ, (Bit8u*)&data);
+            return data;
+        }
+    }
+
+    if (access_read_linear(offset, 4, curr_pl, BX_SHADOW_STACK_READ, 0, (void*)&data) < 0)
+        exception(BX_GP_EXCEPTION, 0);
+
+    return data;
+}
+
+
+void BX_CPP_AttrRegparmN(3) BX_CPU_C::shadow_stack_write_dword(bx_address offset, unsigned curr_pl, Bit32u data)
+{  //1177
     bool user = (curr_pl == 3);
     bx_TLB_entry* tlbEntry = BX_DTLB_ENTRY_OF(offset, 3);
     bx_address lpf = AlignedAccessLPFOf(offset, 3);
@@ -105,3 +132,4 @@ void BX_CPP_AttrRegparmN(3) BX_CPU_C::shadow_stack_write_dword(bx_address offset
     if (access_write_linear(offset, 4, curr_pl, BX_SHADOW_STACK_WRITE, 0, (void*)&data) < 0)
         exception(BX_GP_EXCEPTION, 0);
 }
+#endif  //1245

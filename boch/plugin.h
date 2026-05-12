@@ -11,6 +11,7 @@
 #define DEV_register_default_iowrite_handler(b,c,d,e) bx_devices.register_default_io_write_handler(b,c,d,e) //133
 #define DEV_register_irq(b,c) bx_devices.register_irq(b,c) //134
 #define DEV_init_devices() {bx_devices.init(BX_MEM(0)); }  //140
+#define DEV_ioapic_receive_eoi(a) (bx_devices.pluginIOAPIC->receive_eoi(a))
 #define DEV_cmos_checksum() (bx_devices.pluginCmosDevice->checksum_cmos()) //163
 #define DEV_pic_lower_irq(b)  (bx_devices.pluginPicDevice->lower_irq(b)) //206
 typedef struct _device_t

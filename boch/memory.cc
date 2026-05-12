@@ -2,6 +2,150 @@
 #include "cpu.h"
 #include "iodev.h"
 #define LOG_THIS BX_MEM_THIS
+void BX_MEM_C::writePhysicalPage(BX_CPU_C* cpu, bx_phy_address addr, unsigned len, void* data)
+{
+    Bit8u* data_ptr;
+    bx_phy_address a20addr = A20ADDR(addr);
+    struct memory_handler_struct* memory_handler = NULL;
+
+    // Note: accesses should always be contained within a single page
+    if ((addr >> 12) != ((addr + len - 1) >> 12)) {
+        //BX_PANIC(("writePhysicalPage: cross page access at address 0x" FMT_PHY_ADDRX ", len=%d", addr, len));
+    }
+
+#if BX_SUPPORT_MONITOR_MWAIT
+    BX_MEM_THIS check_monitor(a20addr, len);
+#endif
+
+    bool is_bios = (a20addr >= (bx_phy_address)BX_MEM_THIS bios_rom_addr);
+#if BX_PHY_ADDRESS_LONG
+    if (a20addr > BX_CONST64(0xffffffff)) is_bios = false;
+#endif
+
+    if (cpu != NULL) {
+#if BX_SUPPORT_IODEBUG
+        bx_devices.pluginIODebug->mem_write(cpu, a20addr, len, data);
+#endif
+
+        if ((a20addr >= 0x000a0000 && a20addr < 0x000c0000) && BX_MEM_THIS smram_available)
+        {
+            // SMRAM memory space
+            if (BX_MEM_THIS smram_enable || (cpu->smm_mode() && !BX_MEM_THIS smram_restricted))
+                goto mem_write;
+        }
+    }
+
+    memory_handler = BX_MEM_THIS memory_handlers[a20addr >> 20];
+    while (memory_handler) {
+        if (memory_handler->write_handler != NULL) {
+            if (memory_handler->begin <= a20addr &&
+                memory_handler->end >= a20addr &&
+                memory_handler->write_handler(a20addr, len, data, memory_handler->param))
+            {
+                return;
+            }
+        }
+        memory_handler = memory_handler->next;
+    }
+
+mem_write:
+
+    // all memory access fits in single 4K page
+    if ((a20addr < BX_MEM_THIS len) && !is_bios) {
+        // all of data is within limits of physical memory
+        if (a20addr < 0x000a0000 || a20addr >= 0x00100000)
+        {
+            BX_MEMORY_STUB_C::writePhysicalPage(cpu, addr, len, data);
+            return;
+        }
+
+#ifdef BX_LITTLE_ENDIAN
+        data_ptr = (Bit8u*)data;
+#else // BX_BIG_ENDIAN
+        data_ptr = (Bit8u*)data + (len - 1);
+#endif
+
+        pageWriteStampTable.decWriteStamp(a20addr);
+
+        // addr must be in range 000A0000 .. 000FFFFF
+        for (unsigned i = 0; i < len; i++) {
+            // SMMRAM
+            if (a20addr < 0x000c0000) {
+                // devices are not allowed to access SMMRAM under VGA memory
+                if (cpu) {
+                    *(BX_MEM_THIS get_vector(a20addr)) = *data_ptr;
+                }
+                goto inc_one;
+            }
+
+            // adapter ROM     C0000 .. DFFFF
+            // ROM BIOS memory E0000 .. FFFFF
+#if BX_SUPPORT_PCI == 0
+      // ignore write to ROM
+#else
+      // Write Based on 440fx Programming
+            if (BX_MEM_THIS pci_enabled && ((a20addr & 0xfffc0000) == 0x000c0000)) {
+                unsigned area = (unsigned)(a20addr >> 14) & 0x0f;
+                if (area > BX_MEM_AREA_F0000) area = BX_MEM_AREA_F0000;
+                if (BX_MEM_THIS memory_type[area][1] == 1) {
+                    // Writes to ShadowRAM
+                    //BX_DEBUG(("Writing to ShadowRAM: address 0x" FMT_PHY_ADDRX ", data %02x", a20addr, *data_ptr));
+                    *(BX_MEM_THIS get_vector(a20addr)) = *data_ptr;
+                }
+                else if ((area >= BX_MEM_AREA_E0000) && BX_MEM_THIS bios_write_enabled) {
+                    // volatile BIOS write support
+                    if (BX_MEM_THIS flash_type > 0) {
+                        BX_MEM_THIS flash_write(BIOS_MAP_LAST128K(a20addr), *data_ptr);
+                    }
+                    else {
+                        BX_MEM_THIS rom[BIOS_MAP_LAST128K(a20addr)] = *data_ptr;
+                    }
+                }
+                else {
+                    // Writes to ROM, Inhibit
+                    //BX_DEBUG(("Write to ROM ignored: address 0x" FMT_PHY_ADDRX ", data %02x", a20addr, *data_ptr));
+                }
+            }
+#endif
+
+        inc_one:
+            a20addr++;
+#ifdef BX_LITTLE_ENDIAN
+            data_ptr++;
+#else // BX_BIG_ENDIAN
+            data_ptr--;
+#endif
+
+        }
+    }
+    else if (BX_MEM_THIS bios_write_enabled && is_bios) {
+        // volatile BIOS write support
+#ifdef BX_LITTLE_ENDIAN
+        data_ptr = (Bit8u*)data;
+#else // BX_BIG_ENDIAN
+        data_ptr = (Bit8u*)data + (len - 1);
+#endif
+        for (unsigned i = 0; i < len; i++) {
+            if (BX_MEM_THIS flash_type > 0) {
+                BX_MEM_THIS flash_write(a20addr & BIOS_MASK, *data_ptr);
+            }
+            else {
+                BX_MEM_THIS rom[a20addr & BIOS_MASK] = *data_ptr;
+            }
+            a20addr++;
+#ifdef BX_LITTLE_ENDIAN
+            data_ptr++;
+#else // BX_BIG_ENDIAN
+            data_ptr--;
+#endif
+        }
+    }
+    else {
+        // access outside limits of physical memory, ignore
+        //BX_DEBUG(("Write outside the limits of physical memory (0x" FMT_PHY_ADDRX ") (ignore)", a20addr));
+    }
+}
+
 
 void BX_MEM_C::readPhysicalPage(BX_CPU_C* cpu, bx_phy_address addr, unsigned len, void* data)
 {

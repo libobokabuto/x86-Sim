@@ -6,6 +6,58 @@
 #if BX_SUPPORT_SVM
 #include "svm.h"
 #endif
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::setEFlags(Bit32u new_eflags)
+{
+    Bit32u eflags = BX_CPU_THIS_PTR eflags;
+
+    // VM flag could not be set from long mode
+#if BX_SUPPORT_X86_64
+    if (long_mode()) {
+        if (BX_CPU_THIS_PTR get_VM()) {
+            //BX_PANIC(("VM is set in long mode !"));
+        }
+        new_eflags &= ~EFlagsVMMask;
+    }
+#endif
+
+    BX_CPU_THIS_PTR eflags = new_eflags;
+    setEFlagsOSZAPC(new_eflags);			// update lazy flags state
+
+    if (BX_CPU_THIS_PTR get_RF()) invalidate_prefetch_q();
+
+    if (BX_CPU_THIS_PTR get_TF()) {
+        BX_CPU_THIS_PTR async_event = 1; // TF == 1
+    }
+
+    if ((eflags ^ new_eflags) & EFlagsIFMask) {
+        handleInterruptMaskChange();
+    }
+
+#if BX_CPU_LEVEL >= 4
+    handleAlignmentCheck(/* EFLAGS.AC reloaded */);
+#endif
+
+    if ((eflags ^ new_eflags) & EFlagsVMMask) {
+        handleCpuModeChange(); // VM flag was changed
+    }
+}
+
+Bit32u BX_CPU_C::force_flags(void)
+{ //107
+    Bit32u newflags = getB_CF();
+    newflags |= getB_PF() << 2;
+    newflags |= getB_AF() << 4;
+    newflags |= getB_ZF() << 6;
+    newflags |= getB_SF() << 7;
+    newflags |= getB_OF() << 11;
+
+    BX_CPU_THIS_PTR eflags = (BX_CPU_THIS_PTR eflags & ~EFlagsOSZAPCMask)
+        | (newflags & EFlagsOSZAPCMask);
+
+    return BX_CPU_THIS_PTR eflags;
+}
+
 void BX_CPU_C::handleInterruptMaskChange(void)
 {
     if (BX_CPU_THIS_PTR get_IF()) {

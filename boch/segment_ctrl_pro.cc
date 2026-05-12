@@ -239,6 +239,55 @@ void set_ar_byte(bx_descriptor_t* d, Bit8u ar_byte)
     d->type = (ar_byte & 0x0f);
 }
 
+Bit32u BX_CPP_AttrRegparmN(1)
+BX_CPU_C::get_descriptor_h(const bx_descriptor_t* d)
+{ //328
+    Bit32u val;
+
+    Bit32u limit = d->u.segment.limit_scaled;
+    if (d->u.segment.g)
+        limit >>= 12;
+
+    if (d->segment || !d->valid) {
+        val = (d->u.segment.base & 0xff000000) |
+            ((d->u.segment.base >> 16) & 0x000000ff) |
+            (d->type << 8) |
+            (d->segment << 12) |
+            (d->dpl << 13) |
+            (d->p << 15) | (limit & 0xf0000) |
+            (d->u.segment.avl << 20) |
+#if BX_SUPPORT_X86_64
+            (d->u.segment.l << 21) |
+#endif
+            (d->u.segment.d_b << 22) |
+            (d->u.segment.g << 23);
+        return(val);
+    }
+    else {
+        switch (d->type) {
+        case BX_SYS_SEGMENT_AVAIL_286_TSS:
+        case BX_SYS_SEGMENT_BUSY_286_TSS:
+        case BX_SYS_SEGMENT_LDT:
+        case BX_SYS_SEGMENT_AVAIL_386_TSS:
+        case BX_SYS_SEGMENT_BUSY_386_TSS:
+            val = ((d->u.segment.base >> 16) & 0xff) |
+                (d->type << 8) |
+                (d->dpl << 13) |
+                (d->p << 15) | (limit & 0xf0000) |
+                (d->u.segment.avl << 20) |
+                (d->u.segment.d_b << 22) |
+                (d->u.segment.g << 23) |
+                (d->u.segment.base & 0xff000000);
+            return(val);
+
+        default:
+            //BX_ERROR(("#get_descriptor_h(): type %d not finished", d->type));
+            return(0);
+        }
+    }
+}
+
+
 void parse_descriptor(Bit32u dword1, Bit32u dword2, bx_descriptor_t* temp)
 {
     //419

@@ -125,6 +125,7 @@
   <ItemGroup>
     <ClCompile Include="access.cc" />
     <ClCompile Include="access2.cc" />
+    <ClCompile Include="apic.cc" />
     <ClCompile Include="cet.cc" />
     <ClCompile Include="coms.cc" />
     <ClCompile Include="cpu.cc" />
@@ -175,9 +176,11 @@
     <ClCompile Include="siminterface.cc" />
     <ClCompile Include="smm.cc" />
     <ClCompile Include="stack.cc" />
+    <ClCompile Include="svm.cc" />
     <ClCompile Include="unmapped.cc" />
     <ClCompile Include="vapic.cc" />
     <ClCompile Include="vmcs.cc" />
+    <ClCompile Include="vmexit.cc" />
     <ClCompile Include="vmx.cc" />
     <ClCompile Include="xsave.cc" />
   </ItemGroup>
@@ -216,6 +219,7 @@
     <ClInclude Include="param_names.h" />
     <ClInclude Include="pc_system.h" />
     <ClInclude Include="plugin.h" />
+    <ClInclude Include="scalar_arith.h" />
     <ClInclude Include="simd_compare.h" />
     <ClInclude Include="simd_int.h" />
     <ClInclude Include="simd_pfp.h" />

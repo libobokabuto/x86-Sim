@@ -103,6 +103,8 @@ enum VMX_vmabort_code {
 };
 
 const Bit32u VMX_APIC_READ_INSTRUCTION_EXECUTION = 0x0000;
+const Bit32u VMX_APIC_WRITE_INSTRUCTION_EXECUTION = 0x1000;
+const Bit32u VMX_APIC_INSTRUCTION_FETCH = 0x2000; /* won't happen because cpu::prefetch will crash */
 const Bit32u VMX_APIC_ACCESS_DURING_EVENT_DELIVERY = 0x3000;
 
 enum VMFunctions {
@@ -467,6 +469,10 @@ typedef struct bx_VMCS   //750
     VmxVmexec3Controls vmexec_ctrls3;
     VmxVmexec1Controls vmexec_ctrls1; //764
     VmxVmexec2Controls vmexec_ctrls2; //769
+
+    Bit32u vm_exceptions_bitmap;
+    Bit32u vm_pf_mask;
+    Bit32u vm_pf_match;
     Bit64u msr_data; //785
 
 #if BX_SUPPORT_X86_64  //799
@@ -474,6 +480,19 @@ typedef struct bx_VMCS   //750
     Bit32u vm_tpr_threshold;
     bx_phy_address apic_access_page;
     unsigned apic_access;
+#endif
+
+#if BX_SUPPORT_VMX >= 2
+    Bit64u eptptr;
+    Bit16u vpid;
+    Bit64u pml_address;
+    Bit16u pml_index;
+    Bit64u spptp;
+#endif
+
+#if BX_SUPPORT_VMX >= 2
+    bx_phy_address ve_info_addr;
+    Bit16u eptp_index;
 #endif
 
 #if BX_SUPPORT_CET  //842
@@ -492,4 +511,6 @@ typedef struct bx_VMCS   //750
 
     VMCS_HOST_STATE host_state; //906
 } VMCS_CACHE;
+
+const Bit32u VMX_MISC_PREEMPTION_TIMER_RATE = 0;  //1105
 

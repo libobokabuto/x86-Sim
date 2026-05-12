@@ -10,6 +10,7 @@
 #endif//63
 
 #if defined(_MSC_VER)
+#define fseeko64 _fseeki64
 //#define fstat _fstati64
 //#define stat  _stati64
 //#define read _read
@@ -20,4 +21,9 @@
 
 #else//105
 #endif  /* __MINGW32__ defined */ //118
+
+#if BX_HAVE_TMPFILE64 == 0
+#define tmpfile64 tmpfile /* use regular tmpfile() function */
+#endif
+
 

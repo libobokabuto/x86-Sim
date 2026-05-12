@@ -108,6 +108,48 @@ void BX_CPU_C::VMabort(VMX_vmabort_code error_code)
     shutdown();
     */
 }
+#define BX_EPTPTR_RESERVED_BITS 0xf00 /* bits 11:8 are reserved */  //467
+
+#if BX_SUPPORT_VMX >= 2
+bool BX_CPU_C::is_eptptr_valid(Bit64u eptptr)
+{
+    // [2:0] EPT paging-structure memory type
+    //       0 = Uncacheable (UC)
+    //       6 = Write-back (WB)
+    Bit32u memtype = eptptr & 7;
+    if (memtype != BX_MEMTYPE_UC && memtype != BX_MEMTYPE_WB) return false;
+
+    // [5:3] This value is 1 less than the EPT page-walk length
+    Bit32u walk_length = (eptptr >> 3) & 7;
+    if (walk_length != 3) return false;
+
+    // [6]   EPT A/D Enable
+    if (!BX_SUPPORT_VMX_EXTENSION(BX_VMX_EPT_ACCESS_DIRTY)) {
+        if (eptptr & 0x40) {
+            //BX_ERROR(("is_eptptr_valid: EPTPTR A/D enabled when not supported by CPU"));
+            return false;
+        }
+    }
+
+    // [7]   CET: Enable supervisor shadow stack control
+    if (eptptr & 0x80) {
+        if (!BX_CPUID_SUPPORT_ISA_EXTENSION(BX_ISA_CET)) {
+            //BX_ERROR(("is_eptptr_valid: EPTPTR CET supervisor shadow stack control bit enabled when not supported by CPU"));
+            return false;
+        }
+    }
+
+#define BX_EPTPTR_RESERVED_BITS 0xf00 /* bits 11:8 are reserved */
+    if (eptptr & BX_EPTPTR_RESERVED_BITS) {
+        //BX_ERROR(("is_eptptr_valid: EPTPTR reserved bits set"));
+        return false;
+    }
+
+    if (!IsValidPhyAddr(eptptr)) return false;
+    return true;
+}
+#endif
+
 Bit32u BX_CPU_C::VMenterLoadCheckGuestState(Bit64u* qualification)
 {
     /*
