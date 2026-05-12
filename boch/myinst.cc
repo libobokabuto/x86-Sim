@@ -393,3 +393,24 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::RETnear16_Iw(bxInstruction_c* i)
     BX_NEXT_TRACE(i);
 }
 
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::PUSH16_Sw(bxInstruction_c* i)
+{
+    push_16(BX_CPU_THIS_PTR sregs[i->src()].selector.value);
+
+    BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::POP_EwR(bxInstruction_c* i)
+{
+    BX_WRITE_16BIT_REG(i->dst(), pop_16());
+
+    BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::INC_EwR(bxInstruction_c* i)
+{
+    Bit32u rx = ++BX_READ_16BIT_REG(i->dst());
+    SET_FLAGS_OSZAP_ADD_16(rx - 1, 0, rx);
+
+    BX_NEXT_INSTR(i);
+}

@@ -1007,7 +1007,7 @@ public:
 #if 1
     // <TAG-CLASS-CPU-START> 1426
    // prototypes for CPU instructions...
-    BX_SMF void PUSH16_Sw(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void PUSH16_Sw(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void POP16_Sw(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void PUSH32_Sw(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void POP32_Sw(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
@@ -1603,7 +1603,7 @@ public:
     BX_SMF void IDIV_EAXEdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
 
     BX_SMF void INC_EbR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
-    BX_SMF void INC_EwR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void INC_EwR(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void INC_EdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void DEC_EbR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void DEC_EwR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
@@ -3601,7 +3601,7 @@ public:
     BX_SMF void PUSH_EdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void PUSH_EdM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
 
-    BX_SMF void POP_EwR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void POP_EwR(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void POP_EwM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void POP_EdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void POP_EdM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }

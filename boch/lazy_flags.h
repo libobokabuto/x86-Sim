@@ -54,6 +54,7 @@ const Bit32u LF_MASK_PO = (0x01 << LF_BIT_PO);
   SET_FLAGS_OSZAPC_8(SUB_COUT_VEC((op1_8), (op2_8), (diff_8)), (diff_8))
 #define SET_FLAGS_OSZAPC_ADD_16(op1_16, op2_16, sum_16) \
   SET_FLAGS_OSZAPC_16(ADD_COUT_VEC((op1_16), (op2_16), (sum_16)), (sum_16))
+
 struct bx_lazyflags_entry { //193
     bx_address result;
     bx_address auxbits;
