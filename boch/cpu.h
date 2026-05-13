@@ -5,6 +5,7 @@
 const Bit64u BX_PHY_ADDRESS_MASK = ((((Bit64u)(1)) << BX_PHY_ADDRESS_WIDTH) - 1);
 const Bit64u BX_PHY_ADDRESS_RESERVED_BITS = (~BX_PHY_ADDRESS_MASK); //33
 #define AL (BX_CPU_THIS_PTR gen_reg[0].word.byte.rl) //45
+#define CL (BX_CPU_THIS_PTR gen_reg[1].word.byte.rl) //46
 #define AX (BX_CPU_THIS_PTR gen_reg[0].word.rx)  //57
 #define CX (BX_CPU_THIS_PTR gen_reg[1].word.rx) //58
 #define DX (BX_CPU_THIS_PTR gen_reg[2].word.rx) //59
@@ -12,6 +13,7 @@ const Bit64u BX_PHY_ADDRESS_RESERVED_BITS = (~BX_PHY_ADDRESS_MASK); //33
 #define DI (BX_CPU_THIS_PTR gen_reg[7].word.rx)  //64
 #define IP (BX_CPU_THIS_PTR gen_reg[BX_16BIT_REG_IP].word.rx) //67
 #  define BX_SMF           static
+#define EAX (BX_CPU_THIS_PTR gen_reg[0].dword.erx)
 #define ECX (BX_CPU_THIS_PTR gen_reg[1].dword.erx) //73
 #define ESP (BX_CPU_THIS_PTR gen_reg[4].dword.erx) //76
 #define EDI (BX_CPU_THIS_PTR gen_reg[7].dword.erx) //79
@@ -1009,7 +1011,7 @@ public:
     // <TAG-CLASS-CPU-START> 1426
    // prototypes for CPU instructions...
     BX_SMF void PUSH16_Sw(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
-    BX_SMF void POP16_Sw(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void POP16_Sw(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void PUSH32_Sw(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void POP32_Sw(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
 
@@ -1119,7 +1121,7 @@ public:
     BX_SMF void REP_STOSW_YwAX(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void REP_LODSW_AXXw(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void REP_SCASW_AXYw(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
-    BX_SMF void REP_STOSD_YdEAX(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void REP_STOSD_YdEAX(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void REP_LODSD_EAXXd(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void REP_SCASD_EAXYd(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
 
@@ -1147,10 +1149,10 @@ public:
 
     BX_SMF void STOSB16_YbAL(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void STOSW16_YwAX(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
-    BX_SMF void STOSD16_YdEAX(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void STOSD16_YdEAX(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void STOSB32_YbAL(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void STOSW32_YwAX(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
-    BX_SMF void STOSD32_YdEAX(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void STOSD32_YdEAX(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
 
     BX_SMF void MOVSB16_YbXb(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void MOVSW16_YwXw(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
@@ -1353,7 +1355,7 @@ public:
     BX_SMF void BTC_EdIbR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
 
     BX_SMF void LES_GwMp(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
-    BX_SMF void LDS_GwMp(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void LDS_GwMp(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void LSS_GwMp(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void LFS_GwMp(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void LGS_GwMp(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
@@ -1578,7 +1580,7 @@ public:
     BX_SMF void ROR_EdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void RCL_EdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void RCR_EdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
-    BX_SMF void SHL_EdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void SHL_EdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void SHR_EdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void SAR_EdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
 
@@ -3731,7 +3733,7 @@ public:
     BX_SMF void LODSD64_EAXXd(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void STOSB64_YbAL(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void STOSW64_YwAX(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
-    BX_SMF void STOSD64_YdEAX(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void STOSD64_YdEAX(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void MOVSB64_YbXb(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void MOVSW64_YwXw(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void MOVSD64_YdXd(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
@@ -4047,11 +4049,14 @@ public:
     BX_SMF Bit16u read_linear_word(unsigned seg, bx_address offset) BX_CPP_AttrRegparmN(2); //4518
     BX_SMF void write_linear_byte(unsigned seg, bx_address offset, Bit8u data) BX_CPP_AttrRegparmN(3); //4530
     BX_SMF void write_linear_word(unsigned seg, bx_address offset, Bit16u data) BX_CPP_AttrRegparmN(3); //4531
+    BX_SMF void write_linear_dword(unsigned seg, bx_address offset, Bit32u data) BX_CPP_AttrRegparmN(3); //4532
     BX_SMF void write_virtual_word_32(unsigned seg, Bit32u offset, Bit16u data) BX_CPP_AttrRegparmN(3); //4561
+    BX_SMF void write_virtual_dword_32(unsigned seg, Bit32u offset, Bit32u data) BX_CPP_AttrRegparmN(3); //4562
     BX_SMF Bit8u read_virtual_byte(unsigned seg, bx_address offset) BX_CPP_AttrRegparmN(2); //4573
     BX_SMF Bit16u read_virtual_word(unsigned seg, bx_address offset) BX_CPP_AttrRegparmN(2); //4574
     BX_SMF void write_virtual_byte(unsigned seg, bx_address offset, Bit8u data) BX_CPP_AttrRegparmN(3); //4586
     BX_SMF void write_virtual_word(unsigned seg, bx_address offset, Bit16u data) BX_CPP_AttrRegparmN(3); //4587
+    BX_SMF void write_virtual_dword(unsigned seg, bx_address offset, Bit32u data) BX_CPP_AttrRegparmN(3); //4588
 	BX_SMF bxICacheEntry_c* getICacheEntry(void);
     BX_SMF void stack_write_word(bx_address offset, Bit16u data) BX_CPP_AttrRegparmN(2); //4635
     BX_SMF Bit16u stack_read_word(bx_address offset) BX_CPP_AttrRegparmN(1);  //4640
@@ -4149,6 +4154,9 @@ public:
 #if BX_CPU_LEVEL >= 6
     BX_SMF void handleAvxModeChange(void);
 #endif
+
+    BX_SMF void load_segw(bxInstruction_c* i, unsigned seg) BX_CPP_AttrRegparmN(2);
+
     BX_SMF void jump_protected(bxInstruction_c* i, Bit16u cs, bx_address disp) BX_CPP_AttrRegparmN(3);//4872
     BX_SMF Bit32u force_flags(void);//4913
     BX_SMF Bit32u read_eflags(void) { return BX_CPU_THIS_PTR force_flags(); } //4914

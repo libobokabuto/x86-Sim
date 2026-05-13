@@ -2,6 +2,21 @@
 #include "bochs.h"
 #include "cpu.h"
 #define LOG_THIS BX_CPU_THIS_PTR
+
+const char* segname[] = { "ES", "CS", "SS", "DS", "FS", "GS" };
+
+void BX_CPP_AttrRegparmN(2) BX_CPU_C::load_segw(bxInstruction_c* i, unsigned seg)
+{
+    bx_address eaddr = BX_CPU_RESOLVE_ADDR(i);
+
+    Bit16u segsel = read_virtual_word(i->seg(), (eaddr + 2) & i->asize_mask());
+    Bit16u reg_16 = read_virtual_word(i->seg(), eaddr);
+
+    load_seg_reg(&BX_CPU_THIS_PTR sregs[seg], segsel);
+
+    BX_WRITE_16BIT_REG(i->dst(), reg_16);
+}
+
 void BX_CPP_AttrRegparmN(2)
 BX_CPU_C::load_seg_reg(bx_segment_reg_t* seg, Bit16u new_value)
 {

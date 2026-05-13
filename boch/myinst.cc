@@ -8,6 +8,8 @@
 #include "svm.h"
 #endif
 
+#include "ia_opcodes.h"
+
 void BX_CPP_AttrRegparmN(1) BX_CPU_C::JMP_Ap(bxInstruction_c* i)
 {
     //BX_ASSERT(BX_CPU_THIS_PTR cpu_mode != BX_MODE_LONG_64);
@@ -558,3 +560,135 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::DEC_EwR(bxInstruction_c* i)
     BX_NEXT_INSTR(i);
 }
 
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::LDS_GwMp(bxInstruction_c* i)
+{
+    load_segw(i, BX_SEG_REG_DS);
+
+    BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::POP16_Sw(bxInstruction_c* i)
+{
+    RSP_SPECULATIVE;
+
+    Bit16u selector = pop_16();
+    load_seg_reg(&BX_CPU_THIS_PTR sregs[i->dst()], selector);
+
+    RSP_COMMIT;
+
+    if (i->dst() == BX_SEG_REG_SS) {
+        // POP SS inhibits interrupts, debug exceptions and single-step
+        // trap exceptions until the execution boundary following the
+        // next instruction is reached.
+        // Same code as MOV_SwEw()
+        inhibit_interrupts(BX_INHIBIT_INTERRUPTS_BY_MOVSS);
+    }
+
+    BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::SHL_EdR(bxInstruction_c* i)
+{
+    unsigned count;
+
+    if (i->getIaOpcode() == BX_IA_SHL_Ed)
+        count = CL;
+    else
+        count = i->Ib();
+
+    count &= 0x1f;
+
+    if (!count) {
+        BX_CLEAR_64BIT_HIGH(i->dst()); // always clear upper part of the register
+    }
+    else {
+        Bit32u op1_32 = BX_READ_32BIT_REG(i->dst());
+
+        /* count < 32, since only lower 5 bits used */
+        Bit32u result_32 = (op1_32 << count);
+
+        BX_WRITE_32BIT_REGZ(i->dst(), result_32);
+
+        unsigned cf = (op1_32 >> (32 - count)) & 0x1;
+        unsigned of = cf ^ (result_32 >> 31);
+
+        SET_FLAGS_OSZAPC_LOGIC_32(result_32);
+        BX_CPU_THIS_PTR oszapc.set_flags_OxxxxC(of, cf);
+    }
+
+    BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::REP_STOSD_YdEAX(bxInstruction_c* i)
+{
+#if BX_SUPPORT_X86_64
+    if (i->as64L())
+        BX_CPU_THIS_PTR repeat(i, &BX_CPU_C::STOSD64_YdEAX);
+    else
+#endif
+        if (i->as32L()) {
+            BX_CPU_THIS_PTR repeat(i, &BX_CPU_C::STOSD32_YdEAX);
+            BX_CLEAR_64BIT_HIGH(BX_64BIT_REG_RDI); // always clear upper part of RDI
+        }
+        else {
+            BX_CPU_THIS_PTR repeat(i, &BX_CPU_C::STOSD16_YdEAX);
+        }
+
+    BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::STOSD16_YdEAX(bxInstruction_c* i)
+{
+    Bit16u di = DI;
+
+    write_virtual_dword_32(BX_SEG_REG_ES, di, EAX);
+
+    if (BX_CPU_THIS_PTR get_DF()) {
+        di -= 4;
+    }
+    else {
+        di += 4;
+    }
+
+    DI = di;
+}
+
+/* 32 bit opsize mode, 32 bit address size */
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::STOSD32_YdEAX(bxInstruction_c* i)
+{
+    Bit32u edi = EDI;
+
+    write_virtual_dword(BX_SEG_REG_ES, edi, EAX);
+
+    if (BX_CPU_THIS_PTR get_DF()) {
+        edi -= 4;
+    }
+    else {
+        edi += 4;
+    }
+
+    // zero extension of RDI
+    RDI = edi;
+}
+
+#if BX_SUPPORT_X86_64
+
+/* 32 bit opsize mode, 32 bit address size */
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::STOSD64_YdEAX(bxInstruction_c* i)
+{
+    Bit64u rdi = RDI;
+
+    write_linear_dword(BX_SEG_REG_ES, rdi, EAX);
+
+    if (BX_CPU_THIS_PTR get_DF()) {
+        rdi -= 4;
+    }
+    else {
+        rdi += 4;
+    }
+
+    RDI = rdi;
+}
+
+
+#endif
