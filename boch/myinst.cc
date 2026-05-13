@@ -522,3 +522,18 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::PUSH_EwM(bxInstruction_c* i)
 
     BX_NEXT_INSTR(i);
 }
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::OUT_DXAL(bxInstruction_c* i)
+{
+    unsigned port = DX;
+    /*
+    if (!allow_io(i, port, 1)) {
+        //BX_DEBUG(("OUT_DXAL: I/O access not allowed !"));
+        exception(BX_GP_EXCEPTION, 0);
+    }
+    */
+    BX_OUTP(port, AL, 1);
+
+    BX_NEXT_TRACE(i);
+}
+
