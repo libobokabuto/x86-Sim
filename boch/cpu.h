@@ -7,6 +7,7 @@ const Bit64u BX_PHY_ADDRESS_RESERVED_BITS = (~BX_PHY_ADDRESS_MASK); //33
 #define AL (BX_CPU_THIS_PTR gen_reg[0].word.byte.rl) //45
 #define AX (BX_CPU_THIS_PTR gen_reg[0].word.rx)  //57
 #define CX (BX_CPU_THIS_PTR gen_reg[1].word.rx) //58
+#define DX (BX_CPU_THIS_PTR gen_reg[2].word.rx) //59
 #define SP (BX_CPU_THIS_PTR gen_reg[4].word.rx) //61
 #define DI (BX_CPU_THIS_PTR gen_reg[7].word.rx)  //64
 #define IP (BX_CPU_THIS_PTR gen_reg[BX_16BIT_REG_IP].word.rx) //67
