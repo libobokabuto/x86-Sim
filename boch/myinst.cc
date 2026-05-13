@@ -756,3 +756,11 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::MOV_EbIbM(bxInstruction_c* i)
 
     BX_NEXT_INSTR(i);
 }
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::MOV_EwIwM(bxInstruction_c* i)
+{
+    bx_address eaddr = BX_CPU_RESOLVE_ADDR(i);
+    write_virtual_word(i->seg(), eaddr, i->Iw());
+
+    BX_NEXT_INSTR(i);
+}
