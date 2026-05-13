@@ -33,7 +33,7 @@ void BX_CPU_C::cpu_loop(void)
             BX_CPU_THIS_PTR prev_rip = RIP; // commit new RIP
             BX_INSTR_AFTER_EXECUTION(BX_CPU_ID, i);
             BX_CPU_THIS_PTR icount++;
-            if (BX_CPU_THIS_PTR icount == 1150)
+            if (BX_CPU_THIS_PTR icount == 1190)
             {
                 int qwq = 0;
             }
