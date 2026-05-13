@@ -689,6 +689,47 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::STOSD64_YdEAX(bxInstruction_c* i)
 
     RDI = rdi;
 }
-
-
 #endif
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::LOOP16_Jb(bxInstruction_c* i)
+{
+    // it is impossible to get this instruction in long mode
+    //BX_ASSERT(i->as64L() == 0);
+
+    if (i->as32L()) {
+        Bit32u count = ECX;
+
+        count--;
+        if (count != 0) {
+            Bit16u new_IP = IP + i->Iw();
+            branch_near16(new_IP);
+            BX_INSTR_CNEAR_BRANCH_TAKEN(BX_CPU_ID, PREV_RIP, new_IP);
+        }
+#if BX_INSTRUMENTATION
+        else {
+            BX_INSTR_CNEAR_BRANCH_NOT_TAKEN(BX_CPU_ID, PREV_RIP);
+        }
+#endif
+
+        ECX = count;
+    }
+    else {
+        Bit16u count = CX;
+
+        count--;
+        if (count != 0) {
+            Bit16u new_IP = IP + i->Iw();
+            branch_near16(new_IP);
+            BX_INSTR_CNEAR_BRANCH_TAKEN(BX_CPU_ID, PREV_RIP, new_IP);
+        }
+#if BX_INSTRUMENTATION
+        else {
+            BX_INSTR_CNEAR_BRANCH_NOT_TAKEN(BX_CPU_ID, PREV_RIP);
+        }
+#endif
+
+        CX = count;
+    }
+
+    BX_NEXT_TRACE(i);
+}
