@@ -733,3 +733,26 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::LOOP16_Jb(bxInstruction_c* i)
 
     BX_NEXT_TRACE(i);
 }
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::ZERO_IDIOM_GdR(bxInstruction_c* i)
+{
+    BX_WRITE_32BIT_REGZ(i->dst(), 0);
+    SET_FLAGS_OSZAPC_LOGIC_32(0);
+    BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::MOV_OdAX(bxInstruction_c* i)
+{
+    write_virtual_word_32(i->seg(), i->Id(), AX);
+
+    BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::MOV_EbIbM(bxInstruction_c* i)
+{
+    bx_address eaddr = BX_CPU_RESOLVE_ADDR(i);
+
+    write_virtual_byte(i->seg(), eaddr, i->Ib());
+
+    BX_NEXT_INSTR(i);
+}
