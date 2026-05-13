@@ -498,3 +498,27 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::TEST_EwGwR(bxInstruction_c* i)
 
     BX_NEXT_INSTR(i);
 }
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::XOR_GbEbR(bxInstruction_c* i)
+{
+    Bit8u op1, op2;
+
+    op1 = BX_READ_8BIT_REGx(i->dst(), i->extend8bitL());
+    op2 = BX_READ_8BIT_REGx(i->src(), i->extend8bitL());
+    op1 ^= op2;
+    BX_WRITE_8BIT_REGx(i->dst(), i->extend8bitL(), op1);
+
+    SET_FLAGS_OSZAPC_LOGIC_8(op1);
+
+    BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::PUSH_EwM(bxInstruction_c* i)
+{
+    bx_address eaddr = BX_CPU_RESOLVE_ADDR(i);
+    Bit16u op1_16 = read_virtual_word(i->seg(), eaddr);
+
+    push_16(op1_16);
+
+    BX_NEXT_INSTR(i);
+}
