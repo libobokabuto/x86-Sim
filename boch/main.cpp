@@ -74,7 +74,6 @@ void bx_init_hardware() {
 	DEV_init_devices();  //1331
 	bx_pc_system.Reset(BX_RESET_HARDWARE);//1341
 
-	
 }
 
 int main_proc(int argc, char* argv[])

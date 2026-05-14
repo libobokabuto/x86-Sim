@@ -136,6 +136,7 @@
     <ClCompile Include="dbg_main.cc" />
     <ClCompile Include="devices.cc" />
     <ClCompile Include="disasm.cc" />
+    <ClCompile Include="dma.cc" />
     <ClCompile Include="event.cc" />
     <ClCompile Include="exception.cc" />
     <ClCompile Include="fetchdecode_opmap_xop.cc" />
@@ -155,9 +156,12 @@
     </ClCompile>
     <ClCompile Include="fetchdecode_opmap_evex.cc" />
     <ClCompile Include="flag_ctrl_pro.cc" />
+    <ClCompile Include="gui.cc" />
     <ClCompile Include="icache.cc" />
     <ClCompile Include="init.cc" />
+    <ClCompile Include="io.cc" />
     <ClCompile Include="jmp_far.cc" />
+    <ClCompile Include="keyboard.cc" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MD5.cpp" />
     <ClCompile Include="memory.cc" />
@@ -172,6 +176,7 @@
     <ClCompile Include="pc_system.cc" />
     <ClCompile Include="plugin.cc" />
     <ClCompile Include="proc_ctrl.cc" />
+    <ClCompile Include="scancodes.cc" />
     <ClCompile Include="segment_ctrl_pro.cc" />
     <ClCompile Include="siminterface.cc" />
     <ClCompile Include="smm.cc" />
@@ -198,18 +203,21 @@
     <ClInclude Include="debug.h" />
     <ClInclude Include="decoder.h" />
     <ClInclude Include="descriptor.h" />
+    <ClInclude Include="dma.h" />
     <ClInclude Include="extplugin.h" />
     <ClInclude Include="features.h" />
     <ClCompile Include="fetchdecode_opmap_0f3a.cc" />
     <ClInclude Include="fetchdecode_x87.h" />
     <ClInclude Include="fetchdecode.h" />
     <ClInclude Include="fetchdecode_opmap.h" />
+    <ClInclude Include="gui.h" />
     <ClInclude Include="i387.h" />
     <ClInclude Include="ia_opcodes.h" />
     <ClInclude Include="icache.h" />
     <ClInclude Include="instr.h" />
     <ClInclude Include="instrument.h" />
     <ClInclude Include="iodev.h" />
+    <ClInclude Include="keyboard.h" />
     <ClInclude Include="lazy_flags.h" />
     <ClInclude Include="MD5.h" />
     <ClInclude Include="memory-bochs.h" />
@@ -220,6 +228,7 @@
     <ClInclude Include="pc_system.h" />
     <ClInclude Include="plugin.h" />
     <ClInclude Include="scalar_arith.h" />
+    <ClInclude Include="scancodes.h" />
     <ClInclude Include="simd_compare.h" />
     <ClInclude Include="simd_int.h" />
     <ClInclude Include="simd_pfp.h" />

@@ -5,16 +5,38 @@
 #include "pc_system.h"
 #include "memory-bochs.h"
 #include "siminterface.h"
+#include "gui.h"
 
 #define BX_MAX_IRQS 16 //39
- 
+
+#define BX_KBD_LED_NUM  0
+#define BX_KBD_LED_CAPS 1
+#define BX_KBD_LED_SCRL 2
+#define BX_KBD_LED_MASK_NUM 1
+#define BX_KBD_LED_MASK_ALL 7
+
+#define BX_KBD_ELEMENTS 16
+
+/* size of internal buffer for mouse devices */
+#define BX_MOUSE_BUFF_SIZE 48
+
+#define BX_DMA_BUFFER_SIZE 512
+
+#define BX_MAX_PCI_DEVICES 20
+
 typedef Bit32u(*bx_read_handler_t)(void*, Bit32u, unsigned);//59
 typedef void   (*bx_write_handler_t)(void*, Bit32u, Bit32u, unsigned); //60
+typedef bool (*bx_kbd_gen_scancode_t)(void*, Bit32u); //62
+typedef Bit8u(*bx_kbd_get_elements_t)(void*);
+typedef void (*bx_mouse_enq_t)(void*, int, int, int, unsigned, bool);
+typedef void (*bx_mouse_enabled_changed_t)(void*, bool);
 
 class BOCHSAPI bx_devmodel_c {
 public:
     virtual ~bx_devmodel_c() {}
     virtual void init(void) {}
+    
+
 };
 
 #if BX_SUPPORT_PCI
@@ -194,8 +216,12 @@ public:
     bool register_default_io_read_handler(void* this_ptr, bx_read_handler_t f, const char* name, Bit8u mask);//411
     bool register_default_io_write_handler(void* this_ptr, bx_write_handler_t f, const char* name, Bit8u mask);//412
     bool register_irq(unsigned irq, const char* name); //413
+    void register_default_keyboard(void* dev, bx_kbd_gen_scancode_t kbd_gen_scancode,
+        bx_kbd_get_elements_t kbd_get_elements); //414
     Bit32u inp(Bit16u addr, unsigned io_len) BX_CPP_AttrRegparmN(2);
     void   outp(Bit16u addr, Bit32u value, unsigned io_len) BX_CPP_AttrRegparmN(3); //416
+    void register_default_mouse(void* dev, bx_mouse_enq_t mouse_enq, bx_mouse_enabled_changed_t mouse_enabled_changed); //424
+    void kbd_set_indicator(Bit8u devid, Bit8u ledid, bool state); //431
     bx_cmos_stub_c* pluginCmosDevice;
     bx_dma_stub_c* pluginDmaDevice;
     bx_hard_drive_stub_c* pluginHardDrive;
@@ -258,8 +284,23 @@ private:
     char* irq_handler_name[BX_MAX_IRQS]; //528
     static Bit32u default_read_handler(void* this_ptr, Bit32u address, unsigned io_len);//535
     static void   default_write_handler(void* this_ptr, Bit32u address, Bit32u value, unsigned io_len);//536
-    int timer_handle;
     
+    
+    struct { //545
+        void* dev;
+        bx_mouse_enq_t enq_event;
+        bx_mouse_enabled_changed_t enabled_changed;
+    } bx_mouse[2];
+
+    struct {
+        void* dev;
+        bx_kbd_gen_scancode_t gen_scancode;
+        bx_kbd_get_elements_t get_elements;
+        Bit8u led_mask;
+        bool bxkey_state[BX_KEY_NBKEYS];
+    } bx_keyboard[2];
+    int timer_handle;
+    int statusbar_id[3];
     Bit8u sound_device_count; //610
 };
 

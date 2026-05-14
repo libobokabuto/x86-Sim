@@ -40,11 +40,11 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::ZERO_IDIOM_GwR(bxInstruction_c* i)
 void BX_CPP_AttrRegparmN(1) BX_CPU_C::OUT_IbAL(bxInstruction_c* i)
 {
     unsigned port = i->Ib();
-    /*
+    
     if (!allow_io(i, port, 1)) {
-        BX_DEBUG(("OUT_IbAL: I/O access not allowed !"));
+        //BX_DEBUG(("OUT_IbAL: I/O access not allowed !"));
         exception(BX_GP_EXCEPTION, 0);
-    }*/
+    }
 
     BX_OUTP(port, AL, 1);
 
@@ -61,12 +61,11 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::MOV_EbIbR(bxInstruction_c* i)
 void BX_CPP_AttrRegparmN(1) BX_CPU_C::IN_ALIb(bxInstruction_c* i)
 {
     unsigned port = i->Ib();
-    /*
+    
     if (!allow_io(i, port, 1)) {
-        BX_DEBUG(("IN_ALIb: I/O access not allowed !"));
+        //BX_DEBUG(("IN_ALIb: I/O access not allowed !"));
         exception(BX_GP_EXCEPTION, 0);
-    }*/
-    //AL = BX_INP(port, 1);
+    }
     AL = BX_INP(port, 1);
 
     BX_NEXT_TRACE(i);
@@ -528,12 +527,12 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::PUSH_EwM(bxInstruction_c* i)
 void BX_CPP_AttrRegparmN(1) BX_CPU_C::OUT_DXAL(bxInstruction_c* i)
 {
     unsigned port = DX;
-    /*
+    
     if (!allow_io(i, port, 1)) {
         //BX_DEBUG(("OUT_DXAL: I/O access not allowed !"));
         exception(BX_GP_EXCEPTION, 0);
     }
-    */
+    
     BX_OUTP(port, AL, 1);
 
     BX_NEXT_TRACE(i);
@@ -763,4 +762,18 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::MOV_EwIwM(bxInstruction_c* i)
     write_virtual_word(i->seg(), eaddr, i->Iw());
 
     BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::IN_ALDX(bxInstruction_c* i)
+{
+    unsigned port = DX;
+    
+    if (!allow_io(i, port, 1)) {
+        //BX_DEBUG(("IN_ALDX: I/O access not allowed !"));
+        exception(BX_GP_EXCEPTION, 0);
+    }
+    
+    AL = BX_INP(port, 1);
+
+    BX_NEXT_TRACE(i);
 }

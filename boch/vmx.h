@@ -462,6 +462,15 @@ typedef struct bx_VMX_Cap //717
     Bit64u vmx_vmfunc_supported_bits;
 #endif
 } VMX_CAP;
+#if BX_SUPPORT_VMX >= 2
+struct VMX_PLE {
+    Bit32u pause_loop_exiting_gap;
+    Bit32u pause_loop_exiting_window;
+    Bit64u last_pause_time;
+    Bit64u first_pause_time;
+};
+#endif
+
 typedef struct bx_VMCS   //750
 {
     //750
@@ -470,10 +479,27 @@ typedef struct bx_VMCS   //750
     VmxVmexec1Controls vmexec_ctrls1; //764
     VmxVmexec2Controls vmexec_ctrls2; //769
 
+    Bit64u vmcs_linkptr;
+
+    Bit64u tsc_multiplier;
+
     Bit32u vm_exceptions_bitmap;
     Bit32u vm_pf_mask;
     Bit32u vm_pf_match;
+    Bit64u io_bitmap_addr[2];
     Bit64u msr_data; //785
+
+    Bit64u ia32_spec_ctrl_shadow;
+    Bit64u ia32_spec_ctrl_mask;
+
+    bx_address vm_cr0_mask;
+    bx_address vm_cr0_read_shadow;
+    bx_address vm_cr4_mask;
+    bx_address vm_cr4_read_shadow;
+
+#define VMX_CR3_TARGET_MAX_CNT 4
+    Bit32u vm_cr3_target_cnt;
+    bx_address vm_cr3_target_value[VMX_CR3_TARGET_MAX_CNT];
 
 #if BX_SUPPORT_X86_64  //799
     bx_phy_address virtual_apic_page_addr;
@@ -481,6 +507,9 @@ typedef struct bx_VMCS   //750
     bx_phy_address apic_access_page;
     unsigned apic_access;
 #endif
+
+    unsigned posted_intr_notification_vector;
+    bx_phy_address pid_addr;
 
 #if BX_SUPPORT_VMX >= 2
     Bit64u eptptr;
@@ -491,8 +520,30 @@ typedef struct bx_VMCS   //750
 #endif
 
 #if BX_SUPPORT_VMX >= 2
+    VMX_PLE ple;
+#endif
+
+#if BX_SUPPORT_VMX >= 2
+    Bit8u svi; /* Servicing Virtual Interrupt */
+    Bit8u rvi; /* Requesting Virtual Interrupt */
+    Bit8u vppr;
+
+    Bit32u eoi_exit_bitmap[8];
+#endif
+
+#if BX_SUPPORT_VMX >= 2
+    bx_phy_address vmread_bitmap_addr, vmwrite_bitmap_addr;
+#endif
+
+
+#if BX_SUPPORT_VMX >= 2
     bx_phy_address ve_info_addr;
     Bit16u eptp_index;
+#endif
+
+
+#if BX_SUPPORT_VMX >= 2
+    Bit64u xss_exiting_bitmap;
 #endif
 
 #if BX_SUPPORT_CET  //842

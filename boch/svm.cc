@@ -318,5 +318,100 @@ void BX_CPU_C::SvmInterceptException(unsigned type, unsigned vector, Bit16u errc
     Svm_Vmexit(SVM_VMEXIT_EXCEPTION + vector, (errcode_valid ? errcode : 0), qualification);
 }
 
+enum {
+    SVM_VMEXIT_IO_PORTIN = (1 << 0),
+    SVM_VMEXIT_IO_INSTR_STRING = (1 << 2),
+    SVM_VMEXIT_IO_INSTR_REP = (1 << 3),
+    SVM_VMEXIT_IO_INSTR_LEN8 = (1 << 4),
+    SVM_VMEXIT_IO_INSTR_LEN16 = (1 << 5),
+    SVM_VMEXIT_IO_INSTR_LEN32 = (1 << 6),
+    SVM_VMEXIT_IO_INSTR_ASIZE16 = (1 << 7),
+    SVM_VMEXIT_IO_INSTR_ASIZE32 = (1 << 8),
+    SVM_VMEXIT_IO_INSTR_ASIZE64 = (1 << 9)
+};
+
+void BX_CPU_C::SvmInterceptIO(bxInstruction_c* i, unsigned port, unsigned len)
+{
+    if (!BX_CPU_THIS_PTR in_svm_guest) return;
+
+    if (!SVM_INTERCEPT(SVM_INTERCEPT0_IO)) return;
+
+    Bit8u bitmap[2];
+    bx_phy_address pAddr;
+
+    // access_read_physical cannot read 2 bytes cross 4K boundary :(
+    pAddr = BX_CPU_THIS_PTR vmcb->ctrls.iopm_base + (port / 8);
+    bitmap[0] = read_physical_byte(pAddr, MEMTYPE(resolve_memtype(pAddr)), BX_IO_BITMAP_ACCESS);
+
+    pAddr++;
+    bitmap[1] = read_physical_byte(pAddr, MEMTYPE(resolve_memtype(pAddr)), BX_IO_BITMAP_ACCESS);
+
+    Bit16u combined_bitmap = bitmap[1];
+    combined_bitmap = (combined_bitmap << 8) | bitmap[0];
+
+    unsigned mask = ((1 << len) - 1) << (port & 7);
+    if (combined_bitmap & mask) {
+        //BX_ERROR(("SVM VMEXIT: I/O port 0x%04x", port));
+
+        Bit32u qualification = 0;
+
+        switch (i->getIaOpcode()) {
+        case BX_IA_IN_ALIb:
+        case BX_IA_IN_AXIb:
+        case BX_IA_IN_EAXIb:
+        case BX_IA_IN_ALDX:
+        case BX_IA_IN_AXDX:
+        case BX_IA_IN_EAXDX:
+            qualification = SVM_VMEXIT_IO_PORTIN;
+            break;
+
+        case BX_IA_OUT_IbAL:
+        case BX_IA_OUT_IbAX:
+        case BX_IA_OUT_IbEAX:
+        case BX_IA_OUT_DXAL:
+        case BX_IA_OUT_DXAX:
+        case BX_IA_OUT_DXEAX:
+            qualification = 0; // PORTOUT
+            break;
+
+        case BX_IA_REP_INSB_YbDX:
+        case BX_IA_REP_INSW_YwDX:
+        case BX_IA_REP_INSD_YdDX:
+            qualification = SVM_VMEXIT_IO_PORTIN | SVM_VMEXIT_IO_INSTR_STRING;
+            if (i->repUsedL())
+                qualification |= SVM_VMEXIT_IO_INSTR_REP;
+            break;
+
+        case BX_IA_REP_OUTSB_DXXb:
+        case BX_IA_REP_OUTSW_DXXw:
+        case BX_IA_REP_OUTSD_DXXd:
+            qualification = SVM_VMEXIT_IO_INSTR_STRING; // PORTOUT
+            if (i->repUsedL())
+                qualification |= SVM_VMEXIT_IO_INSTR_REP;
+            break;
+
+        default:
+            //BX_PANIC(("VMexit_IO: I/O instruction %s unknown", i->getIaOpcodeNameShort()));
+            break;
+        }
+
+        qualification |= (port << 16);
+        if (len == 1)
+            qualification |= SVM_VMEXIT_IO_INSTR_LEN8;
+        else if (len == 2)
+            qualification |= SVM_VMEXIT_IO_INSTR_LEN16;
+        else if (len == 4)
+            qualification |= SVM_VMEXIT_IO_INSTR_LEN32;
+
+        if (i->as64L())
+            qualification |= SVM_VMEXIT_IO_INSTR_ASIZE64;
+        else if (i->as32L())
+            qualification |= SVM_VMEXIT_IO_INSTR_ASIZE32;
+        else
+            qualification |= SVM_VMEXIT_IO_INSTR_ASIZE16;
+
+        Svm_Vmexit(SVM_VMEXIT_IO, qualification, RIP);
+    }
+}
 
 #endif // BX_SUPPORT_SVM

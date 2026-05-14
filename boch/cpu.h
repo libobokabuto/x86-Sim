@@ -4,28 +4,69 @@
 #include "instrument.h" //29行
 const Bit64u BX_PHY_ADDRESS_MASK = ((((Bit64u)(1)) << BX_PHY_ADDRESS_WIDTH) - 1);
 const Bit64u BX_PHY_ADDRESS_RESERVED_BITS = (~BX_PHY_ADDRESS_MASK); //33
-#define AL (BX_CPU_THIS_PTR gen_reg[0].word.byte.rl) //45
-#define CL (BX_CPU_THIS_PTR gen_reg[1].word.byte.rl) //46
+#define AL (BX_CPU_THIS_PTR gen_reg[0].word.byte.rl)
+#define CL (BX_CPU_THIS_PTR gen_reg[1].word.byte.rl)
+#define DL (BX_CPU_THIS_PTR gen_reg[2].word.byte.rl)
+#define BL (BX_CPU_THIS_PTR gen_reg[3].word.byte.rl)
+#define AH (BX_CPU_THIS_PTR gen_reg[0].word.byte.rh)
+#define CH (BX_CPU_THIS_PTR gen_reg[1].word.byte.rh)
+#define DH (BX_CPU_THIS_PTR gen_reg[2].word.byte.rh)
+#define BH (BX_CPU_THIS_PTR gen_reg[3].word.byte.rh)
+
+#define TMP8L (BX_CPU_THIS_PTR gen_reg[BX_TMP_REGISTER].word.byte.rl)
+
 #define AX (BX_CPU_THIS_PTR gen_reg[0].word.rx)  //57
 #define CX (BX_CPU_THIS_PTR gen_reg[1].word.rx) //58
 #define DX (BX_CPU_THIS_PTR gen_reg[2].word.rx) //59
+#define BX (BX_CPU_THIS_PTR gen_reg[3].word.rx)
 #define SP (BX_CPU_THIS_PTR gen_reg[4].word.rx) //61
+#define BP (BX_CPU_THIS_PTR gen_reg[5].word.rx)
+#define SI (BX_CPU_THIS_PTR gen_reg[6].word.rx)
 #define DI (BX_CPU_THIS_PTR gen_reg[7].word.rx)  //64
+
 #define IP (BX_CPU_THIS_PTR gen_reg[BX_16BIT_REG_IP].word.rx) //67
+
+#define TMP16 (BX_CPU_THIS_PTR gen_reg[BX_TMP_REGISTER].word.rx)
 #  define BX_SMF           static
 #define EAX (BX_CPU_THIS_PTR gen_reg[0].dword.erx)
-#define ECX (BX_CPU_THIS_PTR gen_reg[1].dword.erx) //73
-#define ESP (BX_CPU_THIS_PTR gen_reg[4].dword.erx) //76
-#define EDI (BX_CPU_THIS_PTR gen_reg[7].dword.erx) //79
+#define ECX (BX_CPU_THIS_PTR gen_reg[1].dword.erx)
+#define EDX (BX_CPU_THIS_PTR gen_reg[2].dword.erx)
+#define EBX (BX_CPU_THIS_PTR gen_reg[3].dword.erx)
+#define ESP (BX_CPU_THIS_PTR gen_reg[4].dword.erx)
+#define EBP (BX_CPU_THIS_PTR gen_reg[5].dword.erx)
+#define ESI (BX_CPU_THIS_PTR gen_reg[6].dword.erx)
+#define EDI (BX_CPU_THIS_PTR gen_reg[7].dword.erx)
+
 #define EIP (BX_CPU_THIS_PTR gen_reg[BX_32BIT_REG_EIP].dword.erx) //82行
-#define RAX (BX_CPU_THIS_PTR gen_reg[0].rrx) //89
-#define RCX (BX_CPU_THIS_PTR gen_reg[1].rrx) //90
-#define RSP (BX_CPU_THIS_PTR gen_reg[4].rrx) //93
-#define RDI (BX_CPU_THIS_PTR gen_reg[7].rrx) //96
+
+#define TMP32 (BX_CPU_THIS_PTR gen_reg[BX_TMP_REGISTER].dword.erx)
+#if BX_SUPPORT_X86_64
+#define RAX (BX_CPU_THIS_PTR gen_reg[0].rrx)
+#define RCX (BX_CPU_THIS_PTR gen_reg[1].rrx)
+#define RDX (BX_CPU_THIS_PTR gen_reg[2].rrx)
+#define RBX (BX_CPU_THIS_PTR gen_reg[3].rrx)
+#define RSP (BX_CPU_THIS_PTR gen_reg[4].rrx)
+#define RBP (BX_CPU_THIS_PTR gen_reg[5].rrx)
+#define RSI (BX_CPU_THIS_PTR gen_reg[6].rrx)
+#define RDI (BX_CPU_THIS_PTR gen_reg[7].rrx)
+#define R8  (BX_CPU_THIS_PTR gen_reg[8].rrx)
+#define R9  (BX_CPU_THIS_PTR gen_reg[9].rrx)
+#define R10 (BX_CPU_THIS_PTR gen_reg[10].rrx)
+#define R11 (BX_CPU_THIS_PTR gen_reg[11].rrx)
+#define R12 (BX_CPU_THIS_PTR gen_reg[12].rrx)
+#define R13 (BX_CPU_THIS_PTR gen_reg[13].rrx)
+#define R14 (BX_CPU_THIS_PTR gen_reg[14].rrx)
+#define R15 (BX_CPU_THIS_PTR gen_reg[15].rrx)
+
 #define RIP (BX_CPU_THIS_PTR gen_reg[BX_64BIT_REG_RIP].rrx)  //107行
 
 #define SSP (BX_CPU_THIS_PTR gen_reg[BX_64BIT_REG_SSP].rrx) //109
 
+#define TMP64 (BX_CPU_THIS_PTR gen_reg[BX_TMP_REGISTER].rrx)
+
+#define MSR_FSBASE  (BX_CPU_THIS_PTR sregs[BX_SEG_REG_FS].cache.u.segment.base)
+#define MSR_GSBASE  (BX_CPU_THIS_PTR sregs[BX_SEG_REG_GS].cache.u.segment.base)#else
+#endif // BX_SUPPORT_X86_64 == 0
 #define BX_WRITE_16BIT_REG(index, val) {\
   BX_CPU_THIS_PTR gen_reg[index].word.rx = val; \
 }
@@ -1199,7 +1240,7 @@ public:
     BX_SMF void JMP_Jd(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void JMP_Jw(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void JMP_Ap(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
-    BX_SMF void IN_ALDX(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void IN_ALDX(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void IN_AXDX(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void IN_EAXDX(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void OUT_DXAL(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
@@ -4065,13 +4106,14 @@ public:
     BX_SMF Bit32u shadow_stack_read_dword(bx_address offset, unsigned curr_pl) BX_CPP_AttrRegparmN(2); //4648
 #endif//4654
     BX_SMF void stackPrefetch(bx_address offset, unsigned len) BX_CPP_AttrRegparmN(2); //4656
+    BX_SMF Bit16u system_read_word(bx_address laddr) BX_CPP_AttrRegparmN(1); //4660
     BX_SMF Bit64u system_read_qword(bx_address laddr) BX_CPP_AttrRegparmN(1); //4662
     BX_SMF void system_write_byte(bx_address laddr, Bit8u data) BX_CPP_AttrRegparmN(2); //4664
     BX_SMF void repeat(bxInstruction_c* i, BxRepIterationPtr_tR execute) BX_CPP_AttrRegparmN(2); //4696
     BX_SMF int access_read_linear(bx_address laddr, unsigned len, unsigned curr_pl, unsigned xlate_rw, Bit32u ac_mask, void* data); //4700
     BX_SMF int access_write_linear(bx_address laddr, unsigned len, unsigned curr_pl, unsigned xlate_rw, Bit32u ac_mask, void* data); //4701
     BX_SMF void page_fault(unsigned fault, bx_address laddr, unsigned user, unsigned rw);
-
+    BX_SMF Bit8u  read_physical_byte(bx_phy_address paddr, BxMemtype memtype, AccessReason reason); //4705
     BX_SMF Bit32u read_physical_dword(bx_phy_address paddr, BxMemtype memtype, AccessReason reason); //4707
     BX_SMF Bit64u read_physical_qword(bx_phy_address paddr, BxMemtype memtype, AccessReason reason); //4708
     BX_SMF void access_read_physical(bx_phy_address paddr, unsigned len, void* data);
@@ -4160,6 +4202,7 @@ public:
     BX_SMF void jump_protected(bxInstruction_c* i, Bit16u cs, bx_address disp) BX_CPP_AttrRegparmN(3);//4872
     BX_SMF Bit32u force_flags(void);//4913
     BX_SMF Bit32u read_eflags(void) { return BX_CPU_THIS_PTR force_flags(); } //4914
+    BX_SMF bool allow_io(bxInstruction_c* i, Bit16u addr, unsigned len) BX_CPP_AttrRegparmN(3); //4916
     BX_SMF Bit32u  get_descriptor_h(const bx_descriptor_t*) BX_CPP_AttrRegparmN(1); //4918
     BX_SMF void    touch_segment(bx_selector_t* selector, bx_descriptor_t* descriptor) BX_CPP_AttrRegparmN(2);//4925
     BX_SMF void    fetch_raw_descriptor(const bx_selector_t* selector,
@@ -4180,6 +4223,9 @@ public:
     BX_SMF void jmp_far32(bxInstruction_c* i, Bit16u cs_raw, Bit32u disp32);
 #if BX_X86_DEBUGGER
     BX_SMF bool hwbreakpoint_check(bx_address laddr, unsigned opa, unsigned opb); //4976
+#if BX_CPU_LEVEL >= 5
+    BX_SMF void    iobreakpoint_match(unsigned port, unsigned len);
+#endif
     BX_SMF void    hwbreakpoint_match(bx_address laddr, unsigned len, unsigned rw); //4981
     BX_SMF Bit32u  hwdebug_compare(bx_address laddr, unsigned len, unsigned opa, unsigned opb); //4982
 #endif
@@ -4353,6 +4399,7 @@ public:
 #endif
     BX_SMF void VMexit_Event(unsigned type, unsigned vector,
         Bit16u errcode, bool errcode_valid, Bit64u qualification = 0); //5316
+    BX_SMF void VMexit_IO(bxInstruction_c* i, unsigned port, unsigned len) BX_CPP_AttrRegparmN(3);
 #endif //5337
 #if BX_SUPPORT_SVM
     BX_SMF void Svm_Vmexit(int reason, Bit64u exitinfo1 = 0, Bit64u exitinfo2 = 0); //5345
@@ -4365,6 +4412,7 @@ public:
     BX_SMF void svm_segment_write(bx_segment_reg_t* seg, unsigned offset);  //5357
     BX_SMF void SvmInterceptException(unsigned type, unsigned vector,
         Bit16u errcode, bool errcode_valid, Bit64u qualification = 0); //5358
+    BX_SMF void SvmInterceptIO(bxInstruction_c* i, unsigned port, unsigned len); //5360
 #endif //5367
 #if BX_CPU_LEVEL >= 5 //5369
     void init_MSRs();//5370

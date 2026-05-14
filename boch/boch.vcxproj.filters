@@ -168,6 +168,21 @@
     <ClCompile Include="vmexit.cc">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="io.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="dma.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="keyboard.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="gui.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="scancodes.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bochs.h">
@@ -315,6 +330,18 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="scalar_arith.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="dma.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="keyboard.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="gui.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="scancodes.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

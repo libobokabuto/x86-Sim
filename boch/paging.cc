@@ -1645,6 +1645,14 @@ void BX_CPU_C::access_read_physical(bx_phy_address paddr, unsigned len, void* da
     
 }
 
+Bit8u BX_CPU_C::read_physical_byte(bx_phy_address paddr, BxMemtype memtype, AccessReason reason)
+{
+    Bit8u data;
+    access_read_physical(paddr, 1, &data);
+    BX_NOTIFY_PHY_MEMORY_ACCESS(paddr, 1, memtype, BX_READ, reason, &data);
+    return data;
+}
+
 Bit32u BX_CPU_C::read_physical_dword(bx_phy_address paddr, BxMemtype memtype, AccessReason reason)
 { //2540
     Bit32u data;

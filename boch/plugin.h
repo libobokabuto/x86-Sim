@@ -1,7 +1,9 @@
 #pragma once
 #include "extplugin.h"
 #define BX_PLUGIN_UNMAPPED  "unmapped" //43
+#define BX_PLUGIN_KEYBOARD  "keyboard"
 #define BX_PLUGIN_CMOS      "cmos" //45
+#define BX_PLUGIN_DMA       "dma" //54
 #define BX_PLUGIN_PCI       "pci"  //57
 #define BX_REGISTER_DEVICE_DEVMODEL(a,b,c,d) pluginRegisterDeviceDevmodel(a,b,c,d)  //80
 #define PLUG_load_plugin(name,type) {lib##name##_plugin_entry(NULL,type,PLUGIN_INIT);} //115
@@ -11,8 +13,13 @@
 #define DEV_register_default_iowrite_handler(b,c,d,e) bx_devices.register_default_io_write_handler(b,c,d,e) //133
 #define DEV_register_irq(b,c) bx_devices.register_irq(b,c) //134
 #define DEV_init_devices() {bx_devices.init(BX_MEM(0)); }  //140
-#define DEV_ioapic_receive_eoi(a) (bx_devices.pluginIOAPIC->receive_eoi(a))
+#define DEV_register_default_keyboard(a,b,c) (bx_devices.register_default_keyboard(a,b,c)) //147
+#define DEV_register_default_mouse(a,b,c) (bx_devices.register_default_mouse(a,b,c)) //150
+#define DEV_ioapic_receive_eoi(a) (bx_devices.pluginIOAPIC->receive_eoi(a)) //157
+#define DEV_cmos_get_reg(a) (bx_devices.pluginCmosDevice->get_reg(a)) //161
+#define DEV_cmos_set_reg(a,b) (bx_devices.pluginCmosDevice->set_reg(a,b)) //162
 #define DEV_cmos_checksum() (bx_devices.pluginCmosDevice->checksum_cmos()) //163
+#define DEV_kbd_set_indicator(a,b,c) (bx_devices.kbd_set_indicator(a,b,c)) //173
 #define DEV_pic_lower_irq(b)  (bx_devices.pluginPicDevice->lower_irq(b)) //206
 typedef struct _device_t
 {
@@ -36,5 +43,7 @@ extern plugin_t bx_builtin_plugins[]; //353
 #define PLUGIN_ENTRY_FOR_MODULE(mod) \
   int CDECL lib##mod##_plugin_entry(plugin_t *plugin, Bit16u type, Bit8u mode) //396
 
+PLUGIN_ENTRY_FOR_MODULE(keyboard);
 PLUGIN_ENTRY_FOR_MODULE(cmos); //414
+PLUGIN_ENTRY_FOR_MODULE(dma); //415
 PLUGIN_ENTRY_FOR_MODULE(pci); //422

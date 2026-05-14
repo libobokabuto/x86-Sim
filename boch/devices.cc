@@ -105,6 +105,11 @@ void bx_devices_c::init(BX_MEM_C* newmem)
     PLUG_load_plugin(pci, PLUGTYPE_CORE); //216
 
     PLUG_load_plugin(cmos, PLUGTYPE_CORE); //238
+
+    PLUG_load_plugin(dma, PLUGTYPE_CORE); //239
+
+    PLUG_load_plugin(keyboard, PLUGTYPE_STANDARD); //250
+
     bx_init_plugins(); //354
     DEV_cmos_checksum();//357
 }
@@ -271,7 +276,7 @@ bool bx_devices_c::register_default_io_write_handler(void* this_ptr, bx_write_ha
 
 Bit32u BX_CPP_AttrRegparmN(2)
 bx_devices_c::inp(Bit16u addr, unsigned io_len)
-{
+{ //1054
     struct io_handler_struct* io_read_handler;
     Bit32u ret;
     BX_INSTR_INP(addr, io_len);
@@ -309,5 +314,38 @@ bx_devices_c::outp(Bit16u addr, Bit32u value, unsigned io_len)
     }
     else if (addr != 0x0cf8) { // don't flood the logfile when probing PCI
         //BX_ERROR(("write to port 0x%04x with len %d ignored", addr, io_len));
+    }
+}
+
+void bx_devices_c::register_default_keyboard(void* dev, bx_kbd_gen_scancode_t kbd_gen_scancode,
+    bx_kbd_get_elements_t kbd_get_elements)
+{ //1134
+    if (bx_keyboard[0].dev == NULL) {
+        bx_keyboard[0].dev = dev;
+        bx_keyboard[0].gen_scancode = kbd_gen_scancode;
+        bx_keyboard[0].get_elements = kbd_get_elements;
+        bx_keyboard[0].led_mask = BX_KBD_LED_MASK_ALL;
+        // add keyboard LEDs to the statusbar
+        // 补2213条先暂时注释底下三行代码
+        //statusbar_id[BX_KBD_LED_NUM] = bx_gui->register_statusitem("NUM");
+        //statusbar_id[BX_KBD_LED_CAPS] = bx_gui->register_statusitem("CAPS");
+        //statusbar_id[BX_KBD_LED_SCRL] = bx_gui->register_statusitem("SCRL");
+    }
+}
+
+void bx_devices_c::register_default_mouse(void* dev, bx_mouse_enq_t mouse_enq,
+    bx_mouse_enabled_changed_t mouse_enabled_changed)
+{ //1172
+    if (bx_mouse[0].dev == NULL) {
+        bx_mouse[0].dev = dev;
+        bx_mouse[0].enq_event = mouse_enq;
+        bx_mouse[0].enabled_changed = mouse_enabled_changed;
+    }
+}
+
+void bx_devices_c::kbd_set_indicator(Bit8u devid, Bit8u ledid, bool state)
+{
+    if (bx_keyboard[devid].led_mask & (1 << ledid)) {
+        //bx_gui->statusbar_setitem(statusbar_id[ledid], state, devid);
     }
 }

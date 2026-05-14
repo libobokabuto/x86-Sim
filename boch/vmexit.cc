@@ -113,6 +113,130 @@ void BX_CPU_C::VMexit_Event(unsigned type, unsigned vector, Bit16u errcode, bool
     VMexit(reason, qualification);
 }
 
+enum {
+    VMX_VMEXIT_IO_PORTIN = (1 << 3),
+    VMX_VMEXIT_IO_INSTR_STRING = (1 << 4),
+    VMX_VMEXIT_IO_INSTR_REP = (1 << 5),
+    VMX_VMEXIT_IO_INSTR_IMM = (1 << 6)
+};
+
+void BX_CPP_AttrRegparmN(3) BX_CPU_C::VMexit_IO(bxInstruction_c* i, unsigned port, unsigned len)
+{ //385
+    //BX_ASSERT(BX_CPU_THIS_PTR in_vmx_guest);
+    //BX_ASSERT(port <= 0xFFFF);
+
+    bool vmexit = false;
+
+    VMCS_CACHE* vm = &BX_CPU_THIS_PTR vmcs;
+
+    if (vm->vmexec_ctrls1.IO_BITMAPS()) {
+        // always VMEXIT on port "wrap around" case
+        if ((port + len) > 0x10000) vmexit = true;
+        else {
+            Bit8u bitmap[2];
+            bx_phy_address pAddr;
+
+            if ((port & 0x7fff) + len > 0x8000) {
+                // special case - the IO access split cross both I/O bitmaps
+                pAddr = vm->io_bitmap_addr[0] + 0xfff;
+                bitmap[0] = read_physical_byte(pAddr, MEMTYPE(resolve_memtype(pAddr)), BX_IO_BITMAP_ACCESS);
+
+                pAddr = vm->io_bitmap_addr[1];
+                bitmap[1] = read_physical_byte(pAddr, MEMTYPE(resolve_memtype(pAddr)), BX_IO_BITMAP_ACCESS);
+            }
+            else {
+                // access_read_physical cannot read 2 bytes cross 4K boundary :(
+                pAddr = vm->io_bitmap_addr[(port >> 15) & 1] + ((port & 0x7fff) / 8);
+                bitmap[0] = read_physical_byte(pAddr, MEMTYPE(resolve_memtype(pAddr)), BX_IO_BITMAP_ACCESS);
+
+                pAddr++;
+                bitmap[1] = read_physical_byte(pAddr, MEMTYPE(resolve_memtype(pAddr)), BX_IO_BITMAP_ACCESS);
+            }
+
+            Bit16u combined_bitmap = bitmap[1];
+            combined_bitmap = (combined_bitmap << 8) | bitmap[0];
+
+            unsigned mask = ((1 << len) - 1) << (port & 7);
+            if (combined_bitmap & mask) vmexit = true;
+        }
+    }
+    else if (vm->vmexec_ctrls1.IO_VMEXIT()) vmexit = true;
+
+    if (vmexit) {
+        //BX_DEBUG(("VMEXIT: I/O port 0x%04x", port));
+
+        Bit32u qualification = 0;
+
+        switch (i->getIaOpcode()) {
+        case BX_IA_IN_ALIb:
+        case BX_IA_IN_AXIb:
+        case BX_IA_IN_EAXIb:
+            qualification = VMX_VMEXIT_IO_PORTIN | VMX_VMEXIT_IO_INSTR_IMM;
+            break;
+
+        case BX_IA_OUT_IbAL:
+        case BX_IA_OUT_IbAX:
+        case BX_IA_OUT_IbEAX:
+            qualification = VMX_VMEXIT_IO_INSTR_IMM;
+            break;
+
+        case BX_IA_IN_ALDX:
+        case BX_IA_IN_AXDX:
+        case BX_IA_IN_EAXDX:
+            qualification = VMX_VMEXIT_IO_PORTIN; // no immediate
+            break;
+
+        case BX_IA_OUT_DXAL:
+        case BX_IA_OUT_DXAX:
+        case BX_IA_OUT_DXEAX:
+            qualification = 0; // PORTOUT, no immediate
+            break;
+
+        case BX_IA_REP_INSB_YbDX:
+        case BX_IA_REP_INSW_YwDX:
+        case BX_IA_REP_INSD_YdDX:
+            qualification = VMX_VMEXIT_IO_PORTIN | VMX_VMEXIT_IO_INSTR_STRING;
+            if (i->repUsedL())
+                qualification |= VMX_VMEXIT_IO_INSTR_REP;
+            break;
+
+        case BX_IA_REP_OUTSB_DXXb:
+        case BX_IA_REP_OUTSW_DXXw:
+        case BX_IA_REP_OUTSD_DXXd:
+            qualification = VMX_VMEXIT_IO_INSTR_STRING; // PORTOUT
+            if (i->repUsedL())
+                qualification |= VMX_VMEXIT_IO_INSTR_REP;
+            break;
+
+        default:
+            //BX_PANIC(("VMexit_IO: I/O instruction %s unknown", i->getIaOpcodeNameShort()));
+            break;
+        }
+
+        if (qualification & VMX_VMEXIT_IO_INSTR_STRING) {
+            bx_address asize_mask = (bx_address)i->asize_mask(), laddr;
+
+            if (qualification & VMX_VMEXIT_IO_PORTIN)
+                laddr = get_laddr(BX_SEG_REG_ES, RDI & asize_mask);
+            else  // PORTOUT
+                laddr = get_laddr(i->seg(), RSI & asize_mask);
+
+            VMwrite_natural(VMCS_GUEST_LINEAR_ADDR, laddr);
+
+            Bit32u instruction_info = i->seg() << 15;
+            if (i->as64L())
+                instruction_info |= (1 << 8);
+            else if (i->as32L())
+                instruction_info |= (1 << 7);
+
+            VMwrite32(VMCS_32BIT_VMEXIT_INSTRUCTION_INFO, instruction_info);
+        }
+
+        VMexit(VMX_VMEXIT_IO_INSTRUCTION, qualification | (len - 1) | (port << 16));
+    }
+}
+
+
 #if BX_SUPPORT_VMX >= 2  //686
 void BX_CPU_C::Virtualization_Exception(Bit64u qualification, Bit64u guest_physical, Bit64u guest_linear)
 {

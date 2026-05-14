@@ -336,6 +336,24 @@ Bit32u BX_CPU_C::hwdebug_compare(bx_address laddr_0, unsigned size,
     return dr6_mask;
 }
 
+#if BX_CPU_LEVEL >= 5
+void BX_CPU_C::iobreakpoint_match(unsigned port, unsigned len)
+{
+    // Only compare debug registers if any breakpoints are enabled
+    if (BX_CPU_THIS_PTR cr4.get_DE() && BX_CPU_THIS_PTR dr7.get_bp_enabled())
+    {
+        Bit32u dr6_bits = hwdebug_compare(port, len, BX_HWDebugIO, BX_HWDebugIO);
+        if (dr6_bits) {
+            BX_CPU_THIS_PTR debug_trap |= dr6_bits;
+            if (BX_CPU_THIS_PTR debug_trap & BX_DEBUG_TRAP_HIT) {
+                //BX_ERROR(("#DB: I/O breakpoint hit - report debug trap on next instruction"));
+                BX_CPU_THIS_PTR async_event = 1;
+            }
+        }
+    }
+}
+#endif
+
 #endif //1723
 #if BX_CPU_LEVEL >= 6  //1725-1933
 XSaveRestoreStateHelper xsave_restore[xcr0_t::BX_XCR0_LAST] = { {0, 0, NULL, NULL, NULL, NULL} };
