@@ -114,6 +114,21 @@ void bx_devices_c::init(BX_MEM_C* newmem)
     DEV_cmos_checksum();//357
 }
 
+void bx_devices_c::reset(unsigned type)
+{
+#if BX_SUPPORT_PCI
+    if (pci.enabled) {
+        pci.confAddr = 0;
+    }
+#endif
+    mem->disable_smram();
+    bx_reset_plugins(type);
+    release_keys();
+    if (paste.buf != NULL) {
+        paste.stop = 1;
+    }
+}
+
 Bit32u bx_devices_c::default_read_handler(void* this_ptr, Bit32u address, unsigned io_len)
 {    //602
     UNUSED(this_ptr);
@@ -343,8 +358,35 @@ void bx_devices_c::register_default_mouse(void* dev, bx_mouse_enq_t mouse_enq,
     }
 }
 
+void bx_devices_c::gen_scancode(Bit32u key)
+{//1202
+    bool ret = 0;
+
+    bx_keyboard[0].bxkey_state[key & 0xff] = ((key & BX_KEY_RELEASED) == 0);
+    if ((paste.buf != NULL) && (!paste.service)) {
+        paste.stop = 1;
+        return;
+    }
+    if (bx_keyboard[1].dev != NULL) {
+        ret = bx_keyboard[1].gen_scancode(bx_keyboard[1].dev, key);
+    }
+    if ((ret == 0) && (bx_keyboard[0].dev != NULL)) {
+        bx_keyboard[0].gen_scancode(bx_keyboard[0].dev, key);
+    }
+}
+
+void bx_devices_c::release_keys()
+{//1230
+    for (int i = 0; i < BX_KEY_NBKEYS; i++) {
+        if (bx_keyboard[0].bxkey_state[i]) {
+            gen_scancode(i | BX_KEY_RELEASED);
+            bx_keyboard[0].bxkey_state[i] = 0;
+        }
+    }
+}
+
 void bx_devices_c::kbd_set_indicator(Bit8u devid, Bit8u ledid, bool state)
-{
+{ //1326
     if (bx_keyboard[devid].led_mask & (1 << ledid)) {
         //bx_gui->statusbar_setitem(statusbar_id[ledid], state, devid);
     }

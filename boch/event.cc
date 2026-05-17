@@ -467,3 +467,13 @@ void BX_CPU_C::deliver_SMI(void)
     signal_event(BX_EVENT_SMI);
 }
 
+void BX_CPU_C::raise_INTR(void)
+{
+    signal_event(BX_EVENT_PENDING_INTR);
+}
+
+void BX_CPU_C::clear_INTR(void)
+{
+    clear_event(BX_EVENT_PENDING_INTR);
+}
+

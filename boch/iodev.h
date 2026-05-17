@@ -35,7 +35,7 @@ class BOCHSAPI bx_devmodel_c {
 public:
     virtual ~bx_devmodel_c() {}
     virtual void init(void) {}
-    
+    virtual void reset(unsigned type) {}
 
 };
 
@@ -240,6 +240,8 @@ public:
 	~bx_devices_c();
     void init_stubs(void);
     void init(BX_MEM_C*);//383
+    void reset(unsigned type);
+
     BX_MEM_C* mem;//392
     bool register_io_read_handler(void* this_ptr, bx_read_handler_t f,
         Bit32u addr, const char* name, Bit8u mask); //393
@@ -253,6 +255,8 @@ public:
     Bit32u inp(Bit16u addr, unsigned io_len) BX_CPP_AttrRegparmN(2);
     void   outp(Bit16u addr, Bit32u value, unsigned io_len) BX_CPP_AttrRegparmN(3); //416
     void register_default_mouse(void* dev, bx_mouse_enq_t mouse_enq, bx_mouse_enabled_changed_t mouse_enabled_changed); //424
+    void gen_scancode(Bit32u key);//427
+    void release_keys(void);//429
     void kbd_set_indicator(Bit8u devid, Bit8u ledid, bool state); //431
     bx_cmos_stub_c* pluginCmosDevice;
     bx_dma_stub_c* pluginDmaDevice;
@@ -331,6 +335,33 @@ private:
         Bit8u led_mask;
         bool bxkey_state[BX_KEY_NBKEYS];
     } bx_keyboard[2];
+
+    struct {
+        Bit8u* buf;     // ptr to bytes to be pasted, or NULL if none in progress
+        Bit32u buf_len; // length of pastebuf
+        Bit32u buf_ptr; // ptr to next byte to be added to hw buffer
+        Bit32u delay;   // number of timer events before paste
+        Bit32u counter; // count before paste
+        bool service;   // set to 1 when gen_scancode() is called from paste service
+        bool stop;      // stop the current paste operation on keypress or hardware reset
+    } paste;
+
+    struct {
+        bool enabled;
+#if BX_SUPPORT_PCI
+        Bit32u advopts;
+        Bit8u handler_id[0x101];  // 256 PCI devices/functions + 1 AGP device
+        struct {
+            bx_pci_device_c* handler;
+        } pci_handler[BX_MAX_PCI_DEVICES];
+        unsigned num_pci_handlers;
+
+        Bit8u map_slot_to_dev;
+        bool slot_used[BX_N_PCI_SLOTS];
+
+        Bit32u confAddr;
+#endif
+    } pci;
     int timer_handle;
     int statusbar_id[3];
     Bit8u sound_device_count; //610

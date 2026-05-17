@@ -45,6 +45,30 @@ void bx_pc_system_c::initialize(Bit32u ips)
     //BX_DEBUG(("ips = %u", (unsigned)ips));
 }
 
+void bx_pc_system_c::set_HRQ(bool val)
+{
+    HRQ = val;
+    if (val)
+        BX_CPU(0)->async_event = 1;
+}
+
+void bx_pc_system_c::raise_INTR(void)
+{
+    if (bx_dbg.interrupts){}
+        //BX_INFO(("pc_system: Setting INTR=1 on bootstrap processor %d", BX_BOOTSTRAP_PROCESSOR));
+
+    BX_CPU(BX_BOOTSTRAP_PROCESSOR)->raise_INTR();
+}
+
+void bx_pc_system_c::clear_INTR(void)
+{
+    if (bx_dbg.interrupts){}
+        //BX_INFO(("pc_system: Setting INTR=0 on bootstrap processor %d", BX_BOOTSTRAP_PROCESSOR));
+
+    BX_CPU(BX_BOOTSTRAP_PROCESSOR)->clear_INTR();
+}
+
+
 Bit32u BX_CPP_AttrRegparmN(2)
 bx_pc_system_c::inp(Bit16u addr, unsigned io_len)
 {  //107
@@ -97,12 +121,23 @@ bool bx_pc_system_c::get_enable_a20(void)
 #endif
 }
 
+
+
 int bx_pc_system_c::Reset(unsigned type)
 {  //187
     set_enable_a20(1);
-    BX_CPU(0)->reset(type);
-    return 0;
+    for (int i = 0; i < BX_SMP_PROCESSORS; i++) {
+        BX_CPU(i)->reset(type);
+    }
+
+    // Reset devices only on Hardware resets
+    if (type == BX_RESET_HARDWARE) {
+        DEV_reset_devices(type);
+    }
+
+    return(0);
 }
+
 
 
 int bx_pc_system_c::register_timer(void* this_ptr, void (*funct)(void*),
@@ -268,6 +303,8 @@ void bx_pc_system_c::nullTimer(void* this_ptr)
 #endif
 }
 
+
+
 void bx_pc_system_c::deactivate_timer(unsigned i)
 { //563
 #if BX_TIMER_DEBUG
@@ -279,17 +316,18 @@ void bx_pc_system_c::deactivate_timer(unsigned i)
 
     timer[i].active = 0;
 }
+
 void bx_pc_system_c::activate_timer_ticks(unsigned i, Bit64u ticks, bool continuous)
 {
     //474
 #if BX_TIMER_DEBUG
-    if (i >= numTimers)
-        BX_PANIC(("activate_timer_ticks: timer %u OOB", i));
-    if (i == 0)
-        BX_PANIC(("activate_timer_ticks: timer 0 is the NullTimer!"));
-    if (timer[i].period < MinAllowableTimerPeriod)
-        BX_PANIC(("activate_timer_ticks: timer[%u].period of " FMT_LL "u < min of %u",
-            i, timer[i].period, MinAllowableTimerPeriod));
+    if (i >= numTimers){}
+        //BX_PANIC(("activate_timer_ticks: timer %u OOB", i));
+    if (i == 0){}
+        //BX_PANIC(("activate_timer_ticks: timer 0 is the NullTimer!"));
+    if (timer[i].period < MinAllowableTimerPeriod){}
+        //BX_PANIC(("activate_timer_ticks: timer[%u].period of " FMT_LL "u < min of %u",
+            //i, timer[i].period, MinAllowableTimerPeriod));
 #endif
 
     // If the timer frequency is rediculously low, make it more sane.
@@ -313,16 +351,17 @@ void bx_pc_system_c::activate_timer_ticks(unsigned i, Bit64u ticks, bool continu
         currCountdown = Bit32u(ticks);
     }
 }
+
 void bx_pc_system_c::activate_timer(unsigned i, Bit32u useconds, bool continuous)
 {
     //508
     Bit64u ticks;
 
 #if BX_TIMER_DEBUG
-    if (i >= numTimers)
-        BX_PANIC(("activate_timer: timer %u OOB", i));
-    if (i == 0)
-        BX_PANIC(("activate_timer: timer 0 is the nullTimer!"));
+    if (i >= numTimers){}
+        //BX_PANIC(("activate_timer: timer %u OOB", i));
+    if (i == 0){}
+       // BX_PANIC(("activate_timer: timer 0 is the nullTimer!"));
 #endif
 
     // if useconds = 0, use default stored in period field

@@ -20,7 +20,7 @@ public:
     bx_keyb_c();
     virtual ~bx_keyb_c();
     virtual void init(void);
-
+    virtual void reset(unsigned type);
 
 private:
     static bool         gen_scancode_static(void* dev, Bit32u key);

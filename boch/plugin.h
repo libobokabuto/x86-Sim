@@ -13,6 +13,7 @@
 #define DEV_register_default_iowrite_handler(b,c,d,e) bx_devices.register_default_io_write_handler(b,c,d,e) //133
 #define DEV_register_irq(b,c) bx_devices.register_irq(b,c) //134
 #define DEV_init_devices() {bx_devices.init(BX_MEM(0)); }  //140
+#define DEV_reset_devices(type) {bx_devices.reset(type); } //141
 #define DEV_register_timer(a,b,c,d,e,f) bx_pc_system.register_timer(a,b,c,d,e,f) //144
 #define DEV_register_default_keyboard(a,b,c) (bx_devices.register_default_keyboard(a,b,c)) //147
 #define DEV_register_default_mouse(a,b,c) (bx_devices.register_default_mouse(a,b,c)) //150
@@ -44,6 +45,7 @@ extern device_t* devices;//293
 
 BOCHSAPI void pluginRegisterDeviceDevmodel(plugin_t* plugin, Bit16u type, bx_devmodel_c* dev, const char* name); //303
 extern void bx_init_plugins(void); //347
+extern void bx_reset_plugins(unsigned);//348
 #if !BX_PLUGINS
 extern plugin_t bx_builtin_plugins[]; //353
 #endif

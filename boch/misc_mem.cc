@@ -368,6 +368,13 @@ Bit8u* BX_MEM_C::getHostMemAddr(BX_CPU_C* cpu, bx_phy_address addr, unsigned rw)
 	}
 }
 
+void BX_MEM_C::disable_smram(void)
+{
+	BX_MEM_THIS smram_available = false;
+	BX_MEM_THIS smram_enable = false;
+	BX_MEM_THIS smram_restricted = false;
+}
+
 Bit8u BX_MEM_C::flash_read(Bit32u addr)
 {  //909
 	Bit8u ret = 0;

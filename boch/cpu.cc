@@ -49,7 +49,7 @@ void BX_CPU_C::cpu_loop(void)
             BX_CPU_THIS_PTR prev_rip = RIP; // commit new RIP
             BX_INSTR_AFTER_EXECUTION(BX_CPU_ID, i);
             BX_CPU_THIS_PTR icount++;
-            if (BX_CPU_THIS_PTR icount == 317500)
+            if (BX_CPU_THIS_PTR icount == 317262)
             {
                   int qwq = 0;
             }
@@ -57,7 +57,12 @@ void BX_CPU_C::cpu_loop(void)
             uint64_t trace_index = md5count++;
             //trace_index >= 300000
             //(trace_index % 500) < 10
-            if (trace_index >= 315000)
+            const uint64_t trace_start = 315000;  // 从第 15 万条之后开始打印
+            const uint64_t trace_step = 1000;    // 每 1000 条一个周期
+            const uint64_t trace_count = 1000;      // 每个周期打印 10 条
+
+            if (trace_index >= trace_start &&
+                ((trace_index - trace_start) % trace_step) < trace_count)
             {
                 int memdatalen = 8;
 
@@ -66,13 +71,19 @@ void BX_CPU_C::cpu_loop(void)
 
                 unsigned char* qwq = (unsigned char*)g_test_buff;
                 unsigned char decrypt[16];
+
                 MD5_CTX md5;
                 MD5Init(&md5);
                 //MD5Update(&md5, qwq, (32 + 1) * 8);
                 MD5Update(&md5, qwq, cpudatalen);
 
                 MD5Final(&md5, decrypt);
-                printf("%05d: ", BX_CPU_THIS_PTR icount);
+                printf(
+                    "%05d: RIP=%016llx currCountdown=%lld MD5=",
+                    BX_CPU_THIS_PTR icount,
+                    (unsigned long long)RIP,
+                    (long long)bx_pc_system.currCountdown
+                );
                 for (int j = 0; j < 16; j++)
                 {
                     printf("%02x", decrypt[j]);

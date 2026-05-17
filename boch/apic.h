@@ -197,6 +197,8 @@ public:
 	static void set_vector(Bit32u* reg, unsigned vector);
 	static void clear_vector(Bit32u* reg, unsigned vector);
 
+	bool INTR;
+
 	void reset(unsigned type);
 	bx_phy_address get_base(void) const { return base_addr; }
 	void set_base(bx_phy_address newbase);

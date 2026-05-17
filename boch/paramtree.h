@@ -27,3 +27,4 @@ public:
 		const char* name, FILE** scratch_file_ptr_ptr);
 	void set_sr_handlers(void* devptr, filedata_save_handler save, filedata_restore_handler restore);
 };
+

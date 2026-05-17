@@ -70,6 +70,28 @@ void bx_init_plugins()
     }
 }
 
+void bx_reset_plugins(unsigned signal)
+{
+    device_t* device;
+
+    for (device = core_devices; device; device = device->next) {
+        //pluginlog->info("reset of '%s' plugin device by virtual method", device->name);
+        device->devmodel->reset(signal);
+    }
+    for (device = devices; device; device = device->next) {
+        if (device->plugtype == PLUGTYPE_STANDARD) {
+            //pluginlog->info("reset of '%s' plugin device by virtual method", device->name);
+            device->devmodel->reset(signal);
+        }
+    }
+    for (device = devices; device; device = device->next) {
+        if (device->plugtype == PLUGTYPE_OPTIONAL) {
+            //pluginlog->info("reset of '%s' plugin device by virtual method", device->name);
+            device->devmodel->reset(signal);
+        }
+    }
+}
+
 #define BUILTIN_OPT_PLUGIN_ENTRY(mod) {#mod, PLUGTYPE_OPTIONAL, 0, lib##mod##_plugin_entry, 0}
 #define BUILTIN_OPTPCI_PLUGIN_ENTRY(mod) {#mod, PLUGTYPE_OPTIONAL, PLUGFLAG_PCI, lib##mod##_plugin_entry, 0}
 #define BUILTIN_VGA_PLUGIN_ENTRY(mod, t, f) {#mod, PLUGTYPE_VGA | t, f, lib##mod##_plugin_entry, 0}

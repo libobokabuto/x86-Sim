@@ -4369,6 +4369,8 @@ public:
 
     BX_SMF void    enter_system_management_mode(void);
     BX_SMF void    smram_save_state(Bit32u* smm_saved_state); //4957
+    BX_SMF void    raise_INTR(void);
+    BX_SMF void    clear_INTR(void);
     BX_SMF void    deliver_INIT(void);//4963
     BX_SMF void    deliver_NMI(void);
     BX_SMF void    deliver_SMI(void);

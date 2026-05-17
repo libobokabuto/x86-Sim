@@ -71,7 +71,7 @@ void bx_keyb_c::init(void)
     DEV_register_iowrite_handler(this, write_handler,
         0x0064, "8042 Keyboard controller", 1);
     BX_KEY_THIS timer_handle = DEV_register_timer(this, timer_handler,
-        150, 1, 1,
+        250, 1, 1,
         "8042 Keyboard controller");
 
     resetinternals(1);
@@ -93,7 +93,7 @@ void bx_keyb_c::init(void)
     BX_KEY_THIS s.kbd_controller.inpb = 0;
     BX_KEY_THIS s.kbd_controller.outb = 0;
 
-    BX_KEY_THIS s.kbd_controller.kbd_type = 1;
+    BX_KEY_THIS s.kbd_controller.kbd_type = BX_KBD_MF_TYPE;
     BX_KEY_THIS s.kbd_controller.kbd_clock_enabled = 1;
     BX_KEY_THIS s.kbd_controller.aux_clock_enabled = 0;
     BX_KEY_THIS s.kbd_controller.allow_irq1 = 1;
@@ -136,6 +136,11 @@ void bx_keyb_c::init(void)
         (BX_KEY_THIS s.mouse.type == BX_MOUSE_TYPE_IMPS2)) {
         DEV_register_default_mouse(this, mouse_enq_static, mouse_enabled_changed_static);
     }
+}
+
+void bx_keyb_c::reset(unsigned type)
+{
+    BX_KEY_THIS s.kbd_internal_buffer.led_status = 0;
 }
 
 Bit32u bx_keyb_c::read_handler(void* this_ptr, Bit32u address, unsigned io_len)
@@ -298,7 +303,7 @@ void bx_keyb_c::write(Bit32u address, Bit32u value, unsigned io_len)
                 break;
             case 0xd4: // Write to mouse
                 // I don't think this enables the AUX clock
-                set_aux_clock_enable(1); // enable aux clock line
+                //set_aux_clock_enable(1); // enable aux clock line
                 kbd_ctrl_to_mouse(value);
                 // ??? should I reset to previous value of aux enable?
                 break;
