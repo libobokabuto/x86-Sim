@@ -9,6 +9,8 @@ typedef struct { /* bx_selector_t */ //41ÐÐ
 	Bit8u  rpl;     /* RPL extracted from value */
 } bx_selector_t;
 #define BX_SELECTOR_RPL(selector) ((selector) & 0x03) //50
+#define BX_SELECTOR_RPL_MASK (0xfffc)
+
 typedef struct
 {
 
@@ -106,6 +108,13 @@ enum {
     BX_CODE_EXEC_READ_CONFORMING_ACCESSED = 0xf
 };
 #define IS_PRESENT(descriptor) (descriptor.p) //152
+
+#if BX_SUPPORT_X86_64
+#define IS_LONG64_SEGMENT(descriptor)   (descriptor.u.segment.l)
+#else
+#define IS_LONG64_SEGMENT(descriptor)   (0)
+#endif
+
 enum {
     BX_SEGMENT_CODE = 0x8,
     BX_SEGMENT_DATA_EXPAND_DOWN = 0x4,

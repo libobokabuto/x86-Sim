@@ -43,6 +43,28 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::setEFlags(Bit32u new_eflags)
     }
 }
 
+void BX_CPP_AttrRegparmN(2)
+BX_CPU_C::writeEFlags(Bit32u flags, Bit32u changeMask)
+{
+    // Build a mask of the non-reserved bits:
+    // ID,VIP,VIF,AC,VM,RF,x,NT,IOPL,OF,DF,IF,TF,SF,ZF,x,AF,x,PF,x,CF
+    Bit32u supportMask = 0x00037fd5;
+#if BX_CPU_LEVEL >= 4
+    if (BX_CPUID_SUPPORT_ISA_EXTENSION(BX_ISA_486))
+        supportMask |= (EFlagsIDMask | EFlagsACMask); // ID/AC
+#endif
+#if BX_CPU_LEVEL >= 5
+    if (BX_CPUID_SUPPORT_ISA_EXTENSION(BX_ISA_VME))
+        supportMask |= (EFlagsVIPMask | EFlagsVIFMask); // VIP/VIF
+#endif
+
+    // Screen out changing of any unsupported bits.
+    changeMask &= supportMask;
+
+    Bit32u newEFlags = (read_eflags() & ~changeMask) | (flags & changeMask);
+    setEFlags(newEFlags);
+}
+
 Bit32u BX_CPU_C::force_flags(void)
 { //107
     Bit32u newflags = getB_CF();

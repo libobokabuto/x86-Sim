@@ -70,9 +70,9 @@ void bx_keyb_c::init(void)
         0x0060, "8042 Keyboard controller", 1);
     DEV_register_iowrite_handler(this, write_handler,
         0x0064, "8042 Keyboard controller", 1);
-    //BX_KEY_THIS timer_handle = DEV_register_timer(this, timer_handler,
-        //SIM->get_param_num(BXPN_KBD_SERIAL_DELAY)->get(), 1, 1,
-        //"8042 Keyboard controller");
+    BX_KEY_THIS timer_handle = DEV_register_timer(this, timer_handler,
+        150, 1, 1,
+        "8042 Keyboard controller");
 
     resetinternals(1);
 
@@ -887,6 +887,82 @@ void bx_keyb_c::kbd_ctrl_to_kbd(Bit8u value)
         kbd_enQ(0xFE); /* send NACK */
         break;
     }
+}
+
+void bx_keyb_c::timer_handler(void* this_ptr)
+{
+    bx_keyb_c* class_ptr = (bx_keyb_c*)this_ptr;
+    unsigned retval;
+
+    retval = class_ptr->periodic(1);
+
+    if (retval & 0x01)
+        DEV_pic_raise_irq(1);
+    if (retval & 0x02)
+        DEV_pic_raise_irq(12);
+}
+
+unsigned bx_keyb_c::periodic(Bit32u usec_delta)
+{
+    Bit8u  retval;
+
+    retval = (Bit8u)BX_KEY_THIS s.kbd_controller.irq1_requested |
+        (BX_KEY_THIS s.kbd_controller.irq12_requested << 1);
+    BX_KEY_THIS s.kbd_controller.irq1_requested = 0;
+    BX_KEY_THIS s.kbd_controller.irq12_requested = 0;
+
+    if (BX_KEY_THIS s.kbd_controller.timer_pending == 0) {
+        return(retval);
+    }
+
+    if (usec_delta >= BX_KEY_THIS s.kbd_controller.timer_pending) {
+        BX_KEY_THIS s.kbd_controller.timer_pending = 0;
+    }
+    else {
+        BX_KEY_THIS s.kbd_controller.timer_pending -= usec_delta;
+        return(retval);
+    }
+
+    if (BX_KEY_THIS s.kbd_controller.outb) {
+        return(retval);
+    }
+
+    /* nothing in outb, look for possible data xfer from keyboard or mouse */
+    if (BX_KEY_THIS s.kbd_internal_buffer.num_elements &&
+        (BX_KEY_THIS s.kbd_controller.kbd_clock_enabled || BX_KEY_THIS s.kbd_controller.bat_in_progress)) {
+        //BX_DEBUG(("service_keyboard: key in internal buffer waiting"));
+        BX_KEY_THIS s.kbd_controller.kbd_output_buffer =
+            BX_KEY_THIS s.kbd_internal_buffer.buffer[BX_KEY_THIS s.kbd_internal_buffer.head];
+        BX_KEY_THIS s.kbd_controller.outb = 1;
+        // commented out since this would override the current state of the
+        // mouse buffer flag - no bug seen - just seems wrong (das)
+        //    BX_KEY_THIS s.kbd_controller.auxb = 0;
+        BX_KEY_THIS s.kbd_internal_buffer.head = (BX_KEY_THIS s.kbd_internal_buffer.head + 1) %
+            BX_KBD_ELEMENTS;
+        BX_KEY_THIS s.kbd_internal_buffer.num_elements--;
+        if (BX_KEY_THIS s.kbd_controller.allow_irq1)
+            BX_KEY_THIS s.kbd_controller.irq1_requested = 1;
+    }
+    else {
+        create_mouse_packet(0);
+        if (BX_KEY_THIS s.kbd_controller.aux_clock_enabled && BX_KEY_THIS s.mouse_internal_buffer.num_elements) {
+            //BX_DEBUG(("service_keyboard: key(from mouse) in internal buffer waiting"));
+            BX_KEY_THIS s.kbd_controller.aux_output_buffer =
+                BX_KEY_THIS s.mouse_internal_buffer.buffer[BX_KEY_THIS s.mouse_internal_buffer.head];
+
+            BX_KEY_THIS s.kbd_controller.outb = 1;
+            BX_KEY_THIS s.kbd_controller.auxb = 1;
+            BX_KEY_THIS s.mouse_internal_buffer.head = (BX_KEY_THIS s.mouse_internal_buffer.head + 1) %
+                BX_MOUSE_BUFF_SIZE;
+            BX_KEY_THIS s.mouse_internal_buffer.num_elements--;
+            if (BX_KEY_THIS s.kbd_controller.allow_irq12)
+                BX_KEY_THIS s.kbd_controller.irq12_requested = 1;
+        }
+        else {
+            //BX_DEBUG(("service_keyboard(): no keys waiting"));
+        }
+    }
+    return(retval);
 }
 
 void bx_keyb_c::activate_timer(void)

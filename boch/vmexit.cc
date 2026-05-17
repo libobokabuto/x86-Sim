@@ -9,6 +9,21 @@
 
 #include "ia_opcodes.h"
 
+void BX_CPU_C::VMexit_ExtInterrupt(void)
+{
+    //BX_ASSERT(BX_CPU_THIS_PTR in_vmx_guest);
+
+    VMCS_CACHE* vm = &BX_CPU_THIS_PTR vmcs;
+
+    if (vm->pin_vmexec_ctrls.EXTERNAL_INTERRUPT_VMEXIT()) {
+        if (!vm->vmexit_ctrls1.INTA_ON_VMEXIT()) {
+            // interrupt wasn't acknowledged and still pending, interruption info is invalid
+            VMwrite32(VMCS_32BIT_VMEXIT_INTERRUPTION_INFO, 0);
+            VMexit(VMX_VMEXIT_EXTERNAL_INTERRUPT, 0);
+        }
+    }
+}
+
 void BX_CPU_C::VMexit_Event(unsigned type, unsigned vector, Bit16u errcode, bool errcode_valid, Bit64u qualification)
 { //211
     if (!BX_CPU_THIS_PTR in_vmx_guest) return;
@@ -119,6 +134,29 @@ enum {
     VMX_VMEXIT_IO_INSTR_REP = (1 << 5),
     VMX_VMEXIT_IO_INSTR_IMM = (1 << 6)
 };
+
+void BX_CPU_C::VMexit_TripleFault(void)
+{
+    if (!BX_CPU_THIS_PTR in_vmx_guest) return;
+
+    // VMEXIT is not considered to occur during event delivery if it results
+    // in a triple fault exception (that causes VMEXIT directly)
+    BX_CPU_THIS_PTR in_event = false;
+
+    VMexit(VMX_VMEXIT_TRIPLE_FAULT, 0);
+}
+
+void BX_CPP_AttrRegparmN(2) BX_CPU_C::VMexit_TaskSwitch(Bit16u tss_selector, unsigned source)
+{
+    //BX_ASSERT(BX_CPU_THIS_PTR in_vmx_guest);
+
+    VMexit(VMX_VMEXIT_TASK_SWITCH, tss_selector | (source << 30));
+}
+
+const Bit32u BX_VMX_LO_MSR_START = 0x00000000;
+const Bit32u BX_VMX_LO_MSR_END = 0x00001FFF;
+const Bit32u BX_VMX_HI_MSR_START = 0xC0000000;
+const Bit32u BX_VMX_HI_MSR_END = 0xC0001FFF;
 
 void BX_CPP_AttrRegparmN(3) BX_CPU_C::VMexit_IO(bxInstruction_c* i, unsigned port, unsigned len)
 { //385
@@ -235,7 +273,6 @@ void BX_CPP_AttrRegparmN(3) BX_CPU_C::VMexit_IO(bxInstruction_c* i, unsigned por
         VMexit(VMX_VMEXIT_IO_INSTRUCTION, qualification | (len - 1) | (port << 16));
     }
 }
-
 
 #if BX_SUPPORT_VMX >= 2  //686
 void BX_CPU_C::Virtualization_Exception(Bit64u qualification, Bit64u guest_physical, Bit64u guest_linear)

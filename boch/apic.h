@@ -222,22 +222,30 @@ public:
 	void read(bx_phy_address addr, void* data, unsigned len);
 	void write(bx_phy_address addr, void* data, unsigned len);
 	void write_aligned(bx_phy_address addr, Bit32u data);
-	
 	Bit32u read_aligned(bx_phy_address address);
+
+#if BX_CPU_LEVEL >= 6
+	bool read_x2apic(unsigned index, Bit64u* msr);
+	bool write_x2apic(unsigned index, Bit32u msr_hi, Bit32u msr_lo);
+#endif
+
 	void trigger_irq(Bit8u vector, unsigned trigger_mode, bool bypass_irr_isr = 0); //248
-	
+	Bit8u acknowledge_int(void);//250
 	static void periodic_smf(void*); //266
 	void periodic(void);
 	void set_divide_configuration(Bit32u value);
 	void set_initial_timer_count(Bit32u value);
 	Bit32u get_current_timer_count(void);
 #if BX_CPU_LEVEL >= 6 //272
+	Bit64u get_tsc_deadline(void);
+	void set_tsc_deadline(Bit64u value);
 	void receive_SEOI(Bit8u vec);
 	void enable_xapic_extensions(void);
 	
 #endif
 	void startup_msg(Bit8u vector);
 #if BX_SUPPORT_VMX >= 2
+	Bit32u read_vmx_preemption_timer(void);
 	void deactivate_vmx_preemption_timer(void);
 	static void vmx_preemption_timer_expired(void*);
 #endif
@@ -250,4 +258,7 @@ public:
 bool apic_bus_deliver_lowest_priority(Bit8u vector, apic_dest_t dest, bool trig_mode, bool broadcast);
 BOCHSAPI_MSVCONLY bool apic_bus_deliver_interrupt(Bit8u vector, apic_dest_t dest, Bit8u delivery_mode, bool logical_dest, bool level, bool trig_mode);
 bool apic_bus_broadcast_interrupt(Bit8u vector, Bit8u delivery_mode, bool trig_mode, int exclude_cpu);
+
+BX_CPP_INLINE bool is_x2apic_msr_range(Bit32u index) { return index >= 0x800 && index <= 0x8FF; }
+
 #endif // if BX_SUPPORT_APIC

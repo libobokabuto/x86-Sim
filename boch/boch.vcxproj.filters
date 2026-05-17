@@ -183,6 +183,21 @@
     <ClCompile Include="scancodes.cc">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="tasking.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ctrl_xfer_pro.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="call_far.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="vm8086.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="wide_int.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bochs.h">
@@ -342,6 +357,12 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="scancodes.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="msr.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="wide_int.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

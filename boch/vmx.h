@@ -1,6 +1,45 @@
 #pragma once
 
-#include "vmx_ctrls.h"
+#define VMX_VMCS_AREA_SIZE   4096
+
+const Bit64u BX_INVALID_VMCSPTR = BX_CONST64(0xFFFFFFFFFFFFFFFF);
+
+// bits supported in IA32_FEATURE_CONTROL MSR
+const Bit32u BX_IA32_FEATURE_CONTROL_LOCK_BIT = 0x1;
+const Bit32u BX_IA32_FEATURE_CONTROL_VMX_ENABLE_BIT = 0x4;
+const Bit32u BX_IA32_FEATURE_CONTROL_BITS = (BX_IA32_FEATURE_CONTROL_LOCK_BIT | BX_IA32_FEATURE_CONTROL_VMX_ENABLE_BIT);
+
+enum VMX_error_code {
+    VMXERR_NO_ERROR = 0,
+    VMXERR_VMCALL_IN_VMX_ROOT_OPERATION = 1,
+    VMXERR_VMCLEAR_WITH_INVALID_ADDR = 2,
+    VMXERR_VMCLEAR_WITH_VMXON_VMCS_PTR = 3,
+    VMXERR_VMLAUNCH_NON_CLEAR_VMCS = 4,
+    VMXERR_VMRESUME_NON_LAUNCHED_VMCS = 5,
+    VMXERR_VMRESUME_VMCS_CORRUPTED = 6,
+    VMXERR_VMENTRY_INVALID_VM_CONTROL_FIELD = 7,
+    VMXERR_VMENTRY_INVALID_VM_HOST_STATE_FIELD = 8,
+    VMXERR_VMPTRLD_INVALID_PHYSICAL_ADDRESS = 9,
+    VMXERR_VMPTRLD_WITH_VMXON_PTR = 10,
+    VMXERR_VMPTRLD_INCORRECT_VMCS_REVISION_ID = 11,
+    VMXERR_UNSUPPORTED_VMCS_COMPONENT_ACCESS = 12,
+    VMXERR_VMWRITE_READ_ONLY_VMCS_COMPONENT = 13,
+    VMXERR_RESERVED14 = 14,
+    VMXERR_VMXON_IN_VMX_ROOT_OPERATION = 15,
+    VMXERR_VMENTRY_INVALID_EXECUTIVE_VMCS = 16,
+    VMXERR_VMENTRY_NON_LAUNCHED_EXECUTIVE_VMCS = 17,
+    VMXERR_VMENTRY_NOT_VMXON_EXECUTIVE_VMCS = 18,
+    VMXERR_VMCALL_NON_CLEAR_VMCS = 19,
+    VMXERR_VMCALL_INVALID_VMEXIT_FIELD = 20,
+    VMXERR_RESERVED21 = 21,
+    VMXERR_VMCALL_INVALID_MSEG_REVISION_ID = 22,
+    VMXERR_VMXOFF_WITH_CONFIGURED_SMM_MONITOR = 23,
+    VMXERR_VMCALL_WITH_INVALID_SMM_MONITOR_FEATURES = 24,
+    VMXERR_VMENTRY_INVALID_VM_CONTROL_FIELD_IN_EXECUTIVE_VMCS = 25,
+    VMXERR_VMENTRY_MOV_SS_BLOCKING = 26,
+    VMXERR_RESERVED27 = 27,
+    VMXERR_INVALID_INVEPT_INVVPID = 28
+};
 
 enum VMX_vmexit_reason {
     VMX_VMEXIT_EXCEPTION_NMI = 0,
@@ -93,6 +132,21 @@ enum VMX_vmexit_reason {
        reason == VMX_VMEXIT_VIRTUALIZED_EOI || \
        reason == VMX_VMEXIT_APIC_WRITE || \
        reason == VMX_VMEXIT_BUS_LOCK)
+
+enum {
+    VMX_VMEXIT_CR_ACCESS_CR_WRITE = 0,
+    VMX_VMEXIT_CR_ACCESS_CR_READ,
+    VMX_VMEXIT_CR_ACCESS_CLTS,
+    VMX_VMEXIT_CR_ACCESS_LMSW
+};
+
+// VMENTRY error on loading guest state qualification
+enum VMX_vmentry_error {
+    VMENTER_ERR_NO_ERROR = 0,
+    VMENTER_ERR_GUEST_STATE_PDPTR_LOADING = 2,
+    VMENTER_ERR_GUEST_STATE_INJECT_NMI_BLOCKING_EVENTS = 3,
+    VMENTER_ERR_GUEST_STATE_LINK_POINTER = 4
+};
 
 enum VMX_vmabort_code {
     VMABORT_SAVING_GUEST_MSRS_FAILURE = 0,
@@ -405,9 +459,153 @@ const Bit64u VMX_VMFUNC_EPTP_SWITCHING_MASK = (BX_CONST64(1) << VMX_VMFUNC_EPTP_
 #define VMCS_HOST_SSP                                      0x00006C1A
 #define VMCS_HOST_INTERRUPT_SSP_TABLE_ADDR                 0x00006C1C
 
-class VMCS_Mapping {  //563
+#define VMCS_FIELD(encoding)        ((encoding) & 0x3ff)
 
+// check if the VMCS field encoding corresponding to HI part of 64-bit value
+#define IS_VMCS_FIELD_HI(encoding)  ((encoding) & 1)
+
+// bits 11:10 of VMCS field encoding indicate field's type
+#define VMCS_FIELD_TYPE(encoding)   (((encoding) >> 10) & 3)
+
+enum {
+    VMCS_FIELD_TYPE_CONTROL = 0x0,
+    VMCS_FIELD_TYPE_READ_ONLY = 0x1,
+    VMCS_FIELD_TYPE_GUEST_STATE = 0x2,
+    VMCS_FIELD_TYPE_HOST_STATE = 0x3
 };
+
+// bits 14:13 of VMCS field encoding indicate field's width
+#define VMCS_FIELD_WIDTH(encoding)  (((encoding) >> 13) & 3)
+
+enum {
+    VMCS_FIELD_WIDTH_16BIT = 0x0,
+    VMCS_FIELD_WIDTH_64BIT = 0x1,
+    VMCS_FIELD_WIDTH_32BIT = 0x2,
+    VMCS_FIELD_WIDTH_NATURAL_WIDTH = 0x3
+};
+
+#define VMCS_FIELD_INDEX(encoding) \
+    ((VMCS_FIELD_WIDTH(encoding) << 2) + VMCS_FIELD_TYPE(encoding))
+
+#define VMX_HIGHEST_16BIT_VMCS_ENCODING          (0x20)
+#define VMX_HIGHEST_64BIT_VMCS_ENCODING          (0x50)
+#define VMX_HIGHEST_32BIT_VMCS_ENCODING          (0x30)
+#define VMX_HIGHEST_NATURAL_WIDTH_VMCS_ENCODING  (0x30)
+
+#define VMX_HIGHEST_VMCS_ENCODING VMX_HIGHEST_64BIT_VMCS_ENCODING
+
+const Bit32u VMCS_ENCODING_RESERVED_BITS = 0xffff9000;
+
+#define BX_VMX_VMCS_REVISION_ID 0x2B
+
+enum VMCS_Access_Rights_Format {
+    VMCS_AR_ROTATE,
+    VMCS_AR_PACK		// Intel Skylake packs AR into 16 bit form
+};
+
+#define VMCS_LAUNCH_STATE_FIELD_ENCODING         (0xfffffffe)
+#define VMCS_VMX_ABORT_FIELD_ENCODING            (0xfffffffc)
+#define VMCS_REVISION_ID_FIELD_ENCODING          (0xfffffffa)
+
+#define VMCS_DATA_OFFSET                         (0x10)  
+
+#if (VMCS_DATA_OFFSET + 4*4*(VMX_HIGHEST_16BIT_VMCS_ENCODING + VMX_HIGHEST_32BIT_VMCS_ENCODING + VMX_HIGHEST_64BIT_VMCS_ENCODING + VMX_HIGHEST_NATURAL_WIDTH_VMCS_ENCODING) >= VMX_VMCS_AREA_SIZE)
+    #error "VMCS area size exceeded !"
+#endif
+
+class VMCS_Mapping {  //563
+private:
+    Bit32u revision_id;
+
+    unsigned vmcs_revision_id_field_offset;
+    unsigned vmx_abort_field_offset;
+    unsigned vmcs_launch_state_field_offset;
+
+    VMCS_Access_Rights_Format ar_format; // in which form segment selectors Access Rights are stored in the VMCS
+
+    // assume 16 VMCS field types (encoded with 4 bits: 2 bits for VMCS_FIELD_TYPE and 2 bits for VMCS_FIELD_WIDTH)
+    unsigned vmcs_map[16][VMX_HIGHEST_VMCS_ENCODING];
+public:
+    void set_vmcs_revision_id(Bit32u revision) { revision_id = revision; }
+    Bit32u get_vmcs_revision_id() const { return revision_id; }
+
+    void set_access_rights_format(VMCS_Access_Rights_Format f) { ar_format = f; }
+    VMCS_Access_Rights_Format get_access_rights_format() const { return ar_format; }
+
+
+    void set_vmcs_recision_id_offset(unsigned offset) { vmcs_revision_id_field_offset = offset; }
+    void set_vmx_abort_field_offset(unsigned offset) { vmx_abort_field_offset = offset; }
+    void set_vmcs_launch_state_field_offset(unsigned offset) { vmcs_launch_state_field_offset = offset; }
+
+    unsigned vmcs_field_offset(Bit32u encoding) const;
+
+    bool is_reserved(Bit32u encoding) const {
+        return (encoding & VMCS_ENCODING_RESERVED_BITS) != 0;
+    }
+
+    bool is_valid(Bit32u encoding) const {
+        return !is_reserved(encoding) && (vmcs_field_offset(encoding) != 0xffffffff);
+    }
+};
+
+enum VMX_state {
+    VMCS_STATE_CLEAR = 0,
+    VMCS_STATE_LAUNCHED
+};
+
+typedef struct bx_VMCS_GUEST_STATE
+{
+    bx_address cr0;
+    bx_address cr3;
+    bx_address cr4;
+    bx_address dr7;
+
+    bx_address rip;
+    bx_address rsp;
+    bx_address rflags;
+
+    bx_segment_reg_t sregs[6];
+
+    bx_global_segment_reg_t gdtr;
+    bx_global_segment_reg_t idtr;
+    bx_segment_reg_t        ldtr;
+    bx_segment_reg_t        tr;
+
+    Bit64u ia32_debugctl_msr;
+    bx_address sysenter_esp_msr;
+    bx_address sysenter_eip_msr;
+    Bit32u sysenter_cs_msr;
+
+    Bit32u smbase;
+    Bit32u activity_state;
+    Bit32u interruptibility_state;
+    Bit32u tmpDR6;
+
+#if BX_SUPPORT_VMX >= 2
+#if BX_SUPPORT_X86_64
+    Bit64u efer_msr;
+#endif
+    Bit64u pat_msr;
+    Bit64u pdptr[4];
+#endif
+
+    Bit64u ia32_spec_ctrl_msr;
+
+#if BX_SUPPORT_CET
+    Bit64u msr_ia32_s_cet;
+    bx_address ssp;
+    bx_address interrupt_ssp_table_address;
+#endif
+
+#if BX_SUPPORT_UINTR
+    Bit16u uintr_uinv;
+#endif
+
+#if BX_SUPPORT_PKEYS
+    Bit32u pkrs;
+#endif
+} VMCS_GUEST_STATE;
+
 typedef struct bx_VMCS_HOST_STATE
 { //674
     bx_address cr0;
@@ -457,6 +655,9 @@ typedef struct bx_VMX_Cap //717
     Bit32u vmx_proc_vmexec_ctrl_supported_bits;
     Bit32u vmx_vmexec_ctrl2_supported_bits;
     Bit64u vmx_vmexec_ctrl3_supported_bits;
+    Bit32u vmx_vmexit_ctrl1_supported_bits;
+    Bit32u vmx_vmexit_ctrl2_supported_bits;
+    Bit32u vmx_vmentry_ctrl_supported_bits;
 #if BX_SUPPORT_VMX >= 2
     Bit64u vmx_ept_vpid_cap_supported_bits;
     Bit64u vmx_vmfunc_supported_bits;
@@ -471,12 +672,30 @@ struct VMX_PLE {
 };
 #endif
 
+#include "vmx_ctrls.h"
+
 typedef struct bx_VMCS   //750
 {
     //750
+
+#define VMX_PIN_BASED_VMEXEC_CTRL_SUPPORTED_BITS \
+    (BX_CPU_THIS_PTR vmx_cap.vmx_pin_vmexec_ctrl_supported_bits)
+
     VmxPinBasedVmexecControls pin_vmexec_ctrls;
+
+#define VMX_VM_EXEC_CTRL3_SUPPORTED_BITS \
+    (BX_CPU_THIS_PTR vmx_cap.vmx_vmexec_ctrl3_supported_bits)
+
     VmxVmexec3Controls vmexec_ctrls3;
+
+#define VMX_VM_EXEC_CTRL1_SUPPORTED_BITS \
+    (BX_CPU_THIS_PTR vmx_cap.vmx_proc_vmexec_ctrl_supported_bits)
+
     VmxVmexec1Controls vmexec_ctrls1; //764
+
+#define VMX_VM_EXEC_CTRL2_SUPPORTED_BITS \
+    (BX_CPU_THIS_PTR vmx_cap.vmx_vmexec_ctrl2_supported_bits)
+
     VmxVmexec2Controls vmexec_ctrls2; //769
 
     Bit64u vmcs_linkptr;
@@ -549,19 +768,202 @@ typedef struct bx_VMCS   //750
 #if BX_SUPPORT_CET  //842
     bool shadow_stack_prematurely_busy;
 #endif
+
+#define VMX_VMEXIT_CTRL1_SUPPORTED_BITS \
+    (BX_CPU_THIS_PTR vmx_cap.vmx_vmexit_ctrl1_supported_bits)
+
     BxVmexit1Controls vmexit_ctrls1; //853
+
+#define VMX_VMEXIT_CTRL2_SUPPORTED_BITS \
+    (BX_CPU_THIS_PTR vmx_cap.vmx_vmexit_ctrl2_supported_bits)
+
     BxVmexit2Controls vmexit_ctrls2; //854
+
+
     Bit32u vmexit_msr_store_cnt;
     bx_phy_address vmexit_msr_store_addr;
     Bit32u vmexit_msr_load_cnt;
     bx_phy_address vmexit_msr_load_addr;
 
+#define VMX_VMENTRY_CTRL1_SUPPORTED_BITS \
+    (BX_CPU_THIS_PTR vmx_cap.vmx_vmentry_ctrl_supported_bits)
+
+    VmxVmentryControls vmentry_ctrls;
+
+    Bit32u vmentry_msr_load_cnt;
+    bx_phy_address vmentry_msr_load_addr;
+
     Bit32u vmentry_interr_info; //877
+    Bit32u vmentry_excep_err_code;
+    Bit32u vmentry_instr_length;
+#if BX_SUPPORT_VMX >= 2
+
+#define VMX_VMFUNC_CTRL1_SUPPORTED_BITS \
+    (BX_CPU_THIS_PTR vmx_cap.vmx_vmfunc_supported_bits)
+
+    Bit64u vmfunc_ctrls;
+
+    Bit64u eptp_list_address;
+
+#endif
     Bit32u idt_vector_info;
     Bit32u idt_vector_error_code; //900
 
     VMCS_HOST_STATE host_state; //906
 } VMCS_CACHE;
 
+const Bit32u BX_VMX_INTERRUPTS_BLOCKED_BY_STI = (1 << 0);
+const Bit32u BX_VMX_INTERRUPTS_BLOCKED_BY_MOV_SS = (1 << 1);
+const Bit32u BX_VMX_INTERRUPTS_BLOCKED_SMI_BLOCKED = (1 << 2);
+const Bit32u BX_VMX_INTERRUPTS_BLOCKED_NMI_BLOCKED = (1 << 3);
+
+const Bit32u BX_VMX_INTERRUPTIBILITY_STATE_MASK = \
+(BX_VMX_INTERRUPTS_BLOCKED_BY_STI | BX_VMX_INTERRUPTS_BLOCKED_BY_MOV_SS | BX_VMX_INTERRUPTS_BLOCKED_SMI_BLOCKED | BX_VMX_INTERRUPTS_BLOCKED_NMI_BLOCKED);
+
+const Bit32u BX_VMCS_SHADOW_BIT_MASK = 0x80000000;//922
+
+#define VMX_MSR_VMX_BASIC_LO (BX_CPU_THIS_PTR vmcs_map->get_vmcs_revision_id())
+#define VMX_MSR_VMX_BASIC_HI \
+     (VMX_VMCS_AREA_SIZE | ((!is_cpu_extension_supported(BX_ISA_LONG_MODE)) << 16) | \
+     (BX_MEMTYPE_WB << 18) | (1<<22)) | ((BX_SUPPORT_VMX >= 2) ? (1<<23) : 0) | \
+     (is_cpu_extension_supported(BX_ISA_CET) ? (1<<24) : 0)
+
+#define VMX_MSR_VMX_BASIC \
+   GET64_FROM_HI32_LO32(VMX_MSR_VMX_BASIC_HI, VMX_MSR_VMX_BASIC_LO) //950
+
+const Bit32u VMX_MSR_VMX_PINBASED_CTRLS_LO = 0x00000016;  //975
+
+#define VMX_MSR_VMX_PINBASED_CTRLS_HI \
+       (VMX_PIN_BASED_VMEXEC_CTRL_SUPPORTED_BITS | VMX_MSR_VMX_PINBASED_CTRLS_LO)
+
+#define VMX_MSR_VMX_PINBASED_CTRLS \
+   GET64_FROM_HI32_LO32(VMX_MSR_VMX_PINBASED_CTRLS_HI, VMX_MSR_VMX_PINBASED_CTRLS_LO)
+
+#define VMX_MSR_VMX_TRUE_PINBASED_CTRLS_LO (VMX_MSR_VMX_PINBASED_CTRLS_LO)
+#define VMX_MSR_VMX_TRUE_PINBASED_CTRLS_HI (VMX_MSR_VMX_PINBASED_CTRLS_HI)
+
+#define VMX_MSR_VMX_TRUE_PINBASED_CTRLS \
+   GET64_FROM_HI32_LO32(VMX_MSR_VMX_TRUE_PINBASED_CTRLS_HI, VMX_MSR_VMX_TRUE_PINBASED_CTRLS_LO)
+
+const Bit32u VMX_MSR_VMX_PROCBASED_CTRLS_LO = 0x0401E172; //1003
+
+#define VMX_MSR_VMX_PROCBASED_CTRLS_HI \
+       (VMX_VM_EXEC_CTRL1_SUPPORTED_BITS | VMX_MSR_VMX_PROCBASED_CTRLS_LO)
+
+#define VMX_MSR_VMX_PROCBASED_CTRLS \
+   GET64_FROM_HI32_LO32(VMX_MSR_VMX_PROCBASED_CTRLS_HI, VMX_MSR_VMX_PROCBASED_CTRLS_LO)
+
+#define VMX_MSR_VMX_TRUE_PROCBASED_CTRLS_LO (0x04006172)
+#define VMX_MSR_VMX_TRUE_PROCBASED_CTRLS_HI (VMX_MSR_VMX_PROCBASED_CTRLS_HI)
+
+#define VMX_MSR_VMX_TRUE_PROCBASED_CTRLS \
+   GET64_FROM_HI32_LO32(VMX_MSR_VMX_TRUE_PROCBASED_CTRLS_HI, VMX_MSR_VMX_TRUE_PROCBASED_CTRLS_LO)
+
+
+const Bit32u VMX_MSR_VMX_VMEXIT_CTRLS_LO = 0x00036DFF; //1028
+
+#define VMX_MSR_VMX_VMEXIT_CTRLS_HI \
+       (VMX_VMEXIT_CTRL1_SUPPORTED_BITS | VMX_MSR_VMX_VMEXIT_CTRLS_LO)
+
+#define VMX_MSR_VMX_VMEXIT_CTRLS \
+   GET64_FROM_HI32_LO32(VMX_MSR_VMX_VMEXIT_CTRLS_HI, VMX_MSR_VMX_VMEXIT_CTRLS_LO)
+
+#define VMX_MSR_VMX_TRUE_VMEXIT_CTRLS_LO (0x00036DFB)
+#define VMX_MSR_VMX_TRUE_VMEXIT_CTRLS_HI (VMX_MSR_VMX_VMEXIT_CTRLS_HI)
+
+#define VMX_MSR_VMX_TRUE_VMEXIT_CTRLS \
+   GET64_FROM_HI32_LO32(VMX_MSR_VMX_TRUE_VMEXIT_CTRLS_HI, VMX_MSR_VMX_TRUE_VMEXIT_CTRLS_LO)
+
+
+const Bit32u VMX_MSR_VMX_VMENTRY_CTRLS_LO = 0x000011FF;//1053
+
+#define VMX_MSR_VMX_VMENTRY_CTRLS_HI \
+       (VMX_VMENTRY_CTRL1_SUPPORTED_BITS | VMX_MSR_VMX_VMENTRY_CTRLS_LO)
+
+#define VMX_MSR_VMX_VMENTRY_CTRLS \
+   GET64_FROM_HI32_LO32(VMX_MSR_VMX_VMENTRY_CTRLS_HI, VMX_MSR_VMX_VMENTRY_CTRLS_LO)
+
+
+#define VMX_MSR_VMX_TRUE_VMENTRY_CTRLS_LO (0x000011FB)
+#define VMX_MSR_VMX_TRUE_VMENTRY_CTRLS_HI (VMX_MSR_VMX_VMENTRY_CTRLS_HI)
+
+#define VMX_MSR_VMX_TRUE_VMENTRY_CTRLS \
+   GET64_FROM_HI32_LO32(VMX_MSR_VMX_TRUE_VMENTRY_CTRLS_HI, VMX_MSR_VMX_TRUE_VMENTRY_CTRLS_LO)
+
+
+#if BX_SUPPORT_VMX >= 2
+const Bit32u VMX_MISC_STORE_LMA_TO_X86_64_GUEST_VMENTRY_CONTROL = (1 << 5);
+#else
+const Bit32u VMX_MISC_STORE_LMA_TO_X86_64_GUEST_VMENTRY_CONTROL = 0;
+#endif
+
+const Bit32u VMX_SUPPORT_VMENTER_TO_NON_ACTIVE_STATE = (1 << 6) | (1 << 7) | (1 << 8);
+
+const Bit32u VMX_MISC_SUPPORT_VMWRITE_READ_ONLY_FIELDS = (1 << 29);
+const Bit32u VMX_MISC_ALLOW_INJECTION_OF_SW_INTERRUPT_WITH_ILEN_0 = (1 << 30);
+
+
 const Bit32u VMX_MISC_PREEMPTION_TIMER_RATE = 0;  //1105
 
+#define VMX_MSR_MISC \
+     (VMX_MISC_PREEMPTION_TIMER_RATE |                     \
+      VMX_MISC_STORE_LMA_TO_X86_64_GUEST_VMENTRY_CONTROL | \
+      VMX_SUPPORT_VMENTER_TO_NON_ACTIVE_STATE |            \
+     (VMX_CR3_TARGET_MAX_CNT << 16) |                      \
+     (BX_SUPPORT_VMX_EXTENSION(BX_VMX_VMCS_SHADOWING) ? VMX_MISC_SUPPORT_VMWRITE_READ_ONLY_FIELDS : 0) | \
+     (BX_SUPPORT_VMX_EXTENSION(BX_VMX_SW_INTERRUPT_INJECTION_ILEN_0) ? VMX_MISC_ALLOW_INJECTION_OF_SW_INTERRUPT_WITH_ILEN_0 : 0))
+
+
+const Bit32u VMX_MSR_CR0_FIXED0_LO = 0x80000021;
+const Bit32u VMX_MSR_CR0_FIXED0_HI = 0x00000000;
+
+const Bit64u VMX_MSR_CR0_FIXED0 =
+GET64_FROM_HI32_LO32(VMX_MSR_CR0_FIXED0_HI, VMX_MSR_CR0_FIXED0_LO);
+
+// allowed 1-setting in CR0 in VMX mode
+const Bit32u VMX_MSR_CR0_FIXED1_LO = 0xFFFFFFFF;
+const Bit32u VMX_MSR_CR0_FIXED1_HI = 0x00000000;
+
+const Bit64u VMX_MSR_CR0_FIXED1 =
+GET64_FROM_HI32_LO32(VMX_MSR_CR0_FIXED1_HI, VMX_MSR_CR0_FIXED1_LO);
+
+const Bit32u VMX_MSR_CR4_FIXED0_LO = 0x00002000;
+const Bit32u VMX_MSR_CR4_FIXED0_HI = 0x00000000;
+
+const Bit64u VMX_MSR_CR4_FIXED0 =
+GET64_FROM_HI32_LO32(VMX_MSR_CR4_FIXED0_HI, VMX_MSR_CR4_FIXED0_LO);
+
+#define VMX_MSR_CR4_FIXED1_LO (BX_CPU_THIS_PTR cr4_suppmask)
+#define VMX_MSR_CR4_FIXED1_HI (0)
+
+#define VMX_MSR_CR4_FIXED1 \
+   GET64_FROM_HI32_LO32(VMX_MSR_CR4_FIXED1_HI, VMX_MSR_CR4_FIXED1_LO)
+
+const Bit32u VMX_MSR_VMCS_ENUM_LO = VMX_HIGHEST_VMCS_ENCODING;
+const Bit32u VMX_MSR_VMCS_ENUM_HI = 0x00000000;
+
+const Bit64u VMX_MSR_VMCS_ENUM =
+GET64_FROM_HI32_LO32(VMX_MSR_VMCS_ENUM_HI, VMX_MSR_VMCS_ENUM_LO);
+
+const Bit32u VMX_MSR_VMX_PROCBASED_CTRLS2_LO = 0x00000000;
+
+#define VMX_MSR_VMX_PROCBASED_CTRLS2_HI \
+       (VMX_VM_EXEC_CTRL2_SUPPORTED_BITS | VMX_MSR_VMX_PROCBASED_CTRLS2_LO)
+
+#define VMX_MSR_VMX_PROCBASED_CTRLS2 \
+   GET64_FROM_HI32_LO32(VMX_MSR_VMX_PROCBASED_CTRLS2_HI, VMX_MSR_VMX_PROCBASED_CTRLS2_LO)
+
+#define VMX_MSR_VMX_PROCBASED_CTRLS3 (VMX_VM_EXEC_CTRL3_SUPPORTED_BITS)
+
+#define VMX_MSR_VMX_VMEXIT_CTRLS2 (VMX_VMEXIT_CTRL2_SUPPORTED_BITS)
+
+#if BX_SUPPORT_VMX >= 2
+enum VMX_INVEPT_INVVPID_type {
+    BX_INVEPT_INVVPID_INDIVIDUAL_ADDRESS_INVALIDATION = 0,
+    BX_INVEPT_INVVPID_SINGLE_CONTEXT_INVALIDATION,
+    BX_INVEPT_INVVPID_ALL_CONTEXT_INVALIDATION,
+    BX_INVEPT_INVVPID_SINGLE_CONTEXT_NON_GLOBAL_INVALIDATION
+};
+#define VMX_MSR_VMX_EPT_VPID_CAP \
+   (BX_CPU_THIS_PTR vmx_cap.vmx_ept_vpid_cap_supported_bits)
+#endif

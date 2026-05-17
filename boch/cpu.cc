@@ -17,8 +17,24 @@ int cpudatalen = (sizeof(bx_gen_reg_t)) * 20;
 jmp_buf BX_CPU_C::jmp_buf_env; //55
 void BX_CPU_C::cpu_loop(void)
 {
-    while (1){
+    if (setjmp(BX_CPU_THIS_PTR jmp_buf_env)) {
+        // can get here only from exception function or VMEXIT
+        BX_CPU_THIS_PTR icount++;
+        BX_SYNC_TIME_IF_SINGLE_PROCESSOR(0);
+#if BX_GDBSTUB
+        if (gdbstub_instruction_epilog() || bx_dbg.gdbstub_enabled) return;
+#endif
+    }
 
+    while (1){
+        
+        if (BX_CPU_THIS_PTR async_event) {
+            if (handleAsyncEvent()) {
+                // If request to return to caller ASAP.
+                return;
+            }
+        }
+        
         bxICacheEntry_c* entry = getICacheEntry();
         bxInstruction_c* i = entry->i;
 
@@ -33,13 +49,15 @@ void BX_CPU_C::cpu_loop(void)
             BX_CPU_THIS_PTR prev_rip = RIP; // commit new RIP
             BX_INSTR_AFTER_EXECUTION(BX_CPU_ID, i);
             BX_CPU_THIS_PTR icount++;
-            if (BX_CPU_THIS_PTR icount == 3100)
+            if (BX_CPU_THIS_PTR icount == 317500)
             {
-                int qwq = 0;
+                  int qwq = 0;
             }
             
-
-            if (1)
+            uint64_t trace_index = md5count++;
+            //trace_index >= 300000
+            //(trace_index % 500) < 10
+            if (trace_index >= 315000)
             {
                 int memdatalen = 8;
 
@@ -61,12 +79,12 @@ void BX_CPU_C::cpu_loop(void)
                 }
                 printf("\n");
 
-                md5count++;
+                //md5count++;
             }
 
 
 
-            //BX_SYNC_TIME_IF_SINGLE_PROCESSOR(0);// ±÷”
+            BX_SYNC_TIME_IF_SINGLE_PROCESSOR(0);// ±÷”
 
             // note instructions generating exceptions never reach this point
 #if BX_GDBSTUB

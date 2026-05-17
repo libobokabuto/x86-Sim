@@ -245,6 +245,65 @@ bool BX_CPP_AttrRegparmN(1) BX_CPU_C::check_CR4(bx_address cr4_val)
 }
 
 #endif // BX_CPU_LEVEL >= 5  //1421
+
+bool BX_CPP_AttrRegparmN(1) BX_CPU_C::SetCR3(bx_address val)
+{
+#if BX_SUPPORT_X86_64
+    if (long_mode()) {
+        if (!IsValidPhyAddr(val)) {
+            //BX_ERROR(("SetCR3(): Attempt to write to reserved bits of CR3 !"));
+            return false;
+        }
+    }
+#endif
+
+    BX_CPU_THIS_PTR cr3 = val;
+
+    // flush TLB even if value does not change
+#if BX_CPU_LEVEL >= 6
+    if (BX_CPU_THIS_PTR cr4.get_PGE())
+        TLB_flushNonGlobal(); // Don't flush Global entries.
+    else
+#endif
+        TLB_flush();          // Flush Global entries also.
+
+    return true;
+}
+
+#if BX_CPU_LEVEL >= 5
+bool BX_CPP_AttrRegparmN(1) BX_CPU_C::SetEFER(bx_address val_64)
+{
+    Bit32u val32 = (Bit32u)val_64;
+
+    if (val_64 & ~((Bit64u)BX_CPU_THIS_PTR efer_suppmask)) {
+        //BX_ERROR(("SetEFER(0x%08x): attempt to set reserved bits of EFER MSR !", val32));
+        return false;
+    }
+
+#if BX_SUPPORT_X86_64
+    /* #GP(0) if changing EFER.LME when cr0.pg = 1 */
+    if ((BX_CPU_THIS_PTR efer.get_LME() != ((val32 >> 8) & 1)) &&
+        BX_CPU_THIS_PTR  cr0.get_PG())
+    {
+        //BX_ERROR(("SetEFER: attempt to change LME when CR0.PG=1"));
+        return false;
+    }
+#endif
+
+#if BX_SUPPORT_SVM
+    if (val32 & BX_EFER_SVME_MASK) {
+        if (BX_CPU_THIS_PTR msr.svm_vm_cr & BX_VM_CR_MSR_SVMDIS_MASK)
+            return false;
+    }
+#endif
+
+    BX_CPU_THIS_PTR efer.set32((val32 & BX_CPU_THIS_PTR efer_suppmask & ~BX_EFER_LMA_MASK)
+        | (BX_CPU_THIS_PTR efer.get32() & BX_EFER_LMA_MASK)); // keep LMA untouched
+
+    return true;
+}
+#endif
+
 #if BX_X86_DEBUGGER //1601
 
 bool BX_CPU_C::hwbreakpoint_check(bx_address laddr, unsigned opa, unsigned opb)
@@ -265,6 +324,19 @@ bool BX_CPU_C::hwbreakpoint_check(bx_address laddr, unsigned opa, unsigned opb)
     }
 
     return false;
+}
+
+Bit32u BX_CPU_C::code_breakpoint_match(bx_address laddr)
+{
+    if (BX_CPU_THIS_PTR get_RF())
+        return 0;
+
+    if (BX_CPU_THIS_PTR dr7.get_bp_enabled()) {
+        Bit32u dr6_bits = hwdebug_compare(laddr, 1, BX_HWDebugInstruction, BX_HWDebugInstruction);
+        return dr6_bits;
+    }
+
+    return 0;
 }
 
 void BX_CPU_C::hwbreakpoint_match(bx_address laddr, unsigned len, unsigned rw)

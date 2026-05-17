@@ -29,7 +29,7 @@ private:
     BX_KEY_SMF Bit8u    get_elements(void);
 
     BX_KEY_SMF void     create_mouse_packet(bool force_enq);
-
+    BX_KEY_SMF unsigned periodic(Bit32u usec_delta);
     static Bit32u read_handler(void* this_ptr, Bit32u address, unsigned io_len);
     static void   write_handler(void* this_ptr, Bit32u address, Bit32u value, unsigned io_len);
 
@@ -160,6 +160,6 @@ private:
     void mouse_enabled_changed(bool enabled);
     static void mouse_enq_static(void* dev, int delta_x, int delta_y, int delta_z, unsigned button_state, bool absxy);
     void mouse_motion(int delta_x, int delta_y, int delta_z, unsigned button_state, bool absxy);
-
+    static void timer_handler(void*);
     int    timer_handle;
 };

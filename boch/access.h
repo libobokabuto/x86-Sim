@@ -29,6 +29,20 @@ BX_CPU_C::read_virtual_word(unsigned s, bx_address offset)
 	return read_linear_word(s, laddr);
 }
 
+ BX_CPP_INLINE Bit32u BX_CPP_AttrRegparmN(2)
+	 BX_CPU_C::read_virtual_dword(unsigned s, bx_address offset)
+ {
+	 bx_address laddr = agen_read(s, offset, 4);
+	 return read_linear_dword(s, laddr);
+ }
+
+ BX_CPP_INLINE Bit64u BX_CPP_AttrRegparmN(2)
+	 BX_CPU_C::read_virtual_qword(unsigned s, bx_address offset)
+ {
+	 bx_address laddr = agen_read(s, offset, 8);
+	 return read_linear_qword(s, laddr);
+ }
+
  BX_CPP_INLINE void BX_CPP_AttrRegparmN(3)
 BX_CPU_C::write_virtual_byte(unsigned s, bx_address offset, Bit8u data)
  {
@@ -48,4 +62,11 @@ BX_CPU_C::write_virtual_byte(unsigned s, bx_address offset, Bit8u data)
  {
 	 bx_address laddr = agen_write(s, offset, 4);
 	 write_linear_dword(s, laddr, data);
+ }
+
+ BX_CPP_INLINE void BX_CPP_AttrRegparmN(3)
+	 BX_CPU_C::write_virtual_qword(unsigned s, bx_address offset, Bit64u data)
+ {
+	 bx_address laddr = agen_write(s, offset, 8);
+	 write_linear_qword(s, laddr, data);
  }

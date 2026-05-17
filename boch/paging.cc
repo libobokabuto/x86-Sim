@@ -67,6 +67,28 @@ void BX_CPU_C::TLB_flush(void)
 
 }
 
+#if BX_CPU_LEVEL >= 6
+void BX_CPU_C::TLB_flushNonGlobal(void)
+{
+    INC_TLBFLUSH_STAT(tlbNonGlobalFlushes);
+
+    invalidate_prefetch_q();
+    invalidate_stack_cache();
+
+    BX_CPU_THIS_PTR DTLB.flushNonGlobal();
+    BX_CPU_THIS_PTR ITLB.flushNonGlobal();
+
+#if BX_SUPPORT_MONITOR_MWAIT
+    // invalidating of the TLB might change translation for monitored page
+    // and cause subsequent MWAIT instruction to wait forever
+    BX_CPU_THIS_PTR wakeup_monitor();
+#endif
+
+    // break all links bewteen traces
+    BX_CPU_THIS_PTR iCache.breakLinks();
+}
+#endif
+
 enum { //492
     ERROR_NOT_PRESENT = 0x00,
     ERROR_PROTECTION = 0x01,
@@ -1650,6 +1672,14 @@ Bit8u BX_CPU_C::read_physical_byte(bx_phy_address paddr, BxMemtype memtype, Acce
     Bit8u data;
     access_read_physical(paddr, 1, &data);
     BX_NOTIFY_PHY_MEMORY_ACCESS(paddr, 1, memtype, BX_READ, reason, &data);
+    return data;
+}
+
+Bit16u BX_CPU_C::read_physical_word(bx_phy_address paddr, BxMemtype memtype, AccessReason reason)
+{
+    Bit16u data;
+    access_read_physical(paddr, 2, (Bit8u*)(&data));
+    BX_NOTIFY_PHY_MEMORY_ACCESS(paddr, 2, memtype, BX_READ, reason, (Bit8u*)(&data));
     return data;
 }
 

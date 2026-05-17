@@ -71,6 +71,8 @@ void bx_init_hardware() {
 	BX_MEM(0)->load_ROM("E:/Study/codes/bochs/boch/boch/BIOS-bochs-latest", 0, 0);
 	//初始化所有
 	BX_CPU(0)->initialize();
+	bx_pc_system.initialize(15000000);//自己加的
+
 	DEV_init_devices();  //1331
 	bx_pc_system.Reset(BX_RESET_HARDWARE);//1341
 

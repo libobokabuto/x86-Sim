@@ -254,8 +254,28 @@ struct SVM_CONTROLS
 	//Bit16u pause_filter_threshold;
 
 };
+
+#if defined(NEED_CPU_REG_SHORTCUTS)
+
+#define SVM_V_TPR          (BX_CPU_THIS_PTR vmcb->ctrls.v_tpr)
+#define SVM_V_INTR_PRIO    (BX_CPU_THIS_PTR vmcb->ctrls.v_intr_prio)
+#define SVM_V_IGNORE_TPR   (BX_CPU_THIS_PTR vmcb->ctrls.v_ignore_tpr)
+#define SVM_V_INTR_MASKING (BX_CPU_THIS_PTR vmcb->ctrls.v_intr_masking)
+#define SVM_V_INTR_VECTOR  (BX_CPU_THIS_PTR vmcb->ctrls.v_intr_vector)
+
+#define SVM_HOST_IF (BX_CPU_THIS_PTR vmcb->host_state.eflags & EFlagsIFMask)
+
+#endif
+
+#define BX_VM_CR_MSR_DPD_MASK           (1<<0)
+#define BX_VM_CR_MSR_INIT_REDIRECT_MASK (1<<1)
+#define BX_VM_CR_MSR_DIS_A20M_MASK      (1<<2)
+#define BX_VM_CR_MSR_LOCK_MASK          (1<<3)
+#define BX_VM_CR_MSR_SVMDIS_MASK        (1<<4)
+
+
 struct VMCB_CACHE
-{
+{ //336
 	SVM_HOST_STATE host_state;
 	SVM_CONTROLS ctrls;
 };

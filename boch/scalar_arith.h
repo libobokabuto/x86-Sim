@@ -18,3 +18,13 @@ BX_CPP_INLINE unsigned most_significant_bitd(Bit32u val_32)
 {
     return 31 - lzcntd(val_32);
 }
+
+BX_CPP_INLINE Bit32u rol32(Bit32u v32, unsigned count)
+{
+    return (v32 << count) | (v32 >> (32 - count));
+}
+
+BX_CPP_INLINE Bit32u ror32(Bit32u v32, unsigned count)
+{
+    return (v32 >> count) | (v32 << (32 - count));
+}

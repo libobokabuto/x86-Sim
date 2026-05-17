@@ -168,6 +168,16 @@ void BX_CPU_C::handleAlignmentCheck(void)
 }
 #endif
 
+void BX_CPU_C::handleFpuMmxModeChange(void)
+{
+	if (BX_CPU_THIS_PTR cr0.get_EM() || BX_CPU_THIS_PTR cr0.get_TS())
+		clear_fpu_mmx_ok();
+	else
+		set_fpu_mmx_ok();
+
+	updateFetchModeMask(); /* FPU_MMX_OK changed */
+}
+
 void BX_CPP_AttrRegparmN(1) BX_CPU_C::BxError(bxInstruction_c* i)
 {
 
@@ -183,10 +193,28 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::BxNoMMX(bxInstruction_c* i)
 {
 	//466
 }
+#if BX_CPU_LEVEL >= 6
+void BX_CPU_C::handleSseModeChange(void)
+{
+	if (BX_CPU_THIS_PTR cr0.get_TS()) {
+		clear_sse_ok();
+	}
+	else {
+		if (BX_CPU_THIS_PTR cr0.get_EM() || !BX_CPU_THIS_PTR cr4.get_OSFXSR())
+			clear_sse_ok();
+		else
+			set_sse_ok();
+	}
+
+	updateFetchModeMask(); /* SSE_OK changed */
+}
+
 void BX_CPP_AttrRegparmN(1) BX_CPU_C::BxNoSSE(bxInstruction_c* i)
 {
 	//495
 }
+#endif
+
 #if BX_SUPPORT_AVX
 void BX_CPU_C::handleAvxModeChange(void)
 {  //509
@@ -245,7 +273,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::BxNoEVEX(bxInstruction_c* i)
 }
 
 void BX_CPU_C::handleCpuContextChange(void)
-{/*  //619
+{
 	TLB_flush();
 
 	invalidate_prefetch_q();
@@ -267,18 +295,48 @@ void BX_CPU_C::handleCpuContextChange(void)
 #endif
 #endif
 
-*/
+
 }
 
 #if BX_CPU_LEVEL >= 5
+
+#include "wide_int.h"
+
+Bit64u BX_CPU_C::get_TSC(void)
+{
+	Bit64u tsc = bx_pc_system.time_ticks() + BX_CPU_THIS_PTR tsc_adjust;
+	return tsc;
+}
+
+Bit64u BX_CPU_C::get_Virtual_TSC()
+{
+	Bit64u tsc = BX_CPU_THIS_PTR get_TSC();
+#if BX_SUPPORT_VMX
+	if (BX_CPU_THIS_PTR in_vmx_guest) {
+		if (BX_CPU_THIS_PTR vmcs.vmexec_ctrls1.TSC_OFFSET() && BX_CPU_THIS_PTR vmcs.vmexec_ctrls2.TSC_SCALING()) {
+			// RDTSC first computes the product of the value of the IA32_TIME_STAMP_COUNTER MSR and
+			// the value of the TSC multiplier. It then shifts the value of the product right 48 bits and loads 
+			// EAX:EDX with <the sum of that shifted value and the value of the TSC offset>.
+			Bit128u product_128;
+			long_mul(&product_128, tsc, BX_CPU_THIS_PTR vmcs.tsc_multiplier);
+			tsc = (product_128.lo >> 48) | (product_128.hi << 16);   // tsc = (uint64) (long128(tsc_value * tsc_multiplier) >> 48);
+		}
+	}
+#endif
+#if BX_SUPPORT_VMX || BX_SUPPORT_SVM
+	tsc += BX_CPU_THIS_PTR tsc_offset;    // BX_CPU_THIS_PTR tsc_offset = 0 if not in VMX or SVM guest
+#endif
+	return tsc;
+}
+
 void BX_CPU_C::set_TSC(Bit64u newval)
-{/*
+{
 	// compute the correct setting of tsc_adjust so that a get_TSC()
 	// will return newval
 	BX_CPU_THIS_PTR tsc_adjust = newval - bx_pc_system.time_ticks();
 
 	// verify
 	//BX_ASSERT(get_TSC() == newval);
-	*/
+	
 }
 #endif // BX_CPU_LEVEL >= 5

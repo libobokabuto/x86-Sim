@@ -7,6 +7,28 @@
 #if BX_SUPPORT_VMX
 #include "vmx_ctrls.h"
 
+const Bit32u VMCS_REVISION_ID_FIELD_ADDR = 0x0000;
+const Bit32u VMCS_VMX_ABORT_FIELD_ADDR = 0x0004;
+const Bit32u VMCS_LAUNCH_STATE_FIELD_ADDR = 0x0008;
+
+unsigned VMCS_Mapping::vmcs_field_offset(Bit32u encoding) const
+{
+	if (is_reserved(encoding)) {
+		switch (encoding) {
+		case VMCS_REVISION_ID_FIELD_ENCODING:  return vmcs_revision_id_field_offset;
+		case VMCS_VMX_ABORT_FIELD_ENCODING:    return vmx_abort_field_offset;
+		case VMCS_LAUNCH_STATE_FIELD_ENCODING: return vmcs_launch_state_field_offset;
+		}
+		return 0xffffffff;
+	}
+
+	unsigned field = VMCS_FIELD(encoding);
+	if (field >= VMX_HIGHEST_VMCS_ENCODING)
+		return 0xffffffff;
+
+	return vmcs_map[VMCS_FIELD_INDEX(encoding)][field];
+}
+
 void BX_CPU_C::init_VMCS(void)
 {
 	BX_CPU_THIS_PTR vmcs_map = BX_CPU_THIS_PTR cpuid->get_vmcs();

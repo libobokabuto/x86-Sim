@@ -414,4 +414,66 @@ void BX_CPU_C::SvmInterceptIO(bxInstruction_c* i, unsigned port, unsigned len)
     }
 }
 
+void BX_CPU_C::SvmInterceptTaskSwitch(Bit16u tss_selector, unsigned source, bool push_error, Bit32u error_code)
+{
+    //BX_ASSERT(BX_CPU_THIS_PTR in_svm_guest);
+
+    //BX_DEBUG(("SVM VMEXIT: task switch"));
+
+    //
+    // SVM VMexit EXITINFO2:
+    // --------------------
+    // EXITINFO2[31-0] - error code to push into new stack (if applicable)
+    // EXITINFO2[36]   - task switch caused by IRET
+    // EXITINFO2[38]   - task switch caused by JUMP FAR
+    // EXITINFO2[44]   - task switch has error code to push
+    // EXITINFO2[48]   - value of EFLAGS.RF that would be saved in outgoing TSS
+    //
+
+    Bit64u qualification = error_code;
+
+    if (source == BX_TASK_FROM_IRET)
+        qualification |= BX_CONST64(1) << 36;
+    if (source == BX_TASK_FROM_JUMP)
+        qualification |= BX_CONST64(1) << 38;
+    if (push_error)
+        qualification |= BX_CONST64(1) << 44;
+
+    Bit32u flags = read_eflags();
+    if (flags & EFlagsRFMask)
+        qualification |= BX_CONST64(1) << 48;
+
+    Svm_Vmexit(SVM_VMEXIT_TASK_SWITCH, tss_selector, qualification);
+}
+
+void BX_CPU_C::Svm_Update_VM_CR_MSR(Bit64u val_64)
+{
+    // VM_CR_MSR 0xc0010114
+
+    // [0]: DPD - If set, disables the external hardware debug port and certain internal debug features
+    // [1]: R_INIT - If set, non-intercepted INIT signals are converted into an #SX exception
+    // [2]: DIS_A20M - If set, disables A20 masking
+    // [3]: LOCK - When this bit is set, writes to LOCK and SVMDIS are silently ignored
+    // [4]: SVMDIS - When this bit is set, writes to EFER treat the SVME bit as MBZ
+    //      Setting SVMDIS while EFER.SVME is 1 generates a #GP fault, regardless of the current state of VM_CR.LOCK
+    //      It is cleared by INIT when LOCK is cleared to 0; otherwise, it is not affected.
+    if (val_64 >> 5) {
+        //BX_ERROR(("VM_CR_MSR: attempt to set reserved bits"));
+        exception(BX_GP_EXCEPTION, 0);
+    }
+
+    if (BX_CPU_THIS_PTR msr.svm_vm_cr & BX_VM_CR_MSR_SVMDIS_MASK) {
+        if (BX_CPU_THIS_PTR efer.get_SVME()) {
+            //BX_ERROR(("VM_CR_MSR: attempt to set SVMDIS when EFER.SVME=1"));
+            exception(BX_GP_EXCEPTION, 0);
+        }
+    }
+
+    if (BX_CPU_THIS_PTR msr.svm_vm_cr & BX_VM_CR_MSR_LOCK_MASK) {
+        val_64 = (val_64 & 0x7) | (BX_CPU_THIS_PTR msr.svm_vm_cr & (BX_VM_CR_MSR_LOCK_MASK | BX_VM_CR_MSR_SVMDIS_MASK));
+    }
+
+    BX_CPU_THIS_PTR msr.svm_vm_cr = GET32L(val_64);
+}
+
 #endif // BX_SUPPORT_SVM

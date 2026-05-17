@@ -56,6 +56,7 @@ public:
 
 	Bit32u* getref() { return &vmexec_ctrls; }
 };
+
 class VmxVmexec2Controls {
 private:
 	Bit32u vmexec_ctrls;
@@ -125,6 +126,7 @@ public:
 
 	Bit32u* getref() { return &vmexec_ctrls; }
 };
+
 class VmxVmexec3Controls {
 private:
 	Bit64u vmexec_ctrls;
@@ -180,6 +182,56 @@ public:
 
 	Bit32u* getref() { return &pin_vmexec_ctrls; }
 };
+
+class VmxVmentryControls {
+private:
+	Bit32u vmentry_ctrls;
+public:
+	VmxVmentryControls(Bit32u ctrls = 0) : vmentry_ctrls(ctrls) {}
+
+#define VMX_VMENTRY_CTRL1_LOAD_DBG_CTRLS                    (1 <<  2) /* legacy must be '1 */
+#define VMX_VMENTRY_CTRL1_X86_64_GUEST                      (1 <<  9)
+#define VMX_VMENTRY_CTRL1_SMM_ENTER                         (1 << 10)
+#define VMX_VMENTRY_CTRL1_DEACTIVATE_DUAL_MONITOR_TREATMENT (1 << 11)
+#define VMX_VMENTRY_CTRL1_LOAD_PERF_GLOBAL_CTRL_MSR         (1 << 13) /* Perf Global Ctrl */
+#define VMX_VMENTRY_CTRL1_LOAD_PAT_MSR                      (1 << 14) /* PAT */
+#define VMX_VMENTRY_CTRL1_LOAD_EFER_MSR                     (1 << 15) /* EFER */
+#define VMX_VMENTRY_CTRL1_LOAD_BNDCFGS                      (1 << 16) /* MPX (not implemented) */
+#define VMX_VMENTRY_CTRL1_SUPPRESS_VMX_PACKETS              (1 << 17) /* Processor Trace (not implemented) */
+#define VMX_VMENTRY_CTRL1_LOAD_GUEST_RTIT_CTRL              (1 << 18) // not implemented
+#define VMX_VMENTRY_CTRL1_LOAD_UINV                         (1 << 19) /* UINTR */
+#define VMX_VMENTRY_CTRL1_LOAD_GUEST_CET_STATE              (1 << 20) /* CET */
+#define VMX_VMENTRY_CTRL1_LOAD_GUEST_LBR_CTRL               (1 << 21) // not implemented
+#define VMX_VMENTRY_CTRL1_LOAD_GUEST_PKRS                   (1 << 22) /* Supervisor-Mode Protection Keys */
+#define VMX_VMENTRY_CTRL1_LOAD_GUEST_IA32_SPEC_CTRL         (1 << 24)
+
+	bool LOAD_DBG_CTRLS() const { return vmentry_ctrls & VMX_VMENTRY_CTRL1_LOAD_DBG_CTRLS; }
+	bool X86_64_GUEST() const { return vmentry_ctrls & VMX_VMENTRY_CTRL1_X86_64_GUEST; }
+	bool SMM_ENTER() const { return vmentry_ctrls & VMX_VMENTRY_CTRL1_SMM_ENTER; }
+	bool DEACTIVATE_DUAL_MONITOR_TREATMENT() const { return vmentry_ctrls & VMX_VMENTRY_CTRL1_DEACTIVATE_DUAL_MONITOR_TREATMENT; }
+	bool LOAD_PERF_GLOBAL_CTRL_MSR() const { return vmentry_ctrls & VMX_VMENTRY_CTRL1_LOAD_PERF_GLOBAL_CTRL_MSR; }
+	bool LOAD_PAT_MSR() const { return vmentry_ctrls & VMX_VMENTRY_CTRL1_LOAD_PAT_MSR; }
+	bool LOAD_EFER_MSR() const { return vmentry_ctrls & VMX_VMENTRY_CTRL1_LOAD_EFER_MSR; }
+	bool LOAD_BNDCFGS() const { return vmentry_ctrls & VMX_VMENTRY_CTRL1_LOAD_BNDCFGS; }
+	bool PTRACE_SUPPRESS_VMX_PACKETS() const { return vmentry_ctrls & VMX_VMENTRY_CTRL1_SUPPRESS_VMX_PACKETS; }
+	bool LOAD_GUEST_RTIT_CTRL() const { return vmentry_ctrls & VMX_VMENTRY_CTRL1_LOAD_GUEST_RTIT_CTRL; }
+	bool LOAD_UINV() const { return vmentry_ctrls & VMX_VMENTRY_CTRL1_LOAD_UINV; }
+	bool LOAD_GUEST_CET_STATE() const { return vmentry_ctrls & VMX_VMENTRY_CTRL1_LOAD_GUEST_CET_STATE; }
+	bool LOAD_GUEST_LBR() const { return vmentry_ctrls & VMX_VMENTRY_CTRL1_LOAD_GUEST_LBR_CTRL; }
+	bool LOAD_GUEST_PKRS() const { return vmentry_ctrls & VMX_VMENTRY_CTRL1_LOAD_GUEST_PKRS; }
+	bool LOAD_GUEST_IA32_SPEC_CTRL() const { return vmentry_ctrls & VMX_VMENTRY_CTRL1_LOAD_GUEST_IA32_SPEC_CTRL; }
+
+	bool query_any(Bit32u mask) const { return (vmentry_ctrls & mask) != 0; }
+	bool query_all(Bit32u mask) const { return (vmentry_ctrls & mask) == mask; }
+
+	Bit32u get() const { return vmentry_ctrls; }
+
+	void   set(Bit32u mask) { vmentry_ctrls |= mask; }
+	void   clear(Bit32u mask) { vmentry_ctrls &= ~mask; }
+
+	Bit32u* getref() { return &vmentry_ctrls; }
+};
+
 class BxVmexit1Controls {
 private:
 	Bit32u vmexit1_ctrls;
@@ -228,6 +280,7 @@ public:
 
 	Bit32u* getref() { return &vmexit1_ctrls; }
 };
+
 class BxVmexit2Controls {
 private:
 	Bit64u vmexit2_ctrls;

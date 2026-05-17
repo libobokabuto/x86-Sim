@@ -26,12 +26,16 @@ private:
 
 	unsigned   numTimers;
 	unsigned   triggeredTimer;
-	struct {
-		Bit32u     currCountdown;
-		Bit32u     currCountdownPeriod;
-		Bit64u     ticksTotal;
-	};
 
+	Bit32u     currCountdown; // Current countdown ticks value (decrements to 0).
+	Bit32u     currCountdownPeriod; // Length of current countdown period.
+	Bit64u     ticksTotal; // Num ticks total since start of emulator execution.
+	Bit64u     lastTimeUsec; // Last sequentially read time in usec.
+	Bit64u     usecSinceLast; // Number of useconds claimed since then.
+	
+	
+	static const Bit64u NullTimerInterval;
+	static void nullTimer(void* this_ptr);
 #if !defined(PROVIDE_M_IPS)
 	// This is the emulator speed, as measured in millions of
 	// x86 instructions per second that it can emulate on some hypothetically
@@ -40,6 +44,9 @@ private:
 #endif
 	void   countdownEvent(void);
 public:
+	void   initialize(Bit32u ips);
+	int    register_timer(void* this_ptr, bx_timer_handler_t, Bit32u useconds,
+		bool continuous, bool active, const char* id);
 	void   activate_timer(unsigned timer_index, Bit32u useconds, bool continuous); //97
 	void   deactivate_timer(unsigned timer_index); //99
 	static BX_CPP_INLINE void tick1(void) {  //106
@@ -47,11 +54,29 @@ public:
 			bx_pc_system.countdownEvent();
 		}
 	}
+
+	static BX_CPP_INLINE void tickn(Bit32u n) {
+		while (n >= bx_pc_system.currCountdown) {
+			n -= bx_pc_system.currCountdown;
+			bx_pc_system.currCountdown = 0;
+			bx_pc_system.countdownEvent();
+			// bx_pc_system.currCountdown is adjusted to new value by countdownevent().
+		}
+		// 'n' is not (or no longer) >= the countdown size.  We can just decrement
+		// the remaining requested ticks and continue.
+		bx_pc_system.currCountdown -= n;
+	}
 	int register_timer_ticks(void* this_ptr, bx_timer_handler_t, Bit64u ticks,
 		bool continuous, bool active, const char* id);
 	void activate_timer_ticks(unsigned index, Bit64u instructions, bool continuous); //125
+	
+	bool HRQ;
+
 	bool enable_a20; //157
+
 	bx_phy_address a20_mask; //166
+
+	volatile bool kill_bochs_request;
 	
 	void set_enable_a20(bool value);
 	bool get_enable_a20(void);
@@ -60,14 +85,18 @@ public:
 		return bx_pc_system.ticksTotal +
 			Bit64u(bx_pc_system.currCountdownPeriod - bx_pc_system.currCountdown);
 	}
+
+	bx_pc_system_c();
 	Bit32u  inp(Bit16u addr, unsigned io_len) BX_CPP_AttrRegparmN(2);
 	void    outp(Bit16u addr, Bit32u value, unsigned io_len) BX_CPP_AttrRegparmN(3);
 
 }; //189
 
 #define BX_TICK1()                  bx_pc_system.tick1()
+#define BX_TICKN(n)                 bx_pc_system.tickn(n)
 #define BX_SET_ENABLE_A20(enabled)  bx_pc_system.set_enable_a20(enabled)
 #define BX_GET_ENABLE_A20()         bx_pc_system.get_enable_a20()
+#define BX_HRQ                      bx_pc_system.HRQ
 
 #if BX_SUPPORT_A20
 #  define A20ADDR(x)                ((bx_phy_address)(x) & bx_pc_system.a20_mask)

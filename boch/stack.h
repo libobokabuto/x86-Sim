@@ -21,6 +21,36 @@ BX_CPU_C::push_16(Bit16u value16)
         }
 }
 
+ BX_CPP_INLINE void BX_CPP_AttrRegparmN(1)
+     BX_CPU_C::push_32(Bit32u value32)
+ {
+#if BX_SUPPORT_X86_64
+     if (long64_mode()) { /* StackAddrSize = 64 */
+         stack_write_dword(RSP - 4, value32);
+         RSP -= 4;
+     }
+     else
+#endif
+         if (BX_CPU_THIS_PTR sregs[BX_SEG_REG_SS].cache.u.segment.d_b) { /* StackAddrSize = 32 */
+             stack_write_dword((Bit32u)(ESP - 4), value32);
+             ESP -= 4;
+         }
+         else /* StackAddrSize = 16 */
+         {
+             stack_write_dword((Bit16u)(SP - 4), value32);
+             SP -= 4;
+         }
+ }
+
+#if BX_SUPPORT_X86_64
+ BX_CPP_INLINE void BX_CPP_AttrRegparmN(1)
+     BX_CPU_C::push_64(Bit64u value64)
+ {
+     /* StackAddrSize = 64 */
+     stack_write_qword(RSP - 8, value64);
+     RSP -= 8;
+ }
+#endif
 
  BX_CPP_INLINE Bit16u BX_CPU_C::pop_16(void)
  {  //81
@@ -45,12 +75,50 @@ BX_CPU_C::push_16(Bit16u value16)
      return value16;
  }
 
+ BX_CPP_INLINE Bit32u BX_CPU_C::pop_32(void)
+ {
+     Bit32u value32;
 
-#if BX_SUPPORT_CET  //130
+#if BX_SUPPORT_X86_64
+     if (long64_mode()) { /* StackAddrSize = 64 */
+         value32 = stack_read_dword(RSP);
+         RSP += 4;
+     }
+     else
+#endif
+         if (BX_CPU_THIS_PTR sregs[BX_SEG_REG_SS].cache.u.segment.d_b) { /* StackAddrSize = 32 */
+             value32 = stack_read_dword(ESP);
+             ESP += 4;
+         }
+         else { /* StackAddrSize = 16 */
+             value32 = stack_read_dword(SP);
+             SP += 4;
+         }
+
+     return value32;
+ }
+
+#if BX_SUPPORT_X86_64
+ BX_CPP_INLINE Bit64u BX_CPU_C::pop_64(void)
+ {
+     /* StackAddrSize = 64 */
+     Bit64u value64 = stack_read_qword(RSP);
+     RSP += 8;
+     return value64;
+ }
+#endif
+
+#if BX_SUPPORT_CET  //139
  BX_CPP_INLINE void BX_CPP_AttrRegparmN(1) BX_CPU_C::shadow_stack_push_32(Bit32u value32)
  {
      shadow_stack_write_dword(SSP - 4, CPL, value32);
      SSP -= 4;
+ }
+
+ BX_CPP_INLINE void BX_CPP_AttrRegparmN(1) BX_CPU_C::shadow_stack_push_64(Bit64u value64)
+ {
+     shadow_stack_write_qword(SSP - 8, CPL, value64);
+     SSP -= 8;
  }
 
  BX_CPP_INLINE Bit32u BX_CPU_C::shadow_stack_pop_32(void)
@@ -58,6 +126,13 @@ BX_CPU_C::push_16(Bit16u value16)
      Bit32u value32 = shadow_stack_read_dword(SSP, CPL);
      SSP += 4;
      return value32;
+ }
+
+ BX_CPP_INLINE Bit64u BX_CPU_C::shadow_stack_pop_64(void)
+ {
+     Bit64u value64 = shadow_stack_read_qword(SSP, CPL);
+     SSP += 8;
+     return value64;
  }
 
 #endif // BX_SUPPORT_X86_64  //166

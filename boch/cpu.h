@@ -65,7 +65,8 @@ const Bit64u BX_PHY_ADDRESS_RESERVED_BITS = (~BX_PHY_ADDRESS_MASK); //33
 #define TMP64 (BX_CPU_THIS_PTR gen_reg[BX_TMP_REGISTER].rrx)
 
 #define MSR_FSBASE  (BX_CPU_THIS_PTR sregs[BX_SEG_REG_FS].cache.u.segment.base)
-#define MSR_GSBASE  (BX_CPU_THIS_PTR sregs[BX_SEG_REG_GS].cache.u.segment.base)#else
+#define MSR_GSBASE  (BX_CPU_THIS_PTR sregs[BX_SEG_REG_GS].cache.u.segment.base)
+#else
 #endif // BX_SUPPORT_X86_64 == 0
 #define BX_WRITE_16BIT_REG(index, val) {\
   BX_CPU_THIS_PTR gen_reg[index].word.rx = val; \
@@ -656,6 +657,26 @@ struct monitor_addr_t {
 
     bx_phy_address monitor_addr;
     unsigned armed_by;
+
+    monitor_addr_t() : monitor_addr(0xffffffff), armed_by(BX_MONITOR_NOT_ARMED) {}
+
+    BX_CPP_INLINE void arm(bx_phy_address addr, monitor_armed_by by) {
+        // align to cache line
+        monitor_addr = addr & ~((bx_phy_address)(CACHE_LINE_SIZE - 1));
+        armed_by = by;
+    }
+
+
+    BX_CPP_INLINE void reset_umonitor(void) {
+        if (armed_by == BX_MONITOR_ARMED_BY_UMONITOR)
+            armed_by = BX_MONITOR_NOT_ARMED;
+    }
+
+    BX_CPP_INLINE void reset_monitorx(void) {
+        if (armed_by == BX_MONITOR_ARMED_BY_MONITORX)
+            armed_by = BX_MONITOR_NOT_ARMED;
+    }
+
     BX_CPP_INLINE void reset_monitor(void) { armed_by = BX_MONITOR_NOT_ARMED; }
     BX_CPP_INLINE bool armed(void) const { return armed_by != BX_MONITOR_NOT_ARMED; }
 
@@ -800,10 +821,15 @@ public:
 #if BX_SUPPORT_VMX //1104
     bool in_vmx;
     bool in_vmx_guest;
+    bool in_smm_vmx; // save in_vmx and in_vmx_guest flags when in SMM mode
+    bool in_smm_vmx_guest;
+    Bit64u  vmcsptr;
     bx_hostpageaddr_t vmcshostptr;
 #if BX_SUPPORT_MEMTYPE
     BxMemtype vmcs_memtype;
 #endif
+    Bit64u  vmxonptr;
+
     VMCS_CACHE vmcs; //1116
     VMX_CAP vmx_cap;
     VMCS_Mapping* vmcs_map; //118
@@ -814,7 +840,11 @@ public:
     bx_phy_address  vmcbptr;
     bx_hostpageaddr_t vmcbhostptr;
     VMCB_CACHE* vmcb;
+
+#define SVM_GIF (BX_CPU_THIS_PTR svm_gif)
 #else//1134
+
+
 #endif//1138
 
 #if BX_SUPPORT_VMX || BX_SUPPORT_SVM
@@ -882,10 +912,22 @@ public:
     BX_SMF BX_CPP_INLINE bool is_pending(Bit32u event) { //1205
         return (BX_CPU_THIS_PTR pending_event & event) != 0;
     }
+
+    BX_SMF BX_CPP_INLINE bool is_unmasked_event_pending(Bit32u event) {
+        return (BX_CPU_THIS_PTR pending_event & ~BX_CPU_THIS_PTR event_mask & event) != 0;
+    }
+
+    BX_SMF BX_CPP_INLINE Bit32u unmasked_events_pending(void) {
+        return (BX_CPU_THIS_PTR pending_event & ~BX_CPU_THIS_PTR event_mask);
+    }
+
 #define BX_ASYNC_EVENT_STOP_TRACE (1<<31) //1216
     bool  in_smm;
     unsigned cpu_mode;//1219行
 	bool  user_pl; //1220行
+#if BX_CPU_LEVEL >= 5
+    bool  ignore_bad_msrs;
+#endif
     Bit32u cpu_state_use_ok;//1225行
 
     BX_SMF void set_fpu_mmx_ok();
@@ -4071,6 +4113,10 @@ public:
 #if BX_LARGE_RAMFILE
     BX_SMF bool check_addr_in_tlb_buffers(const Bit8u* addr, const Bit8u* end);
 #endif
+    BX_SMF bool handleAsyncEvent(void); //4483
+    BX_SMF bool handleWaitForEvent(void); //4484
+    BX_SMF void HandleExtInterrupt(void); //4485
+    BX_SMF Bit8u interrupt_acknowledge(void);//4486
 
     BX_SMF void boundaryFetch(const Bit8u* fetchPtr, unsigned remainingInPage, bxInstruction_c*);//4488
 
@@ -4086,43 +4132,94 @@ public:
 #endif
     BX_SMF bool write_virtual_checks(bx_segment_reg_t* seg, Bit32u offset, unsigned len, bool align = false) BX_CPP_AttrRegparmN(4); //4513
     BX_SMF bool read_virtual_checks(bx_segment_reg_t* seg, Bit32u offset, unsigned len, bool align = false) BX_CPP_AttrRegparmN(4);//4514
+
     BX_SMF Bit8u read_linear_byte(unsigned seg, bx_address offset) BX_CPP_AttrRegparmN(2); //4517
     BX_SMF Bit16u read_linear_word(unsigned seg, bx_address offset) BX_CPP_AttrRegparmN(2); //4518
+    BX_SMF Bit32u read_linear_dword(unsigned seg, bx_address offset) BX_CPP_AttrRegparmN(2);
+    BX_SMF Bit64u read_linear_qword(unsigned seg, bx_address offset) BX_CPP_AttrRegparmN(2);
+
     BX_SMF void write_linear_byte(unsigned seg, bx_address offset, Bit8u data) BX_CPP_AttrRegparmN(3); //4530
     BX_SMF void write_linear_word(unsigned seg, bx_address offset, Bit16u data) BX_CPP_AttrRegparmN(3); //4531
     BX_SMF void write_linear_dword(unsigned seg, bx_address offset, Bit32u data) BX_CPP_AttrRegparmN(3); //4532
+    BX_SMF void write_linear_qword(unsigned seg, bx_address offset, Bit64u data) BX_CPP_AttrRegparmN(3);
+
     BX_SMF void write_virtual_word_32(unsigned seg, Bit32u offset, Bit16u data) BX_CPP_AttrRegparmN(3); //4561
     BX_SMF void write_virtual_dword_32(unsigned seg, Bit32u offset, Bit32u data) BX_CPP_AttrRegparmN(3); //4562
+
     BX_SMF Bit8u read_virtual_byte(unsigned seg, bx_address offset) BX_CPP_AttrRegparmN(2); //4573
     BX_SMF Bit16u read_virtual_word(unsigned seg, bx_address offset) BX_CPP_AttrRegparmN(2); //4574
+    BX_SMF Bit32u read_virtual_dword(unsigned seg, bx_address offset) BX_CPP_AttrRegparmN(2);
+    BX_SMF Bit64u read_virtual_qword(unsigned seg, bx_address offset) BX_CPP_AttrRegparmN(2);
+
     BX_SMF void write_virtual_byte(unsigned seg, bx_address offset, Bit8u data) BX_CPP_AttrRegparmN(3); //4586
     BX_SMF void write_virtual_word(unsigned seg, bx_address offset, Bit16u data) BX_CPP_AttrRegparmN(3); //4587
     BX_SMF void write_virtual_dword(unsigned seg, bx_address offset, Bit32u data) BX_CPP_AttrRegparmN(3); //4588
+    BX_SMF void write_virtual_qword(unsigned seg, bx_address offset, Bit64u data) BX_CPP_AttrRegparmN(3);
+
 	BX_SMF bxICacheEntry_c* getICacheEntry(void);
+
+    BX_SMF void write_new_stack_word(bx_segment_reg_t* seg, Bit32u offset, unsigned curr_pl, Bit16u data);
+    BX_SMF void write_new_stack_dword(bx_segment_reg_t* seg, Bit32u offset, unsigned curr_pl, Bit32u data);
+    BX_SMF void write_new_stack_qword(bx_segment_reg_t* seg, Bit32u offset, unsigned curr_pl, Bit64u data);
+
+    BX_SMF void write_new_stack_word(bx_address laddr, unsigned curr_pl, Bit16u data);
+    BX_SMF void write_new_stack_dword(bx_address laddr, unsigned curr_pl, Bit32u data);
+    BX_SMF void write_new_stack_qword(bx_address laddr, unsigned curr_pl, Bit64u data); //4631
+
+
     BX_SMF void stack_write_word(bx_address offset, Bit16u data) BX_CPP_AttrRegparmN(2); //4635
+    BX_SMF void stack_write_dword(bx_address offset, Bit32u data) BX_CPP_AttrRegparmN(2);
+    BX_SMF void stack_write_qword(bx_address offset, Bit64u data) BX_CPP_AttrRegparmN(2);
+
     BX_SMF Bit16u stack_read_word(bx_address offset) BX_CPP_AttrRegparmN(1);  //4640
+    BX_SMF Bit32u stack_read_dword(bx_address offset) BX_CPP_AttrRegparmN(1);
+    BX_SMF Bit64u stack_read_qword(bx_address offset) BX_CPP_AttrRegparmN(1);
+
 #if BX_SUPPORT_CET  //4644
     BX_SMF void shadow_stack_write_dword(bx_address offset, unsigned curr_pl, Bit32u data) BX_CPP_AttrRegparmN(3); //4645
+    BX_SMF void shadow_stack_write_qword(bx_address offset, unsigned curr_pl, Bit64u data) BX_CPP_AttrRegparmN(3);
+
     BX_SMF Bit32u shadow_stack_read_dword(bx_address offset, unsigned curr_pl) BX_CPP_AttrRegparmN(2); //4648
+    BX_SMF Bit64u shadow_stack_read_qword(bx_address offset, unsigned curr_pl) BX_CPP_AttrRegparmN(2);
+
+    BX_SMF bool shadow_stack_lock_cmpxchg8b(bx_address offset, unsigned curr_pl, Bit64u data, Bit64u expected_data) BX_CPP_AttrRegparmN(4);
+    BX_SMF bool shadow_stack_atomic_set_busy(bx_address offset, unsigned curr_pl) BX_CPP_AttrRegparmN(2); //4652
+    BX_SMF bool shadow_stack_atomic_clear_busy(bx_address offset, unsigned curr_pl) BX_CPP_AttrRegparmN(2);
 #endif//4654
     BX_SMF void stackPrefetch(bx_address offset, unsigned len) BX_CPP_AttrRegparmN(2); //4656
+
+    BX_SMF Bit8u  system_read_byte(bx_address laddr) BX_CPP_AttrRegparmN(1); //4659
     BX_SMF Bit16u system_read_word(bx_address laddr) BX_CPP_AttrRegparmN(1); //4660
+    BX_SMF Bit32u system_read_dword(bx_address laddr) BX_CPP_AttrRegparmN(1);
     BX_SMF Bit64u system_read_qword(bx_address laddr) BX_CPP_AttrRegparmN(1); //4662
+
     BX_SMF void system_write_byte(bx_address laddr, Bit8u data) BX_CPP_AttrRegparmN(2); //4664
+    BX_SMF void system_write_word(bx_address laddr, Bit16u data) BX_CPP_AttrRegparmN(2);
+    BX_SMF void system_write_dword(bx_address laddr, Bit32u data) BX_CPP_AttrRegparmN(2);
+    BX_SMF void system_write_qword(bx_address laddr, Bit64u data) BX_CPP_AttrRegparmN(2);
+
+    BX_SMF void branch_far(bx_selector_t* selector,
+        bx_descriptor_t* descriptor, bx_address rip, unsigned cpl); //4678
     BX_SMF void repeat(bxInstruction_c* i, BxRepIterationPtr_tR execute) BX_CPP_AttrRegparmN(2); //4696
+
     BX_SMF int access_read_linear(bx_address laddr, unsigned len, unsigned curr_pl, unsigned xlate_rw, Bit32u ac_mask, void* data); //4700
     BX_SMF int access_write_linear(bx_address laddr, unsigned len, unsigned curr_pl, unsigned xlate_rw, Bit32u ac_mask, void* data); //4701
     BX_SMF void page_fault(unsigned fault, bx_address laddr, unsigned user, unsigned rw);
+
     BX_SMF Bit8u  read_physical_byte(bx_phy_address paddr, BxMemtype memtype, AccessReason reason); //4705
+    BX_SMF Bit16u read_physical_word(bx_phy_address paddr, BxMemtype memtype, AccessReason reason); //4706
     BX_SMF Bit32u read_physical_dword(bx_phy_address paddr, BxMemtype memtype, AccessReason reason); //4707
     BX_SMF Bit64u read_physical_qword(bx_phy_address paddr, BxMemtype memtype, AccessReason reason); //4708
     BX_SMF void access_read_physical(bx_phy_address paddr, unsigned len, void* data);
+
     BX_SMF void access_write_physical(bx_phy_address paddr, unsigned len, void* data); //4710
     BX_SMF void write_physical_byte(bx_phy_address paddr, Bit8u val_8, BxMemtype memtype, AccessReason reason); //4711
     BX_SMF void write_physical_word(bx_phy_address paddr, Bit16u val_16, BxMemtype memtype, AccessReason reason);
     BX_SMF void write_physical_dword(bx_phy_address paddr, Bit32u val_32, BxMemtype memtype, AccessReason reason); //4713
     BX_SMF void write_physical_qword(bx_phy_address paddr, Bit64u val_64, BxMemtype memtype, AccessReason reason);//4714
+
     BX_SMF bx_hostpageaddr_t getHostMemAddr(bx_phy_address addr, unsigned rw);//4716行
+
     BX_SMF bx_phy_address translate_linear(bx_TLB_entry* entry, bx_address laddr, unsigned user, unsigned rw);//4719行
     BX_SMF bx_phy_address translate_linear_legacy(bx_address laddr, Bit32u& lpf_mask, unsigned user, unsigned rw);//4720
     BX_SMF void update_access_dirty(bx_phy_address* entry_addr, Bit32u* entry, BxMemtype* entry_memtype, unsigned leaf, unsigned write); //4721
@@ -4161,11 +4258,19 @@ public:
     BX_SMF BxMemtype memtype_by_pat(unsigned pat) BX_CPP_AttrRegparmN(1);
     BX_SMF BxMemtype resolve_memtype(BxMemtype mtrr_memtype, BxMemtype pat_memtype = BX_MEMTYPE_WB) BX_CPP_AttrRegparmN(2);
 #endif
-
+#if BX_CPU_LEVEL >= 6
+    BX_SMF void TLB_flushNonGlobal(void);
+#endif
     BX_SMF void TLB_flush(void); //4758
     BX_SMF void inhibit_interrupts(unsigned mask); //4760
     BX_SMF bool interrupts_inhibited(unsigned mask); //4761
+    BX_SMF void interrupt(Bit8u vector, unsigned type, bool push_error, Bit16u error_code); //4763
     BX_SMF void real_mode_int(Bit8u vector, bool push_error, Bit16u error_code); //4764
+    BX_SMF void protected_mode_int(Bit8u vector, bool soft_int, bool push_error, Bit16u error_code);//4765
+#if BX_SUPPORT_X86_64
+    BX_SMF void long_mode_int(Bit8u vector, bool soft_int, bool push_error, Bit16u error_code);
+#endif
+
     BX_SMF bool exception_push_error(unsigned vector);//4769
     BX_SMF int  get_exception_type(unsigned vector);//4770
     BX_SMF void exception(unsigned vector, Bit16u error_code)//4771
@@ -4173,6 +4278,7 @@ public:
     BX_SMF void init_SMRAM(void);//4773
     BX_SMF int  int_number(unsigned s); //4774
     BX_SMF bool check_CR0(bx_address val) BX_CPP_AttrRegparmN(1);//4777
+    BX_SMF bool SetCR3(bx_address val) BX_CPP_AttrRegparmN(1); //4778
     BX_SMF bool check_CR4(bx_address val) BX_CPP_AttrRegparmN(1); //4781
     BX_SMF Bit32u get_cr4_allow_mask(void);  //4782
 #if BX_CPU_LEVEL >= 6   //4784
@@ -4182,6 +4288,7 @@ public:
     BX_SMF bool CheckPDPTR(const Bit64u* pdptr) BX_CPP_AttrRegparmN(1);
 #endif
 #if BX_CPU_LEVEL >= 5
+    BX_SMF bool SetEFER(bx_address val) BX_CPP_AttrRegparmN(1);//4791
     BX_SMF Bit32u get_efer_allow_mask(void);  //4792
 #endif
     BX_SMF void reset(unsigned source); //4804
@@ -4193,28 +4300,75 @@ public:
 #if BX_CPU_LEVEL >= 4
     BX_SMF void handleAlignmentCheck(void);
 #endif
+    BX_SMF void handleFpuMmxModeChange(void);
 #if BX_CPU_LEVEL >= 6
+    BX_SMF void handleSseModeChange(void);
     BX_SMF void handleAvxModeChange(void);
 #endif
+#if BX_CPU_LEVEL >= 5
+    BX_SMF bool rdmsr(Bit32u index, Bit64u* val_64) BX_CPP_AttrRegparmN(2);//4851
+    BX_SMF bool handle_unknown_rdmsr(Bit32u index, Bit64u* val_64) BX_CPP_AttrRegparmN(2);
+    BX_SMF bool wrmsr(Bit32u index, Bit64u  val_64) BX_CPP_AttrRegparmN(2);
+    BX_SMF bool handle_unknown_wrmsr(Bit32u index, Bit64u  val_64) BX_CPP_AttrRegparmN(2);
+#endif
 
-    BX_SMF void load_segw(bxInstruction_c* i, unsigned seg) BX_CPP_AttrRegparmN(2);
+#if BX_SUPPORT_APIC
+    BX_SMF bool relocate_apic(Bit64u val_64);
+    BX_SMF bool apic_global_enable_on();
+    BX_SMF bool x2apic_mode();
+#endif
+
+    BX_SMF void load_segw(bxInstruction_c* i, unsigned seg) BX_CPP_AttrRegparmN(2); //4863
 
     BX_SMF void jump_protected(bxInstruction_c* i, Bit16u cs, bx_address disp) BX_CPP_AttrRegparmN(3);//4872
+#if BX_SUPPORT_CET
+    BX_SMF void shadow_stack_switch(bx_address new_SSP) BX_CPP_AttrRegparmN(1);
+    BX_SMF void call_far_shadow_stack_push(Bit16u cs, bx_address lip, bx_address old_ssp) BX_CPP_AttrRegparmN(3); //4889
+#endif
+    BX_SMF bool v86_redirect_interrupt(Bit8u vector); //4897
+    BX_SMF void task_switch_load_selector(bx_segment_reg_t* seg,
+        bx_selector_t* selector, Bit16u raw_selector, Bit8u cs_rpl);//4900
+    BX_SMF void task_switch(bxInstruction_c* i, bx_selector_t* selector, bx_descriptor_t* descriptor,
+        unsigned source, Bit32u dword1, Bit32u dword2, bool push_error = 0, Bit32u error_code = 0);//4902
+    BX_SMF void get_SS_ESP_from_TSS(unsigned pl, Bit16u* ss, Bit32u* esp); //4903
+#if BX_SUPPORT_X86_64
+    BX_SMF Bit64u get_RSP_from_TSS(unsigned pl); //4905
+#endif
+    BX_SMF void writeEFlags(Bit32u eflags, Bit32u changeMask) BX_CPP_AttrRegparmN(2);//4908
     BX_SMF Bit32u force_flags(void);//4913
     BX_SMF Bit32u read_eflags(void) { return BX_CPU_THIS_PTR force_flags(); } //4914
     BX_SMF bool allow_io(bxInstruction_c* i, Bit16u addr, unsigned len) BX_CPP_AttrRegparmN(3); //4916
     BX_SMF Bit32u  get_descriptor_h(const bx_descriptor_t*) BX_CPP_AttrRegparmN(1); //4918
+    BX_SMF bool set_segment_ar_data(bx_segment_reg_t* seg, bool valid, Bit16u raw_selector,
+        bx_address base, Bit32u limit_scaled, Bit16u ar_data);
+    BX_SMF void    load_cs(bx_selector_t* selector, bx_descriptor_t* descriptor, Bit8u cpl) BX_CPP_AttrRegparmN(3); //4923
+    BX_SMF void    load_ss(bx_selector_t* selector, bx_descriptor_t* descriptor, Bit8u cpl) BX_CPP_AttrRegparmN(3); //4924
     BX_SMF void    touch_segment(bx_selector_t* selector, bx_descriptor_t* descriptor) BX_CPP_AttrRegparmN(2);//4925
     BX_SMF void    fetch_raw_descriptor(const bx_selector_t* selector,
         Bit32u* dword1, Bit32u* dword2, unsigned exception_no); //4927
+    BX_SMF bool fetch_raw_descriptor2(const bx_selector_t* selector,
+        Bit32u* dword1, Bit32u* dword2) BX_CPP_AttrRegparmN(3);//4929
     BX_SMF void    load_seg_reg(bx_segment_reg_t* seg, Bit16u new_value) BX_CPP_AttrRegparmN(2); //4930
     BX_SMF void    load_null_selector(bx_segment_reg_t* seg, unsigned value) BX_CPP_AttrRegparmN(2); //4931
     BX_SMF void    push_16(Bit16u value16) BX_CPP_AttrRegparmN(1); //4938
+    BX_SMF void    push_32(Bit32u value32) BX_CPP_AttrRegparmN(1);
     BX_SMF Bit16u  pop_16(void);
+    BX_SMF Bit32u  pop_32(void);
+
+#if BX_SUPPORT_X86_64
+    BX_SMF void    push_64(Bit64u value64) BX_CPP_AttrRegparmN(1);
+    BX_SMF Bit64u  pop_64(void);
+#endif
+
 #if BX_SUPPORT_CET //4946
     BX_SMF void    shadow_stack_push_32(Bit32u value32) BX_CPP_AttrRegparmN(1); //4947
     BX_SMF Bit32u  shadow_stack_pop_32(void); //4948
+    BX_SMF void    shadow_stack_push_64(Bit64u value64) BX_CPP_AttrRegparmN(1);
+    BX_SMF Bit64u  shadow_stack_pop_64(void);
 #endif  //4952
+
+    BX_SMF void    enter_system_management_mode(void);
+    BX_SMF void    smram_save_state(Bit32u* smm_saved_state); //4957
     BX_SMF void    deliver_INIT(void);//4963
     BX_SMF void    deliver_NMI(void);
     BX_SMF void    deliver_SMI(void);
@@ -4226,6 +4380,7 @@ public:
 #if BX_CPU_LEVEL >= 5
     BX_SMF void    iobreakpoint_match(unsigned port, unsigned len);
 #endif
+    BX_SMF Bit32u  code_breakpoint_match(bx_address laddr); //4980
     BX_SMF void    hwbreakpoint_match(bx_address laddr, unsigned len, unsigned rw); //4981
     BX_SMF Bit32u  hwdebug_compare(bx_address laddr, unsigned len, unsigned opa, unsigned opb); //4982
 #endif
@@ -4269,7 +4424,9 @@ public:
     BX_SMF BX_CPP_INLINE bool alignment_check(void);
 #endif
 #if BX_CPU_LEVEL >= 5 //5089
+    BX_SMF Bit64u get_TSC();
     BX_SMF void   set_TSC(Bit64u tsc);//509
+    BX_SMF Bit64u get_Virtual_TSC();
 #endif //5096
 #if BX_CPU_LEVEL >= 6    //5129
     BX_SMF void xsave_xrestor_init(void); //5130
@@ -4350,22 +4507,31 @@ public:
     BX_SMF void check_monitor(bx_phy_address addr, unsigned len);
 #if BX_SUPPORT_CET
     BX_SMF bool ShadowStackEnabled(unsigned cpl) BX_CPP_AttrRegparmN(1);
+    BX_SMF bool EndbranchEnabled(unsigned cpl) BX_CPP_AttrRegparmN(1);
+    BX_SMF void track_indirect(unsigned cpl) BX_CPP_AttrRegparmN(1); //5214
 #endif
 #if BX_SUPPORT_MONITOR_MWAIT
     BX_SMF void wakeup_monitor(void);
 #endif
 #if BX_SUPPORT_VMX //5225
+    BX_SMF Bit16u VMread16(unsigned encoding) BX_CPP_AttrRegparmN(1);
     BX_SMF Bit32u VMread32(unsigned encoding) BX_CPP_AttrRegparmN(1); //5227
-    BX_SMF void VMabort(VMX_vmabort_code error_code); //5245
-    BX_SMF Bit32u LoadMSRs(Bit32u msr_cnt, bx_phy_address pAddr); //5247
-    BX_SMF Bit32u StoreMSRs(Bit32u msr_cnt, bx_phy_address pAddr); //5248
+    BX_SMF Bit64u VMread64(unsigned encoding) BX_CPP_AttrRegparmN(1);
+    BX_SMF bx_address VMread_natural(unsigned encoding) BX_CPP_AttrRegparmN(1);
+    BX_SMF void VMwrite16(unsigned encoding, Bit16u val_16) BX_CPP_AttrRegparmN(2); //5230
     BX_SMF void VMwrite32(unsigned encoding, Bit32u val_32) BX_CPP_AttrRegparmN(2);
     BX_SMF void VMwrite64(unsigned encoding, Bit64u val_64) BX_CPP_AttrRegparmN(2);
     BX_SMF void VMwrite_natural(unsigned encoding, bx_address val) BX_CPP_AttrRegparmN(2);
+    BX_SMF void VMabort(VMX_vmabort_code error_code); //5245
+    BX_SMF Bit32u LoadMSRs(Bit32u msr_cnt, bx_phy_address pAddr); //5247
+    BX_SMF Bit32u StoreMSRs(Bit32u msr_cnt, bx_phy_address pAddr); //5248
+    BX_SMF Bit32u VMXReadRevisionID(bx_phy_address pAddr);//5249
+
     BX_SMF Bit32u VMenterLoadCheckGuestState(Bit64u* qualification);//5252
     BX_SMF void VMexit(Bit32u reason, Bit64u qualification); //5254
     BX_SMF void VMexitSaveGuestState(Bit32u reason, Bit32u vector); //5255
     BX_SMF void VMexitLoadHostState(void); //5257
+    BX_SMF Bit32u VMexitReadEFLAGS(Bit32u reason, Bit32u vector); //5258
     BX_SMF void init_vmx_capabilities(void);//5260
 
 #if BX_SUPPORT_VMX >= 2
@@ -4383,12 +4549,27 @@ public:
 #if BX_SUPPORT_X86_64 //5278
     BX_SMF bool is_virtual_apic_page(bx_phy_address paddr) BX_CPP_AttrRegparmN(1); //5279
     BX_SMF bool virtual_apic_access_vmexit(unsigned offset, unsigned len) BX_CPP_AttrRegparmN(2);
+
     BX_SMF bx_phy_address VMX_Virtual_Apic_Read(bx_phy_address paddr, unsigned len, void* data); //5281
     BX_SMF void VMX_Virtual_Apic_Write(bx_phy_address paddr, unsigned len, void* data); //5282
+    BX_SMF Bit32u VMX_Read_Virtual_APIC(unsigned offset);
     BX_SMF void VMX_Write_Virtual_APIC(unsigned offset, int len, Bit8u* val); //5284
     BX_SMF void VMX_Write_Virtual_APIC(unsigned offset, Bit32u val32) { VMX_Write_Virtual_APIC(offset, 4, (Bit8u*)(&val32)); }
     BX_SMF void VMX_Write_Virtual_X2APIC(unsigned offset, Bit64u val64) { VMX_Write_Virtual_APIC(offset, 8, (Bit8u*)(&val64)); }
+    BX_SMF void VMX_TPR_Virtualization(void);//5287
+    BX_SMF bool Virtualize_X2APIC_Write(unsigned msr, Bit64u val_64); //5288
+    BX_SMF void VMX_Virtual_Apic_Access_Trap(void);//5289
 #if BX_SUPPORT_VMX >= 2
+    BX_SMF bool VMX_Posted_Interrupt_Processing(Bit8u vector);//5291
+    BX_SMF void vapic_set_vector(unsigned apic_arrbase, Bit8u vector); //5292
+    BX_SMF Bit8u vapic_clear_and_find_highest_priority_int(unsigned apic_arrbase, Bit8u vector); //5293
+    BX_SMF void VMX_Write_VICR(void);
+    BX_SMF void VMX_Write_VICR_HI(void);
+    BX_SMF void VMX_PPR_Virtualization(void);  //5296
+    BX_SMF void VMX_EOI_Virtualization(void); //5297
+    BX_SMF void VMX_Self_IPI_Virtualization(Bit8u vector);
+    BX_SMF void VMX_Evaluate_Pending_Virtual_Interrupts(void); //5299
+    BX_SMF void VMX_Deliver_Virtual_Interrupt(void);//5300
     BX_SMF void vmx_page_modification_logging(Bit64u guest_laddr, Bit64u guest_paddr, unsigned dirty_update);
 #endif
 
@@ -4399,6 +4580,9 @@ public:
 #endif
     BX_SMF void VMexit_Event(unsigned type, unsigned vector,
         Bit16u errcode, bool errcode_valid, Bit64u qualification = 0); //5316
+    BX_SMF void VMexit_TripleFault(void); //5318
+    BX_SMF void VMexit_ExtInterrupt(void); //5319
+    BX_SMF void VMexit_TaskSwitch(Bit16u tss_selector, unsigned source) BX_CPP_AttrRegparmN(2); //5320
     BX_SMF void VMexit_IO(bxInstruction_c* i, unsigned port, unsigned len) BX_CPP_AttrRegparmN(3);
 #endif //5337
 #if BX_SUPPORT_SVM
@@ -4413,6 +4597,9 @@ public:
     BX_SMF void SvmInterceptException(unsigned type, unsigned vector,
         Bit16u errcode, bool errcode_valid, Bit64u qualification = 0); //5358
     BX_SMF void SvmInterceptIO(bxInstruction_c* i, unsigned port, unsigned len); //5360
+    BX_SMF void SvmInterceptTaskSwitch(Bit16u tss_selector, unsigned source, bool push_error, Bit32u error_code); //5362
+    BX_SMF void SvmVirtualInterruptAcknowledge(void); //5364
+    BX_SMF void Svm_Update_VM_CR_MSR(Bit64u val);//5365
 #endif //5367
 #if BX_CPU_LEVEL >= 5 //5369
     void init_MSRs();//5370
@@ -4676,8 +4863,10 @@ __forceinline void BX_CPU_C::set_IOPL(Bit32u val) {
 } __forceinline Bit32u BX_CPU_C::get_IOPL() {
     return 3 & ((&bx_cpu)->eflags >> 12);
 } //5837
+IMPLEMENT_EFLAG_ACCESSOR(VIF, 19)
 IMPLEMENT_EFLAG_ACCESSOR(VM, 17)
 IMPLEMENT_EFLAG_ACCESSOR(RF, 16)
+IMPLEMENT_EFLAG_ACCESSOR(NT, 14)
 IMPLEMENT_EFLAG_ACCESSOR(DF, 10)
 IMPLEMENT_EFLAG_ACCESSOR(IF, 9) //5839
 IMPLEMENT_EFLAG_ACCESSOR(TF, 8)
@@ -4686,6 +4875,7 @@ IMPLEMENT_EFLAG_ACCESSOR(AC, 18)
 IMPLEMENT_EFLAG_SET_ACCESSOR(VIF, 19) //5844
 IMPLEMENT_EFLAG_SET_ACCESSOR_VM(17)
 IMPLEMENT_EFLAG_SET_ACCESSOR_RF(16) //5851行
+IMPLEMENT_EFLAG_SET_ACCESSOR(NT, 14)
 IMPLEMENT_EFLAG_SET_ACCESSOR(DF, 10) //5853
 
 #if BX_SUPPORT_ALIGNMENT_CHECK && BX_CPU_LEVEL >= 4
@@ -4695,6 +4885,13 @@ IMPLEMENT_EFLAG_SET_ACCESSOR(AC, 18)
 #endif
 IMPLEMENT_EFLAG_SET_ACCESSOR_IF(9)//5854
 IMPLEMENT_EFLAG_SET_ACCESSOR_TF(8)
+
+enum {
+    BX_TASK_FROM_CALL = 0,
+    BX_TASK_FROM_IRET = 1,
+    BX_TASK_FROM_JUMP = 2,
+    BX_TASK_FROM_INT = 3
+};
 
 enum {
     BX_EXTERNAL_INTERRUPT = 0,

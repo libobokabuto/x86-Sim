@@ -3,7 +3,48 @@
 #include "cpu.h"
 #include "iodev.h"
 #include "debug.h"
+#define SpewPeriodicTimerInfo 0
 #define MinAllowableTimerPeriod 1 //37
+
+const Bit64u bx_pc_system_c::NullTimerInterval = 0xffffffff;
+
+bx_pc_system_c::bx_pc_system_c()
+{
+    //this->put("pc_system", "SYS");
+
+    //BX_ASSERT(numTimers == 0);
+
+    // Timer[0] is the null timer.  It is initialized as a special
+    // case here.  It should never be turned off or modified, and its
+    // duration should always remain the same.
+    ticksTotal = 0; // Reset ticks since emulator started.
+    timer[0].inUse = 1;
+    timer[0].period = NullTimerInterval;
+    timer[0].active = 1;
+    timer[0].continuous = 1;
+    timer[0].funct = nullTimer;
+    timer[0].this_ptr = this;
+    numTimers = 1; // So far, only the nullTimer.
+}
+
+void bx_pc_system_c::initialize(Bit32u ips)
+{
+    ticksTotal = 0;
+    timer[0].timeToFire = NullTimerInterval;
+    currCountdown = NullTimerInterval;
+    currCountdownPeriod = NullTimerInterval;
+    lastTimeUsec = 0;
+    usecSinceLast = 0;
+    triggeredTimer = 0;
+    HRQ = 0;
+    kill_bochs_request = 0;
+
+    // parameter 'ips' is the processor speed in Instructions-Per-Second
+    m_ips = double(ips) / 1000000.0L;
+
+    //BX_DEBUG(("ips = %u", (unsigned)ips));
+}
+
 Bit32u BX_CPP_AttrRegparmN(2)
 bx_pc_system_c::inp(Bit16u addr, unsigned io_len)
 {  //107
@@ -62,6 +103,17 @@ int bx_pc_system_c::Reset(unsigned type)
     BX_CPU(0)->reset(type);
     return 0;
 }
+
+
+int bx_pc_system_c::register_timer(void* this_ptr, void (*funct)(void*),
+    Bit32u useconds, bool continuous, bool active, const char* id)
+{
+    // Convert useconds to number of ticks.
+    Bit64u ticks = (Bit64u)(double(useconds) * m_ips);
+
+    return register_timer_ticks(this_ptr, funct, ticks, continuous, active, id);
+}
+
 int bx_pc_system_c::register_timer_ticks(void* this_ptr, bx_timer_handler_t funct,
     Bit64u ticks, bool continuous, bool active, const char* id)
 {
@@ -188,6 +240,32 @@ void bx_pc_system_c::countdownEvent(void)
             triggeredTimer = 0;
         }
     }
+}
+
+void bx_pc_system_c::nullTimer(void* this_ptr)
+{ //388
+    // This function is always inserted in timer[0].  It is sort of
+    // a heartbeat timer.  It ensures that at least one timer is
+    // always active to make the timer logic more simple, and has
+    // a duration of less than the maximum 32-bit integer, so that
+    // a 32-bit size can be used for the hot countdown timer.  The
+    // rest of the timer info can be 64-bits.  This is also a good
+    // place for some logic to report actual emulated
+    // instructions-per-second (IPS) data when measured relative to
+    // the host computer's wall clock.
+
+    UNUSED(this_ptr);
+
+#if SpewPeriodicTimerInfo
+    //BX_INFO(("==================================="));
+    for (unsigned i = 0; i < bx_pc_system.numTimers; i++) {
+        if (bx_pc_system.timer[i].active) {
+            //BX_INFO(("BxTimer(%s): period=" FMT_LL "u, continuous=%u",
+                bx_pc_system.timer[i].id, bx_pc_system.timer[i].period,
+                bx_pc_system.timer[i].continuous));
+        }
+    }
+#endif
 }
 
 void bx_pc_system_c::deactivate_timer(unsigned i)

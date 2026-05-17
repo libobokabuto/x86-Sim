@@ -130,4 +130,23 @@ struct TLB {
 		{
 			return &entry[get_index_of(lpf, len)];
 		}
+
+#if BX_CPU_LEVEL >= 6
+		BX_CPP_INLINE void flushNonGlobal(void)
+		{
+			Bit32u lpf_mask = 0;
+
+			for (unsigned n = 0; n < size; n++) {
+				bx_TLB_entry* tlbEntry = &entry[n];
+				if (tlbEntry->valid()) {
+					if (!(tlbEntry->accessBits & TLB_GlobalPage))
+						tlbEntry->invalidate();
+					else
+						lpf_mask |= tlbEntry->lpf_mask;
+				}
+			}
+
+			split_large = (lpf_mask > 0xfff);
+		}
+#endif
 };

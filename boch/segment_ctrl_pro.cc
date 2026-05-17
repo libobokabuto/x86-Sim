@@ -302,6 +302,51 @@ BX_CPU_C::get_descriptor_h(const bx_descriptor_t* d)
     }
 }
 
+bool BX_CPU_C::set_segment_ar_data(bx_segment_reg_t* seg, bool valid,
+    Bit16u raw_selector, bx_address base, Bit32u limit_scaled, Bit16u ar_data)
+{
+    parse_selector(raw_selector, &seg->selector);
+
+    bx_descriptor_t* d = &seg->cache;
+
+    set_ar_byte(d, ar_data);
+
+    d->valid = valid;
+
+    if (d->segment || !valid) { /* data/code segment descriptors */
+        d->u.segment.g = (ar_data >> 15) & 0x1;
+        d->u.segment.d_b = (ar_data >> 14) & 0x1;
+#if BX_SUPPORT_X86_64
+        d->u.segment.l = (ar_data >> 13) & 0x1;
+#endif
+        d->u.segment.avl = (ar_data >> 12) & 0x1;
+
+        d->u.segment.base = base;
+        d->u.segment.limit_scaled = limit_scaled;
+    }
+    else {
+        switch (d->type) {
+        case BX_SYS_SEGMENT_LDT:
+        case BX_SYS_SEGMENT_AVAIL_286_TSS:
+        case BX_SYS_SEGMENT_BUSY_286_TSS:
+        case BX_SYS_SEGMENT_AVAIL_386_TSS:
+        case BX_SYS_SEGMENT_BUSY_386_TSS:
+            d->u.segment.avl = (ar_data >> 12) & 0x1;
+            d->u.segment.d_b = (ar_data >> 14) & 0x1;
+            d->u.segment.g = (ar_data >> 15) & 0x1;
+            d->u.segment.base = base;
+            d->u.segment.limit_scaled = limit_scaled;
+            break;
+
+        default:
+            //BX_ERROR(("set_segment_ar_data(): case %u unsupported, valid=%d", (unsigned)d->type, d->valid));
+            break;
+        }
+    }
+
+    return d->valid;
+}
+
 
 void parse_descriptor(Bit32u dword1, Bit32u dword2, bx_descriptor_t* temp)
 {
@@ -405,6 +450,23 @@ BX_CPU_C::touch_segment(bx_selector_t* selector, bx_descriptor_t* descriptor)
     }
 }
 
+void BX_CPP_AttrRegparmN(3)
+BX_CPU_C::load_ss(bx_selector_t* selector, bx_descriptor_t* descriptor, Bit8u cpl)
+{
+    // Add cpl to the selector value.
+    selector->value = (BX_SELECTOR_RPL_MASK & selector->value) | cpl;
+
+    if ((selector->value & BX_SELECTOR_RPL_MASK) != 0)
+        touch_segment(selector, descriptor);
+
+    BX_CPU_THIS_PTR sregs[BX_SEG_REG_SS].selector = *selector;
+    BX_CPU_THIS_PTR sregs[BX_SEG_REG_SS].cache = *descriptor;
+    BX_CPU_THIS_PTR sregs[BX_SEG_REG_SS].selector.rpl = cpl;
+    BX_CPU_THIS_PTR sregs[BX_SEG_REG_SS].cache.valid = SegValidCache;
+
+    invalidate_stack_cache();
+}
+
 void BX_CPU_C::fetch_raw_descriptor(const bx_selector_t* selector,
     Bit32u* dword1, Bit32u* dword2, unsigned exception_no)
 {   //536
@@ -436,4 +498,33 @@ void BX_CPU_C::fetch_raw_descriptor(const bx_selector_t* selector,
 
     *dword1 = GET32L(raw_descriptor);
     *dword2 = GET32H(raw_descriptor);
+}
+
+bool BX_CPP_AttrRegparmN(3)
+BX_CPU_C::fetch_raw_descriptor2(const bx_selector_t* selector, Bit32u* dword1, Bit32u* dword2)
+{
+    Bit32u index = selector->index;
+    bx_address offset;
+
+    if (selector->ti == 0) { /* GDT */
+        if ((index * 8 + 7) > BX_CPU_THIS_PTR gdtr.limit)
+            return false;
+        offset = BX_CPU_THIS_PTR gdtr.base + index * 8;
+    }
+    else { /* LDT */
+        if (BX_CPU_THIS_PTR ldtr.cache.valid == 0) {
+            //BX_ERROR(("fetch_raw_descriptor2: LDTR.valid=0"));
+            return false;
+        }
+        if ((index * 8 + 7) > BX_CPU_THIS_PTR ldtr.cache.u.segment.limit_scaled)
+            return false;
+        offset = BX_CPU_THIS_PTR ldtr.cache.u.segment.base + index * 8;
+    }
+
+    Bit64u raw_descriptor = system_read_qword(offset);
+
+    *dword1 = GET32L(raw_descriptor);
+    *dword2 = GET32H(raw_descriptor);
+
+    return true;
 }

@@ -30,6 +30,11 @@ struct bx_guard_t {//244-314
         bool io;
         bool dma;
     } report;
+
+    struct {
+        bool irq;  // should process IRQs asynchronously
+        bool dma;  // should process DMAs asynchronously
+    } async;
 };
 BOCHSAPI_MSVCONLY extern bx_guard_t bx_guard; //325
 void bx_dbg_io_report(Bit32u port, unsigned size, unsigned op, Bit32u val); //347

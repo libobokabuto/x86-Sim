@@ -141,6 +141,73 @@ void BX_CPP_AttrRegparmN(2) BX_CPU_C::stack_write_word(bx_address offset, Bit16u
     }
 }
 
+void BX_CPP_AttrRegparmN(2) BX_CPU_C::stack_write_dword(bx_address offset, Bit32u data)
+{
+    bx_address espBiased = offset + BX_CPU_THIS_PTR espPageBias;
+
+    if (espBiased >= BX_CPU_THIS_PTR espPageWindowSize) {
+        stackPrefetch(offset, 4);
+        espBiased = offset + BX_CPU_THIS_PTR espPageBias;
+    }
+
+    if (BX_CPU_THIS_PTR espHostPtr) {
+        Bit32u* hostPageAddr = (Bit32u*)(BX_CPU_THIS_PTR espHostPtr + espBiased);
+        bx_phy_address pAddr = BX_CPU_THIS_PTR pAddrStackPage + espBiased;
+#if BX_CPU_LEVEL >= 4 && BX_SUPPORT_ALIGNMENT_CHECK
+        if (BX_CPU_THIS_PTR alignment_check() && (pAddr & 3) != 0) {
+            //BX_ERROR(("stack_write_dword(): #AC misaligned access"));
+            exception(BX_AC_EXCEPTION, 0);
+        }
+#endif
+        BX_NOTIFY_LIN_MEMORY_ACCESS(get_laddr(BX_SEG_REG_SS, offset), pAddr, 4,
+            MEMTYPE(BX_CPU_THIS_PTR espPageMemtype), BX_WRITE, (Bit8u*)&data);
+
+#if BX_SUPPORT_SMP == 0
+        if (BX_CPU_THIS_PTR espPageFineGranularityMapping)
+#endif
+            pageWriteStampTable.decWriteStamp(pAddr, 4);
+
+        WriteHostDWordToLittleEndian(hostPageAddr, data);
+    }
+    else {
+        write_virtual_dword(BX_SEG_REG_SS, offset, data);
+    }
+}
+
+void BX_CPP_AttrRegparmN(2) BX_CPU_C::stack_write_qword(bx_address offset, Bit64u data)
+{
+    bx_address espBiased = offset + BX_CPU_THIS_PTR espPageBias;
+
+    if (espBiased >= BX_CPU_THIS_PTR espPageWindowSize) {
+        stackPrefetch(offset, 8);
+        espBiased = offset + BX_CPU_THIS_PTR espPageBias;
+    }
+
+    if (BX_CPU_THIS_PTR espHostPtr) {
+        Bit64u* hostPageAddr = (Bit64u*)(BX_CPU_THIS_PTR espHostPtr + espBiased);
+        bx_phy_address pAddr = BX_CPU_THIS_PTR pAddrStackPage + espBiased;
+#if BX_CPU_LEVEL >= 4 && BX_SUPPORT_ALIGNMENT_CHECK
+        if (BX_CPU_THIS_PTR alignment_check() && (pAddr & 7) != 0) {
+            //BX_ERROR(("stack_write_qword(): #AC misaligned access"));
+            exception(BX_AC_EXCEPTION, 0);
+        }
+#endif
+        BX_NOTIFY_LIN_MEMORY_ACCESS(get_laddr(BX_SEG_REG_SS, offset), pAddr, 8,
+            MEMTYPE(BX_CPU_THIS_PTR espPageMemtype), BX_WRITE, (Bit8u*)&data);
+
+#if BX_SUPPORT_SMP == 0
+        if (BX_CPU_THIS_PTR espPageFineGranularityMapping)
+#endif
+            pageWriteStampTable.decWriteStamp(pAddr, 8);
+
+        WriteHostQWordToLittleEndian(hostPageAddr, data);
+    }
+    else {
+        write_virtual_qword(BX_SEG_REG_SS, offset, data);
+    }
+}
+
+
 Bit16u BX_CPP_AttrRegparmN(1) BX_CPU_C::stack_read_word(bx_address offset)
 {  //282
     bx_address espBiased = offset + BX_CPU_THIS_PTR espPageBias;
@@ -169,5 +236,67 @@ Bit16u BX_CPP_AttrRegparmN(1) BX_CPU_C::stack_read_word(bx_address offset)
     }
     else {
         return read_virtual_word(BX_SEG_REG_SS, offset);
+    }
+}
+
+Bit32u BX_CPP_AttrRegparmN(1) BX_CPU_C::stack_read_dword(bx_address offset)
+{
+    bx_address espBiased = offset + BX_CPU_THIS_PTR espPageBias;
+
+    if (espBiased >= BX_CPU_THIS_PTR espPageWindowSize) {
+        stackPrefetch(offset, 4);
+        espBiased = offset + BX_CPU_THIS_PTR espPageBias;
+    }
+
+    if (BX_CPU_THIS_PTR espHostPtr) {
+        Bit32u* hostPageAddr = (Bit32u*)(BX_CPU_THIS_PTR espHostPtr + espBiased), data;
+#if BX_CPU_LEVEL >= 4 && BX_SUPPORT_ALIGNMENT_CHECK
+        if (BX_CPU_THIS_PTR alignment_check()) {
+            bx_phy_address pAddr = BX_CPU_THIS_PTR pAddrStackPage + espBiased;
+            if (pAddr & 3) {
+                //BX_ERROR(("stack_read_dword(): #AC misaligned access"));
+                exception(BX_AC_EXCEPTION, 0);
+            }
+        }
+#endif
+        data = ReadHostDWordFromLittleEndian(hostPageAddr);
+        BX_NOTIFY_LIN_MEMORY_ACCESS(get_laddr(BX_SEG_REG_SS, offset),
+            (BX_CPU_THIS_PTR pAddrStackPage + espBiased), 4,
+            MEMTYPE(BX_CPU_THIS_PTR espPageMemtype), BX_READ, (Bit8u*)&data);
+        return data;
+    }
+    else {
+        return read_virtual_dword(BX_SEG_REG_SS, offset);
+    }
+}
+
+Bit64u BX_CPP_AttrRegparmN(1) BX_CPU_C::stack_read_qword(bx_address offset)
+{
+    bx_address espBiased = offset + BX_CPU_THIS_PTR espPageBias;
+
+    if (espBiased >= BX_CPU_THIS_PTR espPageWindowSize) {
+        stackPrefetch(offset, 8);
+        espBiased = offset + BX_CPU_THIS_PTR espPageBias;
+    }
+
+    if (BX_CPU_THIS_PTR espHostPtr) {
+        Bit64u* hostPageAddr = (Bit64u*)(BX_CPU_THIS_PTR espHostPtr + espBiased), data;
+#if BX_CPU_LEVEL >= 4 && BX_SUPPORT_ALIGNMENT_CHECK
+        if (BX_CPU_THIS_PTR alignment_check()) {
+            bx_phy_address pAddr = BX_CPU_THIS_PTR pAddrStackPage + espBiased;
+            if (pAddr & 7) {
+                //BX_ERROR(("stack_read_qword(): #AC misaligned access"));
+                exception(BX_AC_EXCEPTION, 0);
+            }
+        }
+#endif
+        data = ReadHostQWordFromLittleEndian(hostPageAddr);
+        BX_NOTIFY_LIN_MEMORY_ACCESS(get_laddr(BX_SEG_REG_SS, offset),
+            (BX_CPU_THIS_PTR pAddrStackPage + espBiased), 8,
+            MEMTYPE(BX_CPU_THIS_PTR espPageMemtype), BX_READ, (Bit8u*)&data);
+        return data;
+    }
+    else {
+        return read_virtual_qword(BX_SEG_REG_SS, offset);
     }
 }

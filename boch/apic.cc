@@ -613,7 +613,6 @@ void bx_local_apic_c::set_lvt_entry(unsigned apic_reg, Bit32u value)
     }
 }
 
-
 void bx_local_apic_c::send_ipi(apic_dest_t dest, Bit32u lo_cmd)
 {
     int dest_shorthand = (lo_cmd >> 18) & 3;
@@ -660,7 +659,6 @@ void bx_local_apic_c::send_ipi(apic_dest_t dest, Bit32u lo_cmd)
         shadow_error_status |= APIC_ERR_TX_ACCEPT_ERR;
     }
 }
-
 
 void bx_local_apic_c::write_spurious_interrupt_register(Bit32u value)
 {  //699
@@ -853,6 +851,32 @@ void bx_local_apic_c::trigger_irq(Bit8u vector, unsigned trigger_mode, bool bypa
         clear_vector(tmr, vector);
 
     service_local_apic();
+}
+
+Bit8u bx_local_apic_c::acknowledge_int(void)
+{
+    // CPU calls this when it is ready to service one interrupt
+    if (!cpu->is_pending(BX_EVENT_PENDING_LAPIC_INTR)){}
+        //BX_PANIC(("APIC %d acknowledged an interrupt, but INTR=0", apic_id));
+
+    int vector = highest_priority_int(irr);
+    if (vector < 0 || (vector & 0xf0) <= get_ppr()) {
+        cpu->clear_event(BX_EVENT_PENDING_LAPIC_INTR);
+        return spurious_vector;
+    }
+
+    //BX_ASSERT(get_vector(irr, vector));
+    //BX_DEBUG(("acknowledge_int() returning vector 0x%02x", vector));
+    clear_vector(irr, vector);
+    set_vector(isr, vector);
+    if (bx_dbg.apic) {
+        //BX_INFO(("Status after setting isr:"));
+        print_status();
+    }
+
+    cpu->clear_event(BX_EVENT_PENDING_LAPIC_INTR);
+    service_local_apic();  // will set INTR again if another is ready
+    return vector;
 }
 
 Bit8u bx_local_apic_c::get_ppr(void) const
@@ -1062,6 +1086,52 @@ Bit32u bx_local_apic_c::get_current_timer_count(void)
     }
 }
 
+#if BX_CPU_LEVEL >= 6
+void bx_local_apic_c::set_tsc_deadline(Bit64u deadline)
+{
+    Bit32u timervec = lvt[APIC_LVT_TIMER];
+
+    if ((timervec & 0x40000) == 0) {
+        //BX_ERROR(("APIC: TSC-Deadline timer is disabled"));
+        return;
+    }
+
+    // If active before, deactivate the current timer before changing it.
+    if (timer_active) {
+        bx_pc_system.deactivate_timer(timer_handle);
+        timer_active = false;
+    }
+
+    ticksInitial = deadline;
+    if (deadline != 0) {
+        //BX_DEBUG(("APIC: TSC-Deadline is set to " FMT_LL "d", deadline));
+        Bit64u currtime = bx_pc_system.time_ticks();
+        timer_active = true;
+        bx_pc_system.activate_timer_ticks(timer_handle, (deadline > currtime) ? (deadline - currtime) : 1, 0);
+    }
+}
+
+Bit64u bx_local_apic_c::get_tsc_deadline(void)
+{
+    Bit32u timervec = lvt[APIC_LVT_TIMER];
+
+    // read as zero if TSC-deadline timer is disabled
+    if ((timervec & 0x40000) == 0) return 0;
+
+    return ticksInitial; /* also holds TSC-deadline value */
+}
+#endif
+
+#if BX_SUPPORT_VMX >= 2
+Bit32u bx_local_apic_c::read_vmx_preemption_timer(void)
+{
+    Bit64u diff = (bx_pc_system.time_ticks() >> vmx_preemption_timer_rate) - (vmx_preemption_timer_initial >> vmx_preemption_timer_rate);
+    if (vmx_preemption_timer_value < diff)
+        return 0;
+    else
+        return vmx_preemption_timer_value - diff;
+}
+
 void bx_local_apic_c::deactivate_vmx_preemption_timer(void)
 {  //1189
     if (!vmx_timer_active) return;
@@ -1075,6 +1145,10 @@ void bx_local_apic_c::vmx_preemption_timer_expired(void* this_ptr)
     class_ptr->cpu->signal_event(BX_EVENT_VMX_PREEMPTION_TIMER_EXPIRED);
     class_ptr->deactivate_vmx_preemption_timer();
 }
+#endif
+
+
+#if BX_SUPPORT_MONITOR_MWAIT
 
 void bx_local_apic_c::deactivate_mwaitx_timer(void)
 {
@@ -1090,4 +1164,167 @@ void bx_local_apic_c::mwaitx_timer_expired(void* this_ptr)
     class_ptr->deactivate_mwaitx_timer();
 }
 
+#endif
 
+#if BX_CPU_LEVEL >= 6
+
+bool bx_local_apic_c::read_x2apic(unsigned index, Bit64u* val_64)
+{
+    index = (index - 0x800) << 4;
+
+    switch (index) {
+        // return full 32-bit lapic id
+    case BX_LAPIC_ID:
+        *val_64 = apic_id;
+        break;
+    case BX_LAPIC_LDR:
+        *val_64 = ldr;
+        break;
+        // full 64-bit access to ICR
+    case BX_LAPIC_ICR_LO:
+        *val_64 = GET64_FROM_HI32_LO32(icr_hi, icr_lo);
+        break;
+        // not supported/not readable in x2apic mode
+    case BX_LAPIC_ARBITRATION_PRIORITY:
+    case BX_LAPIC_DESTINATION_FORMAT:
+    case BX_LAPIC_ICR_HI:
+    case BX_LAPIC_EOI: // write only
+    case BX_LAPIC_SELF_IPI: // write only
+        return false;
+        // compatible to legacy lapic mode
+    case BX_LAPIC_VERSION:
+    case BX_LAPIC_TPR:
+    case BX_LAPIC_PPR:
+    case BX_LAPIC_SPURIOUS_VECTOR:
+    case BX_LAPIC_ISR1:
+    case BX_LAPIC_ISR2:
+    case BX_LAPIC_ISR3:
+    case BX_LAPIC_ISR4:
+    case BX_LAPIC_ISR5:
+    case BX_LAPIC_ISR6:
+    case BX_LAPIC_ISR7:
+    case BX_LAPIC_ISR8:
+    case BX_LAPIC_TMR1:
+    case BX_LAPIC_TMR2:
+    case BX_LAPIC_TMR3:
+    case BX_LAPIC_TMR4:
+    case BX_LAPIC_TMR5:
+    case BX_LAPIC_TMR6:
+    case BX_LAPIC_TMR7:
+    case BX_LAPIC_TMR8:
+    case BX_LAPIC_IRR1:
+    case BX_LAPIC_IRR2:
+    case BX_LAPIC_IRR3:
+    case BX_LAPIC_IRR4:
+    case BX_LAPIC_IRR5:
+    case BX_LAPIC_IRR6:
+    case BX_LAPIC_IRR7:
+    case BX_LAPIC_IRR8:
+    case BX_LAPIC_ESR:
+    case BX_LAPIC_LVT_TIMER:
+    case BX_LAPIC_LVT_THERMAL:
+    case BX_LAPIC_LVT_PERFMON:
+    case BX_LAPIC_LVT_LINT0:
+    case BX_LAPIC_LVT_LINT1:
+    case BX_LAPIC_LVT_ERROR:
+    case BX_LAPIC_LVT_CMCI:
+    case BX_LAPIC_TIMER_INITIAL_COUNT:
+    case BX_LAPIC_TIMER_CURRENT_COUNT:
+    case BX_LAPIC_TIMER_DIVIDE_CFG:
+        *val_64 = read_aligned(index);
+        break;
+    default:
+        //BX_ERROR(("read_x2apic: not supported apic register 0x%08x", index));
+        return false;
+    }
+
+    return true;
+}
+
+bool bx_local_apic_c::write_x2apic(unsigned index, Bit32u val32_hi, Bit32u val32_lo)
+{
+    index = (index - 0x800) << 4;
+
+    if (index != BX_LAPIC_ICR_LO) {
+        // upper 32-bit are reserved for all x2apic MSRs except for the ICR
+        if (val32_hi != 0)
+            return false;
+    }
+
+    switch (index) {
+        // read only/not available in x2apic mode
+    case BX_LAPIC_ID:
+    case BX_LAPIC_VERSION:
+    case BX_LAPIC_ARBITRATION_PRIORITY:
+    case BX_LAPIC_PPR:
+    case BX_LAPIC_LDR:
+    case BX_LAPIC_DESTINATION_FORMAT:
+    case BX_LAPIC_ISR1:
+    case BX_LAPIC_ISR2:
+    case BX_LAPIC_ISR3:
+    case BX_LAPIC_ISR4:
+    case BX_LAPIC_ISR5:
+    case BX_LAPIC_ISR6:
+    case BX_LAPIC_ISR7:
+    case BX_LAPIC_ISR8:
+    case BX_LAPIC_TMR1:
+    case BX_LAPIC_TMR2:
+    case BX_LAPIC_TMR3:
+    case BX_LAPIC_TMR4:
+    case BX_LAPIC_TMR5:
+    case BX_LAPIC_TMR6:
+    case BX_LAPIC_TMR7:
+    case BX_LAPIC_TMR8:
+    case BX_LAPIC_IRR1:
+    case BX_LAPIC_IRR2:
+    case BX_LAPIC_IRR3:
+    case BX_LAPIC_IRR4:
+    case BX_LAPIC_IRR5:
+    case BX_LAPIC_IRR6:
+    case BX_LAPIC_IRR7:
+    case BX_LAPIC_IRR8:
+    case BX_LAPIC_ICR_HI:
+    case BX_LAPIC_TIMER_CURRENT_COUNT:
+        return false;
+        // send self ipi
+    case BX_LAPIC_SELF_IPI:
+        trigger_irq(val32_lo & 0xff, APIC_EDGE_TRIGGERED);
+        return true;
+    case BX_LAPIC_ICR_LO:
+        // handle full 64-bit write
+        send_ipi(val32_hi, val32_lo);
+        return true;
+    case BX_LAPIC_TPR:
+        // handle reserved bits, only bits 0-7 are writeable
+        if ((val32_lo & 0xffffff00) != 0)
+            return false;
+        break; // use legacy write
+    case BX_LAPIC_SPURIOUS_VECTOR:
+        // handle reserved bits, only bits 0-8, 12 are writeable
+        // we do not support directed EOI capability, so reserve bit 12 as well
+        if ((val32_lo & 0xfffffe00) != 0)
+            return false;
+        break; // use legacy write
+    case BX_LAPIC_EOI:
+    case BX_LAPIC_ESR:
+        if (val32_lo != 0) return false;
+        break; // use legacy write
+    case BX_LAPIC_LVT_TIMER:
+    case BX_LAPIC_LVT_THERMAL:
+    case BX_LAPIC_LVT_PERFMON:
+    case BX_LAPIC_LVT_LINT0:
+    case BX_LAPIC_LVT_LINT1:
+    case BX_LAPIC_LVT_ERROR:
+    case BX_LAPIC_LVT_CMCI:
+    case BX_LAPIC_TIMER_INITIAL_COUNT:
+    case BX_LAPIC_TIMER_DIVIDE_CFG:
+        break; // use legacy write
+    default:
+        //BX_ERROR(("write_x2apic: not supported apic register 0x%08x", index));
+        return false;
+    }
+
+    write_aligned(index, val32_lo);
+    return true;
+}
+#endif

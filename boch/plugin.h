@@ -13,6 +13,7 @@
 #define DEV_register_default_iowrite_handler(b,c,d,e) bx_devices.register_default_io_write_handler(b,c,d,e) //133
 #define DEV_register_irq(b,c) bx_devices.register_irq(b,c) //134
 #define DEV_init_devices() {bx_devices.init(BX_MEM(0)); }  //140
+#define DEV_register_timer(a,b,c,d,e,f) bx_pc_system.register_timer(a,b,c,d,e,f) //144
 #define DEV_register_default_keyboard(a,b,c) (bx_devices.register_default_keyboard(a,b,c)) //147
 #define DEV_register_default_mouse(a,b,c) (bx_devices.register_default_mouse(a,b,c)) //150
 #define DEV_ioapic_receive_eoi(a) (bx_devices.pluginIOAPIC->receive_eoi(a)) //157
@@ -20,7 +21,13 @@
 #define DEV_cmos_set_reg(a,b) (bx_devices.pluginCmosDevice->set_reg(a,b)) //162
 #define DEV_cmos_checksum() (bx_devices.pluginCmosDevice->checksum_cmos()) //163
 #define DEV_kbd_set_indicator(a,b,c) (bx_devices.kbd_set_indicator(a,b,c)) //173
+
+#define DEV_dma_raise_hlda() \
+  (bx_devices.pluginDmaDevice->raise_HLDA())
+
 #define DEV_pic_lower_irq(b)  (bx_devices.pluginPicDevice->lower_irq(b)) //206
+#define DEV_pic_raise_irq(b)  (bx_devices.pluginPicDevice->raise_irq(b))
+#define DEV_pic_iac()         (bx_devices.pluginPicDevice->IAC()) //209
 typedef struct _device_t
 {
     //281
