@@ -141,6 +141,7 @@ void bx_cmos_c::CRA_change(void)
             bx_pc_system.deactivate_timer(BX_CMOS_THIS s.periodic_timer_index);
     }
 }
+
 Bit32u bx_cmos_c::read_handler(void* this_ptr, Bit32u address, unsigned io_len)
 {
     //372
