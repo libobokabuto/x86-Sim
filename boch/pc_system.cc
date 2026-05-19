@@ -385,3 +385,12 @@ void bx_pc_system_c::activate_timer(unsigned i, Bit32u useconds, bool continuous
     activate_timer_ticks(i, ticks, continuous);
 }
 
+void bx_pc_system_c::setTimerParam(unsigned timerIndex, Bit32u param)
+{
+#if BX_TIMER_DEBUG
+    if (timerIndex >= numTimers)
+        //BX_PANIC(("setTimerParam: timer %u OOB", timerIndex));
+#endif
+    timer[timerIndex].param = param;
+}
+

@@ -26,4 +26,10 @@
 #define tmpfile64 tmpfile /* use regular tmpfile() function */
 #endif
 
+#if !BX_HAVE_SSIZE_T
+// needed on Windows
+typedef Bit64s ssize_t;
+#endif
+
+
 

@@ -1,11 +1,14 @@
 #pragma once
 #include "extplugin.h"
 #define BX_PLUGIN_UNMAPPED  "unmapped" //43
-#define BX_PLUGIN_KEYBOARD  "keyboard"
+
 #define BX_PLUGIN_CMOS      "cmos" //45
 #define BX_PLUGIN_PARALLEL  "parallel"//49
+#define BX_PLUGIN_SERIAL    "serial"
+#define BX_PLUGIN_KEYBOARD  "keyboard"
 #define BX_PLUGIN_DMA       "dma" //54
 #define BX_PLUGIN_PCI       "pci"  //57
+
 #define BX_REGISTER_DEVICE_DEVMODEL(a,b,c,d) pluginRegisterDeviceDevmodel(a,b,c,d)  //80
 #define PLUG_load_plugin(name,type) {lib##name##_plugin_entry(NULL,type,PLUGIN_INIT);} //115
 #define DEV_register_ioread_handler(b,c,d,e,f) bx_devices.register_io_read_handler(b,c,d,e,f) //124
@@ -55,6 +58,7 @@ extern plugin_t bx_builtin_plugins[]; //353
   int CDECL lib##mod##_plugin_entry(plugin_t *plugin, Bit16u type, Bit8u mode) //396
 
 PLUGIN_ENTRY_FOR_MODULE(keyboard);
+PLUGIN_ENTRY_FOR_MODULE(serial);//411
 PLUGIN_ENTRY_FOR_MODULE(cmos); //414
 PLUGIN_ENTRY_FOR_MODULE(dma); //415
 PLUGIN_ENTRY_FOR_MODULE(parallel);//421

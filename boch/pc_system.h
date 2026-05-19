@@ -50,6 +50,7 @@ public:
 	void   initialize(Bit32u ips);
 	int    register_timer(void* this_ptr, bx_timer_handler_t, Bit32u useconds,
 		bool continuous, bool active, const char* id);
+	void   setTimerParam(unsigned timerID, Bit32u param);//95
 	void   activate_timer(unsigned timer_index, Bit32u useconds, bool continuous); //97
 
 	void   deactivate_timer(unsigned timer_index); //99

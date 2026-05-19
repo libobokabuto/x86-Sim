@@ -111,6 +111,9 @@ void bx_devices_c::init(BX_MEM_C* newmem)
     PLUG_load_plugin(keyboard, PLUGTYPE_STANDARD); //250
 
     PLUG_load_plugin(parallel, PLUGTYPE_OPTIONAL); //自己加的按 PLUGTYPE_OPTIONAL 加载，不按 CORE
+
+    PLUG_load_plugin(serial, PLUGTYPE_OPTIONAL);//同parallel一样
+
     bx_init_plugins(); //354
     DEV_cmos_checksum();//357
 }

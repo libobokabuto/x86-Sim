@@ -7,7 +7,7 @@
 #if BX_SUPPORT_SVM
 #include "svm.h"
 #endif
-
+#include "scalar_arith.h"
 #include "ia_opcodes.h"
 
 void BX_CPP_AttrRegparmN(1) BX_CPU_C::JMP_Ap(bxInstruction_c* i)
@@ -776,4 +776,38 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::IN_ALDX(bxInstruction_c* i)
     AL = BX_INP(port, 1);
 
     BX_NEXT_TRACE(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::SHL_EwR(bxInstruction_c* i)
+{
+    Bit16u result_16;
+    unsigned count;
+    unsigned of = 0, cf = 0;
+
+    if (i->getIaOpcode() == BX_IA_SHL_Ew)
+        count = CL;
+    else
+        count = i->Ib();
+
+    count &= 0x1f; /* use only 5 LSB's */
+
+    if (count) {
+        Bit16u op1_16 = BX_READ_16BIT_REG(i->dst());
+
+        if (count <= 16) {
+            result_16 = (op1_16 << count);
+            cf = (op1_16 >> (16 - count)) & 0x1;
+            of = cf ^ (result_16 >> 15); // of = cf ^ result15
+        }
+        else {
+            result_16 = 0;
+        }
+
+        BX_WRITE_16BIT_REG(i->dst(), result_16);
+
+        SET_FLAGS_OSZAPC_LOGIC_16(result_16);
+        BX_CPU_THIS_PTR oszapc.set_flags_OxxxxC(of, cf);
+    }
+
+    BX_NEXT_INSTR(i);
 }
