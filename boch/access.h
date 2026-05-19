@@ -15,6 +15,14 @@ BX_CPU_C::write_virtual_dword_32(unsigned s, Bit32u offset, Bit32u data)
 	write_linear_dword(s, laddr, data);
 }
 
+BX_CPP_INLINE Bit16u BX_CPP_AttrRegparmN(2)
+BX_CPU_C::read_virtual_word_32(unsigned s, Bit32u offset)
+{
+	Bit32u laddr = agen_read32(s, offset, 2);
+	return read_linear_word(s, laddr);
+}
+
+
 BX_CPP_INLINE Bit8u BX_CPP_AttrRegparmN(2)
 BX_CPU_C::read_virtual_byte(unsigned s, bx_address offset)
 {

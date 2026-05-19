@@ -49,7 +49,7 @@ void BX_CPU_C::cpu_loop(void)
             BX_CPU_THIS_PTR prev_rip = RIP; // commit new RIP
             BX_INSTR_AFTER_EXECUTION(BX_CPU_ID, i);
             BX_CPU_THIS_PTR icount++;
-            if (BX_CPU_THIS_PTR icount == 326428)
+            if (BX_CPU_THIS_PTR icount == 326500)
             {
                   int qwq = 0;
             }
@@ -57,7 +57,7 @@ void BX_CPU_C::cpu_loop(void)
             uint64_t trace_index = md5count++;
             //trace_index >= 300000
             //(trace_index % 500) < 10
-            const uint64_t trace_start = 325900;  // 从第 15 万条之后开始打印
+            const uint64_t trace_start = 326000;  // 从第 15 万条之后开始打印
             const uint64_t trace_step = 1000;    // 每 1000 条一个周期
             const uint64_t trace_count = 1000;      // 每个周期打印 10 条
 

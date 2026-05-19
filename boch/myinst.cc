@@ -811,3 +811,35 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::SHL_EwR(bxInstruction_c* i)
 
     BX_NEXT_INSTR(i);
 }
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::MOV_AXOd(bxInstruction_c* i)
+{
+    AX = read_virtual_word_32(i->seg(), i->Id());
+
+    BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::AND_EwIwR(bxInstruction_c* i)
+{
+    Bit16u op1_16 = BX_READ_16BIT_REG(i->dst());
+    op1_16 &= i->Iw();
+    BX_WRITE_16BIT_REG(i->dst(), op1_16);
+
+    SET_FLAGS_OSZAPC_LOGIC_16(op1_16);
+
+    BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::OR_GwEwR(bxInstruction_c* i)
+{
+    Bit16u op1_16, op2_16;
+
+    op1_16 = BX_READ_16BIT_REG(i->dst());
+    op2_16 = BX_READ_16BIT_REG(i->src());
+    op1_16 |= op2_16;
+    BX_WRITE_16BIT_REG(i->dst(), op1_16);
+
+    SET_FLAGS_OSZAPC_LOGIC_16(op1_16);
+
+    BX_NEXT_INSTR(i);
+}

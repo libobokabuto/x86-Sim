@@ -22,7 +22,8 @@ bx_cmos_c* theCmosDevice = NULL;
 #define  REG_STAT_C                  0x0c
 #define  REG_STAT_D                  0x0d
 #define  REG_DIAGNOSTIC_STATUS       0x0e  /* alternatives */
-#define  REG_SHUTDOWN_STATUS         0x0f  //54
+#define  REG_SHUTDOWN_STATUS         0x0f
+#define  REG_EQUIPMENT_BYTE          0x14
 #define  REG_CSUM_HIGH               0x2e
 #define  REG_CSUM_LOW                0x2f
 #define  REG_IBM_CENTURY_BYTE        0x32  /* alternatives */
@@ -81,6 +82,36 @@ void bx_cmos_c::init(void)
     DEV_register_iowrite_handler(this, write_handler, 0x0070, "CMOS RAM", 1);
     DEV_register_iowrite_handler(this, write_handler, 0x0071, "CMOS RAM", 1);
     DEV_register_irq(8, "CMOS RTC");
+
+    BX_CMOS_THIS s.max_reg = 127;
+    BX_CMOS_THIS s.use_image = false;
+    BX_CMOS_THIS s.timeval_change = false;
+    BX_CMOS_THIS s.rtc_mode_12hour = false;
+    BX_CMOS_THIS s.rtc_mode_binary = false;
+    BX_CMOS_THIS s.rtc_sync = false;
+    BX_CMOS_THIS s.irq_enabled = true;
+
+    BX_CMOS_THIS s.reg[REG_STAT_A] = 0x26;
+    BX_CMOS_THIS s.reg[REG_STAT_B] = 0x02;
+    BX_CMOS_THIS s.reg[REG_STAT_C] = 0x00;
+    BX_CMOS_THIS s.reg[REG_STAT_D] = 0x80;
+    BX_CMOS_THIS s.reg[REG_SHUTDOWN_STATUS] = 0x00;
+
+    // Source bochsrc has floppya: type=1_44. This is the CMOS floppy type byte.
+    BX_CMOS_THIS s.reg[0x10] = 0x40;
+
+    BX_CMOS_THIS s.reg[REG_EQUIPMENT_BYTE] = 0x00;
+
+#if BX_SUPPORT_FPU == 1
+    BX_CMOS_THIS s.reg[REG_EQUIPMENT_BYTE] |= 0x02;
+#endif
+
+    // Your project has no full floppy device init yet, so keep the source default bit here.
+    BX_CMOS_THIS s.reg[REG_EQUIPMENT_BYTE] |= 0x01;
+
+    BX_CMOS_THIS s.timeval = 0;
+    update_clock();
+
 }
 void bx_cmos_c::CRA_change(void)
 {

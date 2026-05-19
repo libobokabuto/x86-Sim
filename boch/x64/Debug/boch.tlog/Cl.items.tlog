@@ -38,6 +38,7 @@ E:\Study\codes\bochs\boch\boch\msr.cc;E:\Study\codes\bochs\boch\boch\x64\Debug\m
 E:\Study\codes\bochs\boch\boch\mwait.cc;E:\Study\codes\bochs\boch\boch\x64\Debug\mwait.obj
 E:\Study\codes\bochs\boch\boch\myinst.cc;E:\Study\codes\bochs\boch\boch\x64\Debug\myinst.obj
 E:\Study\codes\bochs\boch\boch\paging.cc;E:\Study\codes\bochs\boch\boch\x64\Debug\paging.obj
+E:\Study\codes\bochs\boch\boch\parallel.cc;E:\Study\codes\bochs\boch\boch\x64\Debug\parallel.obj
 E:\Study\codes\bochs\boch\boch\paramtree.cc;E:\Study\codes\bochs\boch\boch\x64\Debug\paramtree.obj
 E:\Study\codes\bochs\boch\boch\pci.cc;E:\Study\codes\bochs\boch\boch\x64\Debug\pci.obj
 E:\Study\codes\bochs\boch\boch\pc_system.cc;E:\Study\codes\bochs\boch\boch\x64\Debug\pc_system.obj
@@ -45,6 +46,7 @@ E:\Study\codes\bochs\boch\boch\plugin.cc;E:\Study\codes\bochs\boch\boch\x64\Debu
 E:\Study\codes\bochs\boch\boch\proc_ctrl.cc;E:\Study\codes\bochs\boch\boch\x64\Debug\proc_ctrl.obj
 E:\Study\codes\bochs\boch\boch\scancodes.cc;E:\Study\codes\bochs\boch\boch\x64\Debug\scancodes.obj
 E:\Study\codes\bochs\boch\boch\segment_ctrl_pro.cc;E:\Study\codes\bochs\boch\boch\x64\Debug\segment_ctrl_pro.obj
+E:\Study\codes\bochs\boch\boch\serial.cc;E:\Study\codes\bochs\boch\boch\x64\Debug\serial.obj
 E:\Study\codes\bochs\boch\boch\siminterface.cc;E:\Study\codes\bochs\boch\boch\x64\Debug\siminterface.obj
 E:\Study\codes\bochs\boch\boch\smm.cc;E:\Study\codes\bochs\boch\boch\x64\Debug\smm.obj
 E:\Study\codes\bochs\boch\boch\stack.cc;E:\Study\codes\bochs\boch\boch\x64\Debug\stack.obj
