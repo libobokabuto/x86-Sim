@@ -173,6 +173,7 @@
     <ClCompile Include="mwait.cc" />
     <ClCompile Include="myinst.cc" />
     <ClCompile Include="paging.cc" />
+    <ClCompile Include="parallel.cc" />
     <ClCompile Include="paramtree.cc" />
     <ClCompile Include="pci.cc" />
     <ClCompile Include="pc_system.cc" />
@@ -227,6 +228,7 @@
     <ClInclude Include="MD5.h" />
     <ClInclude Include="memory-bochs.h" />
     <ClInclude Include="msr.h" />
+    <ClInclude Include="parallel.h" />
     <ClInclude Include="pci.h" />
     <ClInclude Include="osdep.h" />
     <ClInclude Include="paramtree.h" />

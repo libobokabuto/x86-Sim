@@ -103,9 +103,10 @@ void bx_reset_plugins(unsigned signal)
 #define BUILTIN_SND_PLUGIN_ENTRY(mod) {#mod, PLUGTYPE_SND, 0, libsound##mod##_plugin_entry, 0}
 #define BUILTIN_USB_PLUGIN_ENTRY(mod) {#mod, PLUGTYPE_USB, 0, lib##mod##_plugin_entry, 0}
 
-/*
+
 plugin_t bx_builtin_plugins[] = {
     //986
+    /*1`    Aw3
 #if BX_USE_TEXTCONFIG
   BUILTIN_CI_PLUGIN_ENTRY(textconfig),
 #endif
@@ -159,7 +160,9 @@ plugin_t bx_builtin_plugins[] = {
   BUILTIN_OPT_PLUGIN_ENTRY(biosdev),
   BUILTIN_OPT_PLUGIN_ENTRY(speaker),
   BUILTIN_OPT_PLUGIN_ENTRY(extfpuirq),
+  */
   BUILTIN_OPT_PLUGIN_ENTRY(parallel),
+  /*
   BUILTIN_OPT_PLUGIN_ENTRY(serial),
 #if BX_SUPPORT_BUSMOUSE
   BUILTIN_OPT_PLUGIN_ENTRY(busmouse),
@@ -262,6 +265,7 @@ plugin_t bx_builtin_plugins[] = {
   BUILTIN_IMG_PLUGIN_ENTRY(vbox),
   BUILTIN_IMG_PLUGIN_ENTRY(vpc),
   BUILTIN_IMG_PLUGIN_ENTRY(vvfat),
+  */
   {"NULL", PLUGTYPE_NULL, 0, NULL, 0}
 };
 int bx_load_plugin_np(const char* name, Bit16u type)
@@ -285,4 +289,4 @@ int bx_load_plugin_np(const char* name, Bit16u type)
     }
     return 0;
 }
-*/
+

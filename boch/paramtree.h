@@ -2,6 +2,7 @@
 
 class bx_object_c;
 class bx_param_c;
+class bx_param_string_c;
 class bx_param_filename_c;
 class BOCHSAPI bx_object_c {
 	//78
@@ -13,6 +14,25 @@ class BOCHSAPI bx_param_c : public bx_object_c {
 	BOCHSAPI_CYGONLY static const char* default_text_format;
 protected:
 };
+
+class BOCHSAPI bx_param_string_c : public bx_param_c {
+protected:
+	int maxsize;
+	char* val, * initial_val;
+public:
+	enum {
+		IS_FILENAME = 1,       // 1=yes it's a filename, 0=not a filename.
+		// Some guis have a file browser. This
+		// bit suggests that they use it.
+		SAVE_FILE_DIALOG = 2,  // Use save dialog opposed to open file dialog
+		SELECT_FOLDER_DLG = 4  // Use folder selection dialog
+	} bx_string_opt_bits;
+	char* getptr() { return val; }//396
+	const char* getptr() const { return val; }//397
+	bool isempty() const;//402
+
+};
+
 
 typedef void (*filedata_save_handler)(void* devptr, FILE* save_fp);//467
 typedef void (*filedata_restore_handler)(void* devptr, FILE* save_fp);//468

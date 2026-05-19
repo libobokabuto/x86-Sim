@@ -250,6 +250,7 @@ public:
     bool register_default_io_read_handler(void* this_ptr, bx_read_handler_t f, const char* name, Bit8u mask);//411
     bool register_default_io_write_handler(void* this_ptr, bx_write_handler_t f, const char* name, Bit8u mask);//412
     bool register_irq(unsigned irq, const char* name); //413
+    bool unregister_irq(unsigned irq, const char* name);//414
     void register_default_keyboard(void* dev, bx_kbd_gen_scancode_t kbd_gen_scancode,
         bx_kbd_get_elements_t kbd_get_elements); //414
     Bit32u inp(Bit16u addr, unsigned io_len) BX_CPP_AttrRegparmN(2);

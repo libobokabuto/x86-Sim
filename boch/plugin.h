@@ -3,6 +3,7 @@
 #define BX_PLUGIN_UNMAPPED  "unmapped" //43
 #define BX_PLUGIN_KEYBOARD  "keyboard"
 #define BX_PLUGIN_CMOS      "cmos" //45
+#define BX_PLUGIN_PARALLEL  "parallel"//49
 #define BX_PLUGIN_DMA       "dma" //54
 #define BX_PLUGIN_PCI       "pci"  //57
 #define BX_REGISTER_DEVICE_DEVMODEL(a,b,c,d) pluginRegisterDeviceDevmodel(a,b,c,d)  //80
@@ -12,6 +13,7 @@
 #define DEV_register_default_ioread_handler(b,c,d,e) bx_devices.register_default_io_read_handler(b,c,d,e) //132
 #define DEV_register_default_iowrite_handler(b,c,d,e) bx_devices.register_default_io_write_handler(b,c,d,e) //133
 #define DEV_register_irq(b,c) bx_devices.register_irq(b,c) //134
+#define DEV_unregister_irq(b,c) bx_devices.unregister_irq(b,c)//135
 #define DEV_init_devices() {bx_devices.init(BX_MEM(0)); }  //140
 #define DEV_reset_devices(type) {bx_devices.reset(type); } //141
 #define DEV_register_timer(a,b,c,d,e,f) bx_pc_system.register_timer(a,b,c,d,e,f) //144
@@ -55,4 +57,5 @@ extern plugin_t bx_builtin_plugins[]; //353
 PLUGIN_ENTRY_FOR_MODULE(keyboard);
 PLUGIN_ENTRY_FOR_MODULE(cmos); //414
 PLUGIN_ENTRY_FOR_MODULE(dma); //415
+PLUGIN_ENTRY_FOR_MODULE(parallel);//421
 PLUGIN_ENTRY_FOR_MODULE(pci); //422

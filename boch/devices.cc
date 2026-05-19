@@ -110,6 +110,7 @@ void bx_devices_c::init(BX_MEM_C* newmem)
 
     PLUG_load_plugin(keyboard, PLUGTYPE_STANDARD); //250
 
+    PLUG_load_plugin(parallel, PLUGTYPE_OPTIONAL); //自己加的按 PLUGTYPE_OPTIONAL 加载，不按 CORE
     bx_init_plugins(); //354
     DEV_cmos_checksum();//357
 }
@@ -155,6 +156,29 @@ bool bx_devices_c::register_irq(unsigned irq, const char* name)
     strcpy(irq_handler_name[irq], name);
     return true;
 }
+
+bool bx_devices_c::unregister_irq(unsigned irq, const char* name)
+{
+    if (irq >= BX_MAX_IRQS) {
+        //BX_PANIC(("IO device %s tried to unregister IRQ %d above %u",
+            //name, irq, (unsigned)BX_MAX_IRQS - 1));
+        return false;
+    }
+    if (!irq_handler_name[irq]) {
+        //BX_INFO(("IO device %s tried to unregister IRQ %d, not registered", name, irq));
+        return false;
+    }
+
+    if (strcmp(irq_handler_name[irq], name)) {
+        //BX_INFO(("IRQ %u not registered to %s but to %s", irq,
+            //name, irq_handler_name[irq]));
+        return false;
+    }
+    delete[] irq_handler_name[irq];
+    irq_handler_name[irq] = NULL;
+    return true;
+}
+
 bool bx_devices_c::register_io_read_handler(void* this_ptr, bx_read_handler_t f,
     Bit32u addr, const char* name, Bit8u mask)
 {
