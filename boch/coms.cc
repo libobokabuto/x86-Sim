@@ -1,3 +1,4 @@
+#define  _CRT_SECURE_NO_WARNINGS
 #define BX_PLUGGABLE
 #include "iodev.h"
 #include "cmos.h"
@@ -109,7 +110,13 @@ void bx_cmos_c::init(void)
     // Your project has no full floppy device init yet, so keep the source default bit here.
     BX_CMOS_THIS s.reg[REG_EQUIPMENT_BYTE] |= 0x01;
 
-    BX_CMOS_THIS s.timeval = 0;
+    time_t tmptime;
+    struct tm* tmptm;
+
+    tmptime = time(NULL);
+    tmptm = localtime(&tmptime);
+    BX_CMOS_THIS s.timeval = timeutc(pushtm(tmptm));
+
     update_clock();
 
 }

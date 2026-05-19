@@ -843,3 +843,113 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::OR_GwEwR(bxInstruction_c* i)
 
     BX_NEXT_INSTR(i);
 }
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::SHR_EbR(bxInstruction_c* i)
+{
+    unsigned count;
+
+    if (i->getIaOpcode() == BX_IA_SHR_Eb)
+        count = CL;
+    else
+        count = i->Ib();
+
+    count &= 0x1f;
+
+    if (count) {
+        Bit8u op1_8 = BX_READ_8BIT_REGx(i->dst(), i->extend8bitL());
+        Bit8u result_8 = (op1_8 >> count);
+        BX_WRITE_8BIT_REGx(i->dst(), i->extend8bitL(), result_8);
+
+        unsigned cf = (op1_8 >> (count - 1)) & 0x1;
+        // note, that of == result7 if count == 1 and
+        //            of == 0       if count >= 2
+        unsigned of = (((result_8 << 1) ^ result_8) >> 7) & 0x1;
+
+        SET_FLAGS_OSZAPC_LOGIC_8(result_8);
+        BX_CPU_THIS_PTR oszapc.set_flags_OxxxxC(of, cf);
+    }
+
+    BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::ADD_GbEbR(bxInstruction_c* i)
+{
+    Bit32u op1 = BX_READ_8BIT_REGx(i->dst(), i->extend8bitL());
+    Bit32u op2 = BX_READ_8BIT_REGx(i->src(), i->extend8bitL());
+    Bit32u sum = op1 + op2;
+
+    BX_WRITE_8BIT_REGx(i->dst(), i->extend8bitL(), sum);
+
+    SET_FLAGS_OSZAPC_ADD_8(op1, op2, sum);
+
+    BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::MUL_ALEbR(bxInstruction_c* i)
+{
+    Bit8u op1 = AL;
+    Bit8u op2 = BX_READ_8BIT_REGx(i->src(), i->extend8bitL());
+
+    Bit32u product_16 = ((Bit16u)op1) * ((Bit16u)op2);
+
+    Bit8u product_8l = (product_16 & 0xFF);
+    Bit8u product_8h = product_16 >> 8;
+
+    /* now write product back to destination */
+    AX = product_16;
+
+    /* set EFLAGS */
+    SET_FLAGS_OSZAPC_LOGIC_8(product_8l);
+    if (product_8h != 0)
+    {
+        BX_CPU_THIS_PTR oszapc.assert_flags_OxxxxC();
+    }
+
+    BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::IMUL_GdEdIdR(bxInstruction_c* i)
+{
+    Bit32s op2_32 = BX_READ_32BIT_REG(i->src());
+    Bit32s op3_32 = i->Id();
+
+    Bit64s product_64 = ((Bit64s)op2_32) * ((Bit64s)op3_32);
+    Bit32u product_32 = (Bit32u)(product_64 & 0xFFFFFFFF);
+
+    /* now write product back to destination */
+    BX_WRITE_32BIT_REGZ(i->dst(), product_32);
+
+    /* set eflags:
+     * IMUL r32,r/m32,imm32: condition for clearing CF & OF:
+     *   result exactly fits within r32
+     */
+    SET_FLAGS_OSZAPC_LOGIC_32(product_32);
+    if (product_64 != (Bit32s)product_64)
+    {
+        BX_CPU_THIS_PTR oszapc.assert_flags_OxxxxC();
+    }
+
+    BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::MOV_GdEdR(bxInstruction_c* i)
+{
+    BX_WRITE_32BIT_REGZ(i->dst(), BX_READ_32BIT_REG(i->src()));
+
+    BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::ADD_GdEdR(bxInstruction_c* i)
+{
+    Bit32u op1_32, op2_32, sum_32;
+
+    op1_32 = BX_READ_32BIT_REG(i->dst());
+    op2_32 = BX_READ_32BIT_REG(i->src());
+    sum_32 = op1_32 + op2_32;
+
+    BX_WRITE_32BIT_REGZ(i->dst(), sum_32);
+
+    SET_FLAGS_OSZAPC_ADD_32(op1_32, op2_32, sum_32);
+
+    BX_NEXT_INSTR(i);
+}

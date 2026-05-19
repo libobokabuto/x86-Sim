@@ -132,3 +132,16 @@ struct utctm* utctime(const Bit64s* a)
 	//224
 	return utctime_ext(a, &timedata);
 }
+
+struct utctm* pushtm(struct tm* src)
+{
+	timedata.tm_sec = src->tm_sec;
+	timedata.tm_min = src->tm_min;
+	timedata.tm_hour = src->tm_hour;
+	timedata.tm_wday = src->tm_wday;
+	timedata.tm_yday = src->tm_yday;
+	timedata.tm_mday = src->tm_mday;
+	timedata.tm_mon = src->tm_mon;
+	timedata.tm_year = src->tm_year;
+	return &timedata;
+}
