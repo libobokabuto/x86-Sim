@@ -1,6 +1,7 @@
 #include "bochs.h"
 #include "cpu.h"
 #include "MD5.h"
+#include "ia_opcodes.h"
 #include "cpustats.h" //29行
 #include "pc_system.h"
 #include <stdint.h>
@@ -49,7 +50,7 @@ void BX_CPU_C::cpu_loop(void)
             BX_CPU_THIS_PTR prev_rip = RIP; // commit new RIP
             BX_INSTR_AFTER_EXECUTION(BX_CPU_ID, i);
             BX_CPU_THIS_PTR icount++;
-            if (BX_CPU_THIS_PTR icount == 326478)
+            if (BX_CPU_THIS_PTR icount == 326479)
             {
                   int qwq = 0;
             }
@@ -64,33 +65,74 @@ void BX_CPU_C::cpu_loop(void)
             if (trace_index >= trace_start &&
                 ((trace_index - trace_start) % trace_step) < trace_count)
             {
-                int memdatalen = 8;
+                unsigned char raw_md5[16];
+                unsigned char nortc_md5[16];
 
+                // 1. 原始 MD5：保留计算，但默认不打印
                 memcpy(g_test_buff, BX_CPU_THIS_PTR gen_reg, cpudatalen);
-                uint8_t* pTarGet = g_test_buff + cpudatalen;
 
-                unsigned char* qwq = (unsigned char*)g_test_buff;
-                unsigned char decrypt[16];
+                MD5_CTX raw_ctx;
+                MD5Init(&raw_ctx);
+                MD5Update(&raw_ctx, (unsigned char*)g_test_buff, cpudatalen);
+                MD5Final(&raw_ctx, raw_md5);
 
-                MD5_CTX md5;
-                MD5Init(&md5);
-                //MD5Update(&md5, qwq, (32 + 1) * 8);
-                MD5Update(&md5, qwq, cpudatalen);
+                // 2. MD5_NORTC：复制寄存器后，屏蔽 RTC 时间传播影响
+                memcpy(g_test_buff, BX_CPU_THIS_PTR gen_reg, cpudatalen);
 
-                MD5Final(&md5, decrypt);
+                bx_gen_reg_t* md5_regs = (bx_gen_reg_t*)g_test_buff;
+
+                bool normalize_rtc_regs = false;
+                unsigned opcode = i->getIaOpcode();
+
+                if (opcode == BX_IA_IN_ALIb) {
+                    normalize_rtc_regs = (i->Ib() == 0x71);
+                }
+                else if (opcode == BX_IA_IN_ALDX) {
+                    normalize_rtc_regs = (DX == 0x71);
+                }
+
+                if (RIP >= 0x9644 && RIP <= 0x9683) {
+                    normalize_rtc_regs = true;
+                }
+
+                if (normalize_rtc_regs) {
+#if BX_SUPPORT_X86_64
+                    md5_regs[0].rrx = 0; // RAX
+                    md5_regs[1].rrx = 0; // RCX
+                    md5_regs[2].rrx = 0; // RDX
+                    md5_regs[3].rrx = 0; // RBX
+#else
+                    md5_regs[0].dword.erx = 0; // EAX
+                    md5_regs[1].dword.erx = 0; // ECX
+                    md5_regs[2].dword.erx = 0; // EDX
+                    md5_regs[3].dword.erx = 0; // EBX
+#endif
+                }
+
+                MD5_CTX nortc_ctx;
+                MD5Init(&nortc_ctx);
+                MD5Update(&nortc_ctx, (unsigned char*)g_test_buff, cpudatalen);
+                MD5Final(&nortc_ctx, nortc_md5);
+
                 printf(
-                    "%05d: RIP=%016llx currCountdown=%lld MD5=",
-                    BX_CPU_THIS_PTR icount,
+                    "%05llu: RIP=%016llx currCountdown=%lld MD5_NORTC=",
+                    (unsigned long long)BX_CPU_THIS_PTR icount,
                     (unsigned long long)RIP,
                     (long long)bx_pc_system.currCountdown
                 );
-                for (int j = 0; j < 16; j++)
-                {
-                    printf("%02x", decrypt[j]);
-                }
-                printf("\n");
 
-                //md5count++;
+                for (int j = 0; j < 16; j++) {
+                    printf("%02x", nortc_md5[j]);
+                }
+
+#if 0
+                printf(" MD5_RAW=");
+                for (int j = 0; j < 16; j++) {
+                    printf("%02x", raw_md5[j]);
+                }
+#endif
+
+                printf("\n");
             }
 
 
