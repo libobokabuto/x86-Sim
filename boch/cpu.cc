@@ -50,7 +50,7 @@ void BX_CPU_C::cpu_loop(void)
             BX_CPU_THIS_PTR prev_rip = RIP; // commit new RIP
             BX_INSTR_AFTER_EXECUTION(BX_CPU_ID, i);
             BX_CPU_THIS_PTR icount++;
-            if (BX_CPU_THIS_PTR icount == 326479)
+            if (BX_CPU_THIS_PTR icount == 326547)
             {
                   int qwq = 0;
             }
@@ -81,17 +81,24 @@ void BX_CPU_C::cpu_loop(void)
 
                 bx_gen_reg_t* md5_regs = (bx_gen_reg_t*)g_test_buff;
 
+                static Bit64u rtc_normalize_until = 0;
+
                 bool normalize_rtc_regs = false;
                 unsigned opcode = i->getIaOpcode();
 
-                if (opcode == BX_IA_IN_ALIb) {
-                    normalize_rtc_regs = (i->Ib() == 0x71);
-                }
-                else if (opcode == BX_IA_IN_ALDX) {
-                    normalize_rtc_regs = (DX == 0x71);
+                if (opcode == BX_IA_IN_ALIb && i->Ib() == 0x71) {
+                    rtc_normalize_until = BX_CPU_THIS_PTR icount + 256;
                 }
 
-                if (RIP >= 0x9644 && RIP <= 0x9683) {
+                if (opcode == BX_IA_IN_ALDX && DX == 0x71) {
+                    rtc_normalize_until = BX_CPU_THIS_PTR icount + 256;
+                }
+
+                if (RIP >= 0x9644 && RIP <= 0x9688) {
+                    rtc_normalize_until = BX_CPU_THIS_PTR icount + 256;
+                }
+
+                if (BX_CPU_THIS_PTR icount <= rtc_normalize_until) {
                     normalize_rtc_regs = true;
                 }
 

@@ -204,6 +204,9 @@
     <ClCompile Include="serial.cc">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="pic.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bochs.h">
@@ -375,6 +378,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="serial.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="pic.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

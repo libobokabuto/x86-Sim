@@ -107,6 +107,7 @@ void bx_devices_c::init(BX_MEM_C* newmem)
     PLUG_load_plugin(cmos, PLUGTYPE_CORE); //238
 
     PLUG_load_plugin(dma, PLUGTYPE_CORE); //239
+    PLUG_load_plugin(pic, PLUGTYPE_CORE);//240
 
     PLUG_load_plugin(keyboard, PLUGTYPE_STANDARD); //250
 

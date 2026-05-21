@@ -7,6 +7,7 @@
 #define BX_PLUGIN_SERIAL    "serial"
 #define BX_PLUGIN_KEYBOARD  "keyboard"
 #define BX_PLUGIN_DMA       "dma" //54
+#define BX_PLUGIN_PIC       "pic" //55
 #define BX_PLUGIN_PCI       "pci"  //57
 
 #define BX_REGISTER_DEVICE_DEVMODEL(a,b,c,d) pluginRegisterDeviceDevmodel(a,b,c,d)  //80
@@ -22,7 +23,9 @@
 #define DEV_register_timer(a,b,c,d,e,f) bx_pc_system.register_timer(a,b,c,d,e,f) //144
 #define DEV_register_default_keyboard(a,b,c) (bx_devices.register_default_keyboard(a,b,c)) //147
 #define DEV_register_default_mouse(a,b,c) (bx_devices.register_default_mouse(a,b,c)) //150
+#define DEV_ioapic_present() (bx_devices.pluginIOAPIC != &bx_devices.stubIOAPIC)//155
 #define DEV_ioapic_receive_eoi(a) (bx_devices.pluginIOAPIC->receive_eoi(a)) //157
+#define DEV_ioapic_set_irq_level(a,b) (bx_devices.pluginIOAPIC->set_irq_level(a,b))//158
 #define DEV_cmos_get_reg(a) (bx_devices.pluginCmosDevice->get_reg(a)) //161
 #define DEV_cmos_set_reg(a,b) (bx_devices.pluginCmosDevice->set_reg(a,b)) //162
 #define DEV_cmos_checksum() (bx_devices.pluginCmosDevice->checksum_cmos()) //163
@@ -33,6 +36,7 @@
 
 #define DEV_pic_lower_irq(b)  (bx_devices.pluginPicDevice->lower_irq(b)) //206
 #define DEV_pic_raise_irq(b)  (bx_devices.pluginPicDevice->raise_irq(b))
+#define DEV_pic_set_mode(a,b) (bx_devices.pluginPicDevice->set_mode(a,b))
 #define DEV_pic_iac()         (bx_devices.pluginPicDevice->IAC()) //209
 typedef struct _device_t
 {
@@ -61,5 +65,6 @@ PLUGIN_ENTRY_FOR_MODULE(keyboard);
 PLUGIN_ENTRY_FOR_MODULE(serial);//411
 PLUGIN_ENTRY_FOR_MODULE(cmos); //414
 PLUGIN_ENTRY_FOR_MODULE(dma); //415
+PLUGIN_ENTRY_FOR_MODULE(pic);//416
 PLUGIN_ENTRY_FOR_MODULE(parallel);//421
 PLUGIN_ENTRY_FOR_MODULE(pci); //422

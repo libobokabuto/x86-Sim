@@ -223,6 +223,7 @@ class BOCHSAPI bx_ioapic_stub_c : public bx_devmodel_c {
 public:
 
     virtual void receive_eoi(Bit8u vector) {}//359
+    virtual void set_irq_level(Bit8u int_in, bool level) {}
 };
 #endif
 

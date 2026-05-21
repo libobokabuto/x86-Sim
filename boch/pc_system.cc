@@ -121,7 +121,10 @@ bool bx_pc_system_c::get_enable_a20(void)
 #endif
 }
 
-
+Bit8u bx_pc_system_c::IAC(void)
+{
+    return DEV_pic_iac();
+}
 
 int bx_pc_system_c::Reset(unsigned type)
 {  //187
@@ -302,8 +305,6 @@ void bx_pc_system_c::nullTimer(void* this_ptr)
     }
 #endif
 }
-
-
 
 void bx_pc_system_c::deactivate_timer(unsigned i)
 { //563

@@ -114,7 +114,7 @@ public:
 	void clear_INTR(void);
 
 	int Reset(unsigned type);
-	
+	Bit8u  IAC(void);
 
 	bx_pc_system_c();
 
