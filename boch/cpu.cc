@@ -50,7 +50,7 @@ void BX_CPU_C::cpu_loop(void)
             BX_CPU_THIS_PTR prev_rip = RIP; // commit new RIP
             BX_INSTR_AFTER_EXECUTION(BX_CPU_ID, i);
             BX_CPU_THIS_PTR icount++;
-            if (BX_CPU_THIS_PTR icount == 326551)
+            if (BX_CPU_THIS_PTR icount == 326664)
             {
                   int qwq = 0;
             }
@@ -68,6 +68,18 @@ void BX_CPU_C::cpu_loop(void)
                 unsigned char raw_md5[16];
                 unsigned char nortc_md5[16];
 
+                unsigned opcode = i->getIaOpcode();
+
+                bool just_read_cmos = false;
+
+                if (opcode == BX_IA_IN_ALIb && i->Ib() == 0x71) {
+                    just_read_cmos = true;
+                }
+
+                if (opcode == BX_IA_IN_ALDX && DX == 0x71) {
+                    just_read_cmos = true;
+                }
+
                 // 1. 原始 MD5：保留计算，但默认不打印
                 memcpy(g_test_buff, BX_CPU_THIS_PTR gen_reg, cpudatalen);
 
@@ -76,43 +88,16 @@ void BX_CPU_C::cpu_loop(void)
                 MD5Update(&raw_ctx, (unsigned char*)g_test_buff, cpudatalen);
                 MD5Final(&raw_ctx, raw_md5);
 
-                // 2. MD5_NORTC：复制寄存器后，屏蔽 RTC 时间传播影响
+                // 2. MD5_NORTC_DIRECT：只屏蔽“当前刚从 0x71 读入 AL”的直接 RTC 值
                 memcpy(g_test_buff, BX_CPU_THIS_PTR gen_reg, cpudatalen);
 
-                bx_gen_reg_t* md5_regs = (bx_gen_reg_t*)g_test_buff;
+                if (just_read_cmos) {
+                    bx_gen_reg_t* md5_regs = (bx_gen_reg_t*)g_test_buff;
 
-                static Bit64u rtc_normalize_until = 0;
-
-                bool normalize_rtc_regs = false;
-                unsigned opcode = i->getIaOpcode();
-
-                if (opcode == BX_IA_IN_ALIb && i->Ib() == 0x71) {
-                    rtc_normalize_until = BX_CPU_THIS_PTR icount + 64;
-                }
-
-                if (opcode == BX_IA_IN_ALDX && DX == 0x71) {
-                    rtc_normalize_until = BX_CPU_THIS_PTR icount + 64;
-                }
-
-                if (RIP >= 0x9644 && RIP <= 0x9688) {
-                    rtc_normalize_until = BX_CPU_THIS_PTR icount + 64;
-                }
-
-                if (BX_CPU_THIS_PTR icount <= rtc_normalize_until) {
-                    normalize_rtc_regs = true;
-                }
-
-                if (normalize_rtc_regs) {
 #if BX_SUPPORT_X86_64
-                    md5_regs[0].rrx = 0; // RAX
-                    md5_regs[1].rrx = 0; // RCX
-                    md5_regs[2].rrx = 0; // RDX
-                    md5_regs[3].rrx = 0; // RBX
+                    md5_regs[0].rrx &= 0xffffffffffffff00ULL;  // 只清 AL，不清整个 RAX
 #else
-                    md5_regs[0].dword.erx = 0; // EAX
-                    md5_regs[1].dword.erx = 0; // ECX
-                    md5_regs[2].dword.erx = 0; // EDX
-                    md5_regs[3].dword.erx = 0; // EBX
+                    md5_regs[0].dword.erx &= 0xffffff00U;      // 只清 AL，不清整个 EAX
 #endif
                 }
 
@@ -121,9 +106,8 @@ void BX_CPU_C::cpu_loop(void)
                 MD5Update(&nortc_ctx, (unsigned char*)g_test_buff, cpudatalen);
                 MD5Final(&nortc_ctx, nortc_md5);
 
-
                 printf(
-                    "%05llu: RIP=%016llx ia=%u currCountdown=%lld mode=%u MD5_NORTC=",
+                    "%llu: RIP=%016llx ia=%u cd=%lld mode=%u RAW=",
                     (unsigned long long)BX_CPU_THIS_PTR icount,
                     (unsigned long long)RIP,
                     (unsigned)opcode,
@@ -132,15 +116,32 @@ void BX_CPU_C::cpu_loop(void)
                 );
 
                 for (int j = 0; j < 16; j++) {
+                    printf("%02x", raw_md5[j]);
+                }
+
+                printf(" NORTC=");
+
+                for (int j = 0; j < 16; j++) {
                     printf("%02x", nortc_md5[j]);
                 }
 
-#if 0
-                printf(" MD5_RAW=");
-                for (int j = 0; j < 16; j++) {
-                    printf("%02x", raw_md5[j]);
-                }
+#if BX_SUPPORT_X86_64
+                printf(
+                    " RAX=%016llx AL=%02x",
+                    (unsigned long long)RAX,
+                    (unsigned)(RAX & 0xff)
+                );
+#else
+                printf(
+                    " EAX=%08x AL=%02x",
+                    (unsigned)EAX,
+                    (unsigned)(EAX & 0xff)
+                );
 #endif
+
+                if (just_read_cmos) {
+                    printf(" RTC_READ");
+                }
 
                 printf("\n");
             }

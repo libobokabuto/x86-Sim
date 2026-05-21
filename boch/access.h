@@ -1,5 +1,10 @@
 #pragma once
-
+BX_CPP_INLINE void BX_CPP_AttrRegparmN(3)
+BX_CPU_C::write_virtual_byte_32(unsigned s, Bit32u offset, Bit8u data)
+{
+	Bit32u laddr = agen_write32(s, offset, 1);
+	write_linear_byte(s, laddr, data);
+}
 
 BX_CPP_INLINE void BX_CPP_AttrRegparmN(3)
 BX_CPU_C::write_virtual_word_32(unsigned s, Bit32u offset, Bit16u data)
@@ -13,6 +18,13 @@ BX_CPU_C::write_virtual_dword_32(unsigned s, Bit32u offset, Bit32u data)
 {
 	Bit32u laddr = agen_write32(s, offset, 4);
 	write_linear_dword(s, laddr, data);
+}
+
+BX_CPP_INLINE Bit8u BX_CPP_AttrRegparmN(2)
+BX_CPU_C::read_virtual_byte_32(unsigned s, Bit32u offset)
+{
+	Bit32u laddr = agen_read32(s, offset, 1);
+	return read_linear_byte(s, laddr);
 }
 
 BX_CPP_INLINE Bit16u BX_CPP_AttrRegparmN(2)

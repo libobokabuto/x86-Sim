@@ -1192,13 +1192,13 @@ public:
     BX_SMF void MOV_OdAX(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
 
     // repeatable instructions
-    BX_SMF void REP_MOVSB_YbXb(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void REP_MOVSB_YbXb(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void REP_MOVSW_YwXw(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void REP_MOVSD_YdXd(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void REP_CMPSB_XbYb(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void REP_CMPSW_XwYw(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void REP_CMPSD_XdYd(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
-    BX_SMF void REP_STOSB_YbAL(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void REP_STOSB_YbAL(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void REP_LODSB_ALXb(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void REP_SCASB_ALYb(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void REP_STOSW_YwAX(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
@@ -1230,17 +1230,17 @@ public:
     BX_SMF void LODSW32_AXXw(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void LODSD32_EAXXd(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
 
-    BX_SMF void STOSB16_YbAL(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void STOSB16_YbAL(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void STOSW16_YwAX(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void STOSD16_YdEAX(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
-    BX_SMF void STOSB32_YbAL(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void STOSB32_YbAL(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void STOSW32_YwAX(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void STOSD32_YdEAX(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
 
-    BX_SMF void MOVSB16_YbXb(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void MOVSB16_YbXb(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void MOVSW16_YwXw(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void MOVSD16_YdXd(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
-    BX_SMF void MOVSB32_YbXb(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void MOVSB32_YbXb(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void MOVSW32_YwXw(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void MOVSD32_YdXd(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
 
@@ -1279,7 +1279,7 @@ public:
     BX_SMF void OUT_IbEAX(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void CALL_Jw(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void CALL_Jd(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
-    BX_SMF void JMP_Jd(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void JMP_Jd(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void JMP_Jw(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void JMP_Ap(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void IN_ALDX(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
@@ -1590,7 +1590,7 @@ public:
     BX_SMF void ADC_GdEdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void SBB_GdEdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void AND_GdEdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
-    BX_SMF void SUB_GdEdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void SUB_GdEdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void CMP_GdEdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void XOR_GdEdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
 
@@ -1702,7 +1702,7 @@ public:
     BX_SMF void DEC_EwM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void DEC_EdM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
 
-    BX_SMF void CALL_EdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void CALL_EdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void CALL_EwR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
 
     BX_SMF void CALL32_Ep(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
@@ -3814,10 +3814,10 @@ public:
     BX_SMF void LODSB64_ALXb(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void LODSW64_AXXw(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void LODSD64_EAXXd(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
-    BX_SMF void STOSB64_YbAL(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void STOSB64_YbAL(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void STOSW64_YwAX(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void STOSD64_YdEAX(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
-    BX_SMF void MOVSB64_YbXb(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void MOVSB64_YbXb(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void MOVSW64_YwXw(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void MOVSD64_YdXd(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
 
@@ -4143,9 +4143,11 @@ public:
     BX_SMF void write_linear_dword(unsigned seg, bx_address offset, Bit32u data) BX_CPP_AttrRegparmN(3); //4532
     BX_SMF void write_linear_qword(unsigned seg, bx_address offset, Bit64u data) BX_CPP_AttrRegparmN(3);
 
+    BX_SMF Bit8u read_virtual_byte_32(unsigned seg, Bit32u offset) BX_CPP_AttrRegparmN(2);
     BX_SMF Bit16u read_virtual_word_32(unsigned seg, Bit32u offset) BX_CPP_AttrRegparmN(2);//4548
     BX_SMF Bit32u read_virtual_dword_32(unsigned seg, Bit32u offset) BX_CPP_AttrRegparmN(2);
 
+    BX_SMF void write_virtual_byte_32(unsigned seg, Bit32u offset, Bit8u data) BX_CPP_AttrRegparmN(3);//4560
     BX_SMF void write_virtual_word_32(unsigned seg, Bit32u offset, Bit16u data) BX_CPP_AttrRegparmN(3); //4561
     BX_SMF void write_virtual_dword_32(unsigned seg, Bit32u offset, Bit32u data) BX_CPP_AttrRegparmN(3); //4562
 
@@ -4200,6 +4202,9 @@ public:
     BX_SMF void system_write_word(bx_address laddr, Bit16u data) BX_CPP_AttrRegparmN(2);
     BX_SMF void system_write_dword(bx_address laddr, Bit32u data) BX_CPP_AttrRegparmN(2);
     BX_SMF void system_write_qword(bx_address laddr, Bit64u data) BX_CPP_AttrRegparmN(2);
+    
+    BX_SMF void branch_near16(Bit16u new_IP) BX_CPP_AttrRegparmN(1);//4672
+    BX_SMF void branch_near32(Bit32u new_EIP) BX_CPP_AttrRegparmN(1); //4673
 
     BX_SMF void branch_far(bx_selector_t* selector,
         bx_descriptor_t* descriptor, bx_address rip, unsigned cpl); //4678
@@ -4395,7 +4400,7 @@ public:
     BX_SMF void    deliver_NMI(void);
     BX_SMF void    deliver_SMI(void);
     BX_SMF void    deliver_SIPI(unsigned vector);
-    BX_SMF void branch_near16(Bit16u new_IP) BX_CPP_AttrRegparmN(1);
+    
     BX_SMF void jmp_far32(bxInstruction_c* i, Bit16u cs_raw, Bit32u disp32);
 #if BX_X86_DEBUGGER
     BX_SMF bool hwbreakpoint_check(bx_address laddr, unsigned opa, unsigned opb); //4976
@@ -4533,7 +4538,9 @@ public:
 #if BX_SUPPORT_CET
     BX_SMF bool ShadowStackEnabled(unsigned cpl) BX_CPP_AttrRegparmN(1);
     BX_SMF bool EndbranchEnabled(unsigned cpl) BX_CPP_AttrRegparmN(1);
+    BX_SMF bool EndbranchEnabledAndNotSuppressed(unsigned cpl) BX_CPP_AttrRegparmN(1);//5211
     BX_SMF void track_indirect(unsigned cpl) BX_CPP_AttrRegparmN(1); //5214
+    BX_SMF void track_indirect_if_not_suppressed(bxInstruction_c* i, unsigned cpl) BX_CPP_AttrRegparmN(2);//5215
 #endif
 #if BX_SUPPORT_MONITOR_MWAIT
     BX_SMF void wakeup_monitor(void);

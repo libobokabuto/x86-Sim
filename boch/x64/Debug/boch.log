@@ -1,14 +1,968 @@
-﻿  cpu.cc
+﻿  access.cc
+E:\Study\codes\bochs\boch\boch\cpu.h(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“access.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(859,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“access.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(3950,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“access.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(4372,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“access.cc”)
+  
+E:\Study\codes\bochs\boch\boch\access.cc(10,3): warning C4838: 从“__int64”转换到“bx_address”需要收缩转换
+E:\Study\codes\bochs\boch\boch\access.cc(11,3): warning C4838: 从“__int64”转换到“bx_address”需要收缩转换
+  access2.cc
+E:\Study\codes\bochs\boch\boch\cpu.h(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“access2.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(859,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“access2.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(3950,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“access2.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(4372,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“access2.cc”)
+  
+  apic.cc
+E:\Study\codes\bochs\boch\boch\cpu.h(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“apic.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(859,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“apic.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(3950,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“apic.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(4372,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“apic.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(44,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“apic.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(45,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“apic.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(46,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“apic.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(47,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“apic.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(48,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“apic.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(49,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“apic.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(52,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“apic.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(53,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“apic.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(54,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“apic.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(55,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“apic.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(56,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“apic.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(57,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“apic.cc”)
+  
+E:\Study\codes\bochs\boch\boch\apic.cc(1132,43): warning C4244: “return”: 从“Bit64u”转换到“Bit32u”，可能丢失数据
+  call_far.cc
+E:\Study\codes\bochs\boch\boch\cpu.h(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“call_far.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(859,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“call_far.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(3950,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“call_far.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(4372,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“call_far.cc”)
+  
+  cet.cc
+E:\Study\codes\bochs\boch\boch\cpu.h(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“cet.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(859,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“cet.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(3950,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“cet.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(4372,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“cet.cc”)
+  
+  cpu.cc
 E:\Study\codes\bochs\boch\boch\cpu.h(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
   (编译源文件“cpu.cc”)
   
 E:\Study\codes\bochs\boch\boch\cpu.h(859,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
   (编译源文件“cpu.cc”)
   
-E:\Study\codes\bochs\boch\boch\cpu.h(3947,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+E:\Study\codes\bochs\boch\boch\cpu.h(3950,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
   (编译源文件“cpu.cc”)
   
-E:\Study\codes\bochs\boch\boch\cpu.h(4367,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+E:\Study\codes\bochs\boch\boch\cpu.h(4372,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
   (编译源文件“cpu.cc”)
   
+  cpuid.cc
+E:\Study\codes\bochs\boch\boch\cpu.h(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“cpuid.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(859,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“cpuid.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(3950,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“cpuid.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(4372,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“cpuid.cc”)
+  
+  crregs.cc
+E:\Study\codes\bochs\boch\boch\cpu.h(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“crregs.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(859,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“crregs.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(3950,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“crregs.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(4372,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“crregs.cc”)
+  
+  ctrl_xfer16.cc
+E:\Study\codes\bochs\boch\boch\cpu.h(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“ctrl_xfer16.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(859,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“ctrl_xfer16.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(3950,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“ctrl_xfer16.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(4372,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“ctrl_xfer16.cc”)
+  
+  ctrl_xfer32.cc
+E:\Study\codes\bochs\boch\boch\cpu.h(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“ctrl_xfer32.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(859,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“ctrl_xfer32.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(3950,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“ctrl_xfer32.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(4372,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“ctrl_xfer32.cc”)
+  
+  ctrl_xfer_pro.cc
+E:\Study\codes\bochs\boch\boch\cpu.h(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“ctrl_xfer_pro.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(859,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“ctrl_xfer_pro.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(3950,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“ctrl_xfer_pro.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(4372,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“ctrl_xfer_pro.cc”)
+  
+  dbg_main.cc
+E:\Study\codes\bochs\boch\boch\cpu.h(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“dbg_main.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(859,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“dbg_main.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(3950,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“dbg_main.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(4372,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“dbg_main.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(44,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“dbg_main.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(45,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“dbg_main.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(46,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“dbg_main.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(47,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“dbg_main.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(48,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“dbg_main.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(49,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“dbg_main.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(52,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“dbg_main.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(53,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“dbg_main.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(54,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“dbg_main.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(55,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“dbg_main.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(56,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“dbg_main.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(57,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“dbg_main.cc”)
+  
+  disasm.cc
+E:\Study\codes\bochs\boch\boch\cpu.h(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“disasm.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(859,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“disasm.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(3950,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“disasm.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(4372,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“disasm.cc”)
+  
+  event.cc
+E:\Study\codes\bochs\boch\boch\cpu.h(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“event.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(859,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“event.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(3950,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“event.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(4372,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“event.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(44,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“event.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(45,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“event.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(46,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“event.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(47,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“event.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(48,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“event.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(49,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“event.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(52,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“event.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(53,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“event.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(54,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“event.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(55,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“event.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(56,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“event.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(57,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“event.cc”)
+  
+  exception.cc
+E:\Study\codes\bochs\boch\boch\cpu.h(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“exception.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(859,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“exception.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(3950,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“exception.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(4372,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“exception.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(44,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“exception.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(45,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“exception.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(46,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“exception.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(47,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“exception.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(48,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“exception.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(49,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“exception.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(52,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“exception.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(53,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“exception.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(54,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“exception.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(55,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“exception.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(56,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“exception.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(57,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“exception.cc”)
+  
+E:\Study\codes\bochs\boch\boch\exception.cc(237,40): warning C4244: “参数”: 从“Bit64u”转换到“Bit16u”，可能丢失数据
+E:\Study\codes\bochs\boch\boch\exception.cc(399,27): warning C4244: “初始化”: 从“bx_address”转换到“Bit32u”，可能丢失数据
+  fetchdecode32.cc
+E:\Study\codes\bochs\boch\boch\cpu.h(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“fetchdecode32.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(859,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“fetchdecode32.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(3950,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“fetchdecode32.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(4372,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“fetchdecode32.cc”)
+  
+  flag_ctrl_pro.cc
+E:\Study\codes\bochs\boch\boch\cpu.h(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“flag_ctrl_pro.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(859,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“flag_ctrl_pro.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(3950,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“flag_ctrl_pro.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(4372,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“flag_ctrl_pro.cc”)
+  
+  icache.cc
+E:\Study\codes\bochs\boch\boch\cpu.h(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“icache.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(859,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“icache.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(3950,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“icache.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(4372,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“icache.cc”)
+  
+  init.cc
+E:\Study\codes\bochs\boch\boch\cpu.h(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“init.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(859,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“init.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(3950,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“init.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(4372,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“init.cc”)
+  
+E:\Study\codes\bochs\boch\boch\init.cc(48,15): warning C4244: “参数”: 从“time_t”转换到“unsigned int”，可能丢失数据
+  io.cc
+E:\Study\codes\bochs\boch\boch\cpu.h(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“io.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(859,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“io.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(3950,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“io.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(4372,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“io.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(44,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“io.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(45,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“io.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(46,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“io.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(47,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“io.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(48,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“io.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(49,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“io.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(52,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“io.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(53,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“io.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(54,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“io.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(55,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“io.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(56,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“io.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(57,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“io.cc”)
+  
+  正在生成代码...
+  正在编译...
+  jmp_far.cc
+E:\Study\codes\bochs\boch\boch\cpu.h(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“jmp_far.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(859,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“jmp_far.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(3950,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“jmp_far.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(4372,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“jmp_far.cc”)
+  
+  main.cpp
+E:\Study\codes\bochs\boch\boch\cpu.h(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“main.cpp”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(859,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“main.cpp”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(3950,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“main.cpp”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(4372,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“main.cpp”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(44,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“main.cpp”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(45,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“main.cpp”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(46,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“main.cpp”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(47,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“main.cpp”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(48,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“main.cpp”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(49,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“main.cpp”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(52,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“main.cpp”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(53,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“main.cpp”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(54,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“main.cpp”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(55,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“main.cpp”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(56,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“main.cpp”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(57,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“main.cpp”)
+  
+E:\Study\codes\bochs\boch\boch\main.cpp(45,13): warning C4101: “base”: 未引用的局部变量
+E:\Study\codes\bochs\boch\boch\main.cpp(44,7): warning C4101: “pname”: 未引用的局部变量
+E:\Study\codes\bochs\boch\boch\main.cpp(43,6): warning C4101: “i”: 未引用的局部变量
+E:\Study\codes\bochs\boch\boch\main.cpp(46,7): warning C4101: “buffer”: 未引用的局部变量
+  memory.cc
+E:\Study\codes\bochs\boch\boch\cpu.h(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“memory.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(859,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“memory.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(3950,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“memory.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(4372,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“memory.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(44,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“memory.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(45,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“memory.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(46,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“memory.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(47,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“memory.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(48,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“memory.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(49,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“memory.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(52,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“memory.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(53,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“memory.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(54,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“memory.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(55,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“memory.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(56,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“memory.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(57,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“memory.cc”)
+  
+  memory_stub.cc
+E:\Study\codes\bochs\boch\boch\cpu.h(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“memory_stub.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(859,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“memory_stub.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(3950,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“memory_stub.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(4372,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“memory_stub.cc”)
+  
+  misc_mem.cc
+E:\Study\codes\bochs\boch\boch\cpu.h(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“misc_mem.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(859,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“misc_mem.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(3950,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“misc_mem.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(4372,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“misc_mem.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(44,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“misc_mem.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(45,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“misc_mem.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(46,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“misc_mem.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(47,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“misc_mem.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(48,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“misc_mem.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(49,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“misc_mem.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(52,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“misc_mem.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(53,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“misc_mem.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(54,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“misc_mem.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(55,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“misc_mem.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(56,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“misc_mem.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(57,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“misc_mem.cc”)
+  
+E:\Study\codes\bochs\boch\boch\misc_mem.cc(157,17): warning C4319: “~”: 将“unsigned long”扩展到更大的“bx_phy_address”时为零
+  msr.cc
+E:\Study\codes\bochs\boch\boch\cpu.h(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“msr.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(859,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“msr.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(3950,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“msr.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(4372,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“msr.cc”)
+  
+  mwait.cc
+E:\Study\codes\bochs\boch\boch\cpu.h(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“mwait.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(859,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“mwait.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(3950,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“mwait.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(4372,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“mwait.cc”)
+  
+  myinst.cc
+E:\Study\codes\bochs\boch\boch\cpu.h(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“myinst.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(859,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“myinst.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(3950,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“myinst.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(4372,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“myinst.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(44,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“myinst.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(45,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“myinst.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(46,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“myinst.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(47,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“myinst.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(48,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“myinst.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(49,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“myinst.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(52,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“myinst.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(53,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“myinst.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(54,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“myinst.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(55,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“myinst.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(56,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“myinst.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(57,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“myinst.cc”)
+  
+  paging.cc
+E:\Study\codes\bochs\boch\boch\cpu.h(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“paging.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(859,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“paging.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(3950,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“paging.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(4372,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“paging.cc”)
+  
+E:\Study\codes\bochs\boch\boch\paging.cc(736,40): warning C4390: “;”: 找到空的受控语句；这是否是有意的?
+E:\Study\codes\bochs\boch\boch\paging.cc(738,38): warning C4390: “;”: 找到空的受控语句；这是否是有意的?
+E:\Study\codes\bochs\boch\boch\paging.cc(771,39): warning C4390: “;”: 找到空的受控语句；这是否是有意的?
+E:\Study\codes\bochs\boch\boch\paging.cc(773,37): warning C4390: “;”: 找到空的受控语句；这是否是有意的?
+  pc_system.cc
+E:\Study\codes\bochs\boch\boch\cpu.h(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“pc_system.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(859,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“pc_system.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(3950,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“pc_system.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(4372,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“pc_system.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(44,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“pc_system.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(45,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“pc_system.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(46,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“pc_system.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(47,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“pc_system.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(48,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“pc_system.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(49,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“pc_system.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(52,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“pc_system.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(53,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“pc_system.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(54,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“pc_system.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(55,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“pc_system.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(56,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“pc_system.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(57,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“pc_system.cc”)
+  
+  proc_ctrl.cc
+E:\Study\codes\bochs\boch\boch\cpu.h(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“proc_ctrl.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(859,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“proc_ctrl.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(3950,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“proc_ctrl.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(4372,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“proc_ctrl.cc”)
+  
+  segment_ctrl_pro.cc
+E:\Study\codes\bochs\boch\boch\cpu.h(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“segment_ctrl_pro.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(859,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“segment_ctrl_pro.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(3950,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“segment_ctrl_pro.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(4372,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“segment_ctrl_pro.cc”)
+  
+E:\Study\codes\bochs\boch\boch\segment_ctrl_pro.cc(312,20): warning C4244: “参数”: 从“Bit16u”转换到“Bit8u”，可能丢失数据
+  smm.cc
+E:\Study\codes\bochs\boch\boch\cpu.h(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“smm.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(859,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“smm.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(3950,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“smm.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(4372,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“smm.cc”)
+  
+  stack.cc
+E:\Study\codes\bochs\boch\boch\cpu.h(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“stack.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(859,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“stack.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(3950,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“stack.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(4372,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“stack.cc”)
+  
+  svm.cc
+E:\Study\codes\bochs\boch\boch\cpu.h(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“svm.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(859,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“svm.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(3950,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“svm.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(4372,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“svm.cc”)
+  
+  tasking.cc
+E:\Study\codes\bochs\boch\boch\cpu.h(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“tasking.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(859,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“tasking.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(3950,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“tasking.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(4372,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“tasking.cc”)
+  
+E:\Study\codes\bochs\boch\boch\tasking.cc(331,26): warning C4244: “=”: 从“Bit64u”转换到“Bit32u”，可能丢失数据
+E:\Study\codes\bochs\boch\boch\tasking.cc(333,35): warning C4244: “=”: 从“bx_address”转换到“Bit32u”，可能丢失数据
+  vapic.cc
+E:\Study\codes\bochs\boch\boch\cpu.h(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“vapic.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(859,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“vapic.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(3950,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“vapic.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(4372,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“vapic.cc”)
+  
+  vm8086.cc
+E:\Study\codes\bochs\boch\boch\cpu.h(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“vm8086.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(859,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“vm8086.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(3950,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“vm8086.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(4372,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“vm8086.cc”)
+  
+  vmcs.cc
+E:\Study\codes\bochs\boch\boch\cpu.h(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“vmcs.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(859,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“vmcs.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(3950,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“vmcs.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(4372,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“vmcs.cc”)
+  
+  vmexit.cc
+E:\Study\codes\bochs\boch\boch\cpu.h(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“vmexit.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(859,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“vmexit.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(3950,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“vmexit.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(4372,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“vmexit.cc”)
+  
+  正在生成代码...
+  正在编译...
+  vmx.cc
+E:\Study\codes\bochs\boch\boch\cpu.h(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“vmx.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(859,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“vmx.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(3950,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“vmx.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(4372,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“vmx.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(44,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“vmx.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(45,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“vmx.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(46,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“vmx.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(47,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“vmx.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(48,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“vmx.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(49,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“vmx.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(52,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“vmx.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(53,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“vmx.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(54,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“vmx.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(55,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“vmx.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(56,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“vmx.cc”)
+  
+E:\Study\codes\bochs\boch\boch\iodev.h(57,1): warning C4010: 单行注释包含行继续符
+  (编译源文件“vmx.cc”)
+  
+E:\Study\codes\bochs\boch\boch\vmx.cc(1179,51): warning C4244: “=”: 从“Bit64u”转换到“Bit32u”，可能丢失数据
+E:\Study\codes\bochs\boch\boch\vmx.cc(1629,56): warning C4244: “=”: 从“Bit64u”转换到“Bit32u”，可能丢失数据
+  xsave.cc
+E:\Study\codes\bochs\boch\boch\cpu.h(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“xsave.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(859,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“xsave.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(3950,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“xsave.cc”)
+  
+E:\Study\codes\bochs\boch\boch\cpu.h(4372,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+  (编译源文件“xsave.cc”)
+  
+  正在生成代码...
   boch.vcxproj -> E:\Study\codes\bochs\boch\x64\Debug\boch.exe

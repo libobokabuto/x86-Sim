@@ -10,7 +10,7 @@
 #endif
 #include "scalar_arith.h"
 #include "ia_opcodes.h"
-
+#include "pc_system.h"
 #if BX_SUPPORT_APIC
 #include "apic.h"
 #endif
@@ -1121,6 +1121,294 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::MOV_EdIdM(bxInstruction_c* i)
     write_virtual_dword(i->seg(), eaddr, i->Id());
 
     BX_NEXT_INSTR(i);
+}
+
+#if BX_CPU_LEVEL >= 3
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::CALL_EdR(bxInstruction_c* i)
+{
+#if BX_DEBUGGER
+    BX_CPU_THIS_PTR show_flag |= Flag_call;
+#endif
+
+    Bit32u new_EIP = BX_READ_32BIT_REG(i->dst());
+
+    RSP_SPECULATIVE;
+
+    /* push 32 bit EA of next instruction */
+    push_32(EIP);
+#if BX_SUPPORT_CET
+    if (ShadowStackEnabled(CPL))
+        shadow_stack_push_32(EIP);
+#endif
+
+    branch_near32(new_EIP);
+
+    RSP_COMMIT;
+
+#if BX_SUPPORT_CET
+    track_indirect_if_not_suppressed(i, CPL);
+#endif
+
+    BX_INSTR_UCNEAR_BRANCH(BX_CPU_ID, BX_INSTR_IS_CALL_INDIRECT, PREV_RIP, EIP);
+
+    BX_NEXT_TRACE(i);
+}
+
+#endif
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::SUB_GdEdR(bxInstruction_c* i)
+{
+    Bit32u op1_32, op2_32, diff_32;
+
+    op1_32 = BX_READ_32BIT_REG(i->dst());
+    op2_32 = BX_READ_32BIT_REG(i->src());
+    diff_32 = op1_32 - op2_32;
+    BX_WRITE_32BIT_REGZ(i->dst(), diff_32);
+
+    SET_FLAGS_OSZAPC_SUB_32(op1_32, op2_32, diff_32);
+
+    BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::REP_STOSB_YbAL(bxInstruction_c* i)
+{
+#if BX_SUPPORT_X86_64
+    if (i->as64L())
+        BX_CPU_THIS_PTR repeat(i, &BX_CPU_C::STOSB64_YbAL);
+    else
+#endif
+        if (i->as32L()) {
+            BX_CPU_THIS_PTR repeat(i, &BX_CPU_C::STOSB32_YbAL);
+            BX_CLEAR_64BIT_HIGH(BX_64BIT_REG_RDI); // always clear upper part of RDI
+        }
+        else {
+            BX_CPU_THIS_PTR repeat(i, &BX_CPU_C::STOSB16_YbAL);
+        }
+
+    BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::STOSB16_YbAL(bxInstruction_c* i)
+{
+    Bit16u di = DI;
+
+    write_virtual_byte_32(BX_SEG_REG_ES, di, AL);
+
+    if (BX_CPU_THIS_PTR get_DF()) {
+        di--;
+    }
+    else {
+        di++;
+    }
+
+    DI = di;
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::STOSB32_YbAL(bxInstruction_c* i)
+{
+    Bit32s increment = 0;
+    Bit32u edi = EDI;
+
+#if BX_SUPPORT_REPEAT_SPEEDUPS
+    /* If conditions are right, we can transfer IO to physical memory
+     * in a batch, rather than one instruction at a time.
+     */
+    if (i->repUsedL() && !BX_CPU_THIS_PTR get_DF() && !BX_CPU_THIS_PTR async_event)
+    {
+        Bit32u byteCount = FastRepSTOSB(BX_SEG_REG_ES, edi, AL, ECX);
+        if (byteCount) {
+            // Decrement the ticks count by the number of iterations, minus
+            // one, since the main cpu loop will decrement one.  Also,
+            // the count is predecremented before examined, so definitely
+            // don't roll it under zero.
+            BX_TICKN(byteCount - 1);
+
+            // Decrement eCX.  Note, the main loop will decrement 1 also, so
+            // decrement by one less than expected, like the case above.
+            RCX = ECX - (byteCount - 1);
+
+            increment = byteCount;
+        }
+    }
+
+    if (increment == 0)
+#endif
+    {
+        write_virtual_byte(BX_SEG_REG_ES, edi, AL);
+
+        increment = BX_CPU_THIS_PTR get_DF() ? -1 : 1;
+    }
+
+    // zero extension of RDI
+    RDI = edi + increment;
+}
+
+#if BX_SUPPORT_X86_64
+// 64 bit address size
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::STOSB64_YbAL(bxInstruction_c* i)
+{
+    Bit64u rdi = RDI;
+    Bit32s increment = 0;
+
+#if BX_SUPPORT_REPEAT_SPEEDUPS
+    /* If conditions are right, we can transfer IO to physical memory
+     * in a batch, rather than one instruction at a time.
+     */
+    if (i->repUsedL() && !BX_CPU_THIS_PTR get_DF() && !BX_CPU_THIS_PTR async_event)
+    {
+        Bit32u byteCount = FastRepSTOSB(rdi, AL, ECX);
+        if (byteCount) {
+            // Decrement the ticks count by the number of iterations, minus
+            // one, since the main cpu loop will decrement one.  Also,
+            // the count is predecremented before examined, so definitely
+            // don't roll it under zero.
+            BX_TICKN(byteCount - 1);
+
+            // Decrement RCX.  Note, the main loop will decrement 1 also, so
+            // decrement by one less than expected, like the case above.
+            RCX -= (byteCount - 1);
+
+            increment = byteCount;
+        }
+    }
+
+    if (increment == 0)
+#endif
+    {
+        write_linear_byte(BX_SEG_REG_ES, rdi, AL);
+
+        increment = BX_CPU_THIS_PTR get_DF() ? -1 : 1;
+    }
+
+    RDI = rdi + increment;
+}
+#endif
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::REP_MOVSB_YbXb(bxInstruction_c* i)
+{
+#if BX_SUPPORT_X86_64
+    if (i->as64L())
+        BX_CPU_THIS_PTR repeat(i, &BX_CPU_C::MOVSB64_YbXb);
+    else
+#endif
+        if (i->as32L()) {
+            BX_CPU_THIS_PTR repeat(i, &BX_CPU_C::MOVSB32_YbXb);
+            BX_CLEAR_64BIT_HIGH(BX_64BIT_REG_RSI); // always clear upper part of RSI/RDI
+            BX_CLEAR_64BIT_HIGH(BX_64BIT_REG_RDI);
+        }
+        else {
+            BX_CPU_THIS_PTR repeat(i, &BX_CPU_C::MOVSB16_YbXb);
+        }
+
+    BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::MOVSB16_YbXb(bxInstruction_c* i)
+{
+    Bit8u temp8 = read_virtual_byte_32(i->seg(), SI);
+    write_virtual_byte_32(BX_SEG_REG_ES, DI, temp8);
+
+    if (BX_CPU_THIS_PTR get_DF()) {
+        SI--;
+        DI--;
+    }
+    else {
+        SI++;
+        DI++;
+    }
+}
+
+// 32 bit address size
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::MOVSB32_YbXb(bxInstruction_c* i)
+{
+    Bit32s increment = 0;
+
+#if BX_SUPPORT_REPEAT_SPEEDUPS
+    /* If conditions are right, we can transfer IO to physical memory
+     * in a batch, rather than one instruction at a time */
+    if (i->repUsedL() && !BX_CPU_THIS_PTR get_DF() && !BX_CPU_THIS_PTR async_event)
+    {
+        Bit32u byteCount = FastRepMOVSB(i->seg(), ESI, BX_SEG_REG_ES, EDI, ECX, 1);
+        if (byteCount) {
+            // Decrement the ticks count by the number of iterations, minus
+            // one, since the main cpu loop will decrement one.  Also,
+            // the count is predecremented before examined, so definitely
+            // don't roll it under zero.
+            BX_TICKN(byteCount - 1);
+
+            // Decrement eCX. Note, the main loop will decrement 1 also, so
+            // decrement by one less than expected, like the case above.
+            RCX = ECX - (byteCount - 1);
+
+            increment = byteCount;
+        }
+    }
+
+    if (increment == 0)
+#endif
+    {
+        Bit8u temp8 = read_virtual_byte(i->seg(), ESI);
+        write_virtual_byte(BX_SEG_REG_ES, EDI, temp8);
+
+        increment = BX_CPU_THIS_PTR get_DF() ? -1 : 1;
+    }
+
+    RSI = ESI + increment;
+    RDI = EDI + increment;
+}
+
+#if BX_SUPPORT_X86_64
+// 64 bit address size
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::MOVSB64_YbXb(bxInstruction_c* i)
+{
+    Bit32s increment = 0;
+
+    Bit64u rsi = RSI;
+    Bit64u rdi = RDI;
+
+#if BX_SUPPORT_REPEAT_SPEEDUPS
+    /* If conditions are right, we can transfer IO to physical memory
+     * in a batch, rather than one instruction at a time */
+    if (i->repUsedL() && !BX_CPU_THIS_PTR get_DF() && !BX_CPU_THIS_PTR async_event)
+    {
+        Bit32u byteCount = FastRepMOVSB(get_laddr64(i->seg(), rsi), rdi, ECX, 1);
+        if (byteCount) {
+            // Decrement the ticks count by the number of iterations, minus
+            // one, since the main cpu loop will decrement one.  Also,
+            // the count is predecremented before examined, so definitely
+            // don't roll it under zero.
+            BX_TICKN(byteCount - 1);
+
+            // Decrement RCX. Note, the main loop will decrement 1 also, so
+            // decrement by one less than expected, like the case above.
+            RCX -= (byteCount - 1);
+
+            increment = byteCount;
+        }
+    }
+
+    if (increment == 0)
+#endif
+    {
+        Bit8u temp8 = read_linear_byte(i->seg(), get_laddr64(i->seg(), rsi));
+        write_linear_byte(BX_SEG_REG_ES, rdi, temp8);
+
+        increment = BX_CPU_THIS_PTR get_DF() ? -1 : 1;
+    }
+
+    RSI = rsi + increment;
+    RDI = rdi + increment;
+}
+#endif
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::JMP_Jd(bxInstruction_c* i)
+{
+    Bit32u new_EIP = EIP + (Bit32s)i->Id();
+    branch_near32(new_EIP);
+    BX_INSTR_UCNEAR_BRANCH(BX_CPU_ID, BX_INSTR_IS_JMP, PREV_RIP, new_EIP);
+
+    BX_LINK_TRACE(i);
 }
 
 

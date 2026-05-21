@@ -33,6 +33,13 @@ bool BX_CPP_AttrRegparmN(1) BX_CPU_C::EndbranchEnabled(unsigned cpl)
         BX_CPU_THIS_PTR msr.ia32_cet_control[cpl == 3] & BX_CET_ENDBRANCH_ENABLED;
 }
 
+bool BX_CPP_AttrRegparmN(1) BX_CPU_C::EndbranchEnabledAndNotSuppressed(unsigned cpl)
+{
+    return BX_CPU_THIS_PTR cr4.get_CET() && protected_mode() &&
+        (BX_CPU_THIS_PTR msr.ia32_cet_control[cpl == 3] & (BX_CET_ENDBRANCH_ENABLED | BX_CET_SUPPRESS_INDIRECT_BRANCH_TRACKING)) == BX_CET_ENDBRANCH_ENABLED;
+}
+
+
 void BX_CPP_AttrRegparmN(1) BX_CPU_C::track_indirect(unsigned cpl)
 {
     if (EndbranchEnabled(cpl)) {
@@ -41,4 +48,14 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::track_indirect(unsigned cpl)
     }
 }
 
-#endif
+void BX_CPP_AttrRegparmN(2) BX_CPU_C::track_indirect_if_not_suppressed(bxInstruction_c* i, unsigned cpl)
+{
+    if (EndbranchEnabledAndNotSuppressed(cpl)) {
+        if (i->segOverrideCet() == BX_SEG_REG_DS && (BX_CPU_THIS_PTR msr.ia32_cet_control[cpl == 3] & BX_CET_ENABLE_NO_TRACK_INDIRECT_BRANCH_PREFIX) != 0)
+            return;
+
+        BX_CPU_THIS_PTR msr.ia32_cet_control[cpl == 3] |= BX_CET_WAIT_FOR_ENBRANCH;
+    }
+}
+
+#endif //最后一行
