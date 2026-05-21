@@ -3,6 +3,56 @@
 #include "cpu.h"
 #define LOG_THIS BX_CPU_THIS_PTR
 
+void BX_CPU_C::check_cs(bx_descriptor_t* descriptor, Bit16u cs_raw, Bit8u check_rpl, Bit8u check_cpl)
+{
+    // descriptor AR byte must indicate code segment else #GP(selector)
+    if (descriptor->valid == 0 || descriptor->segment == 0 ||
+        IS_DATA_SEGMENT(descriptor->type))
+    {
+        //BX_ERROR(("check_cs(0x%04x): not a valid code segment !", cs_raw));
+        exception(BX_GP_EXCEPTION, cs_raw & 0xfffc);
+    }
+
+#if BX_SUPPORT_X86_64
+    if (long_mode()) {
+        if (descriptor->u.segment.l && descriptor->u.segment.d_b) {
+            //BX_ERROR(("check_cs(0x%04x): Both CS.L and CS.D_B bits enabled !", cs_raw));
+            exception(BX_GP_EXCEPTION, cs_raw & 0xfffc);
+        }
+    }
+#endif
+
+    // if non-conforming, code segment descriptor DPL must = CPL else #GP(selector)
+    if (IS_CODE_SEGMENT_NON_CONFORMING(descriptor->type)) {
+        if (descriptor->dpl != check_cpl) {
+            //BX_ERROR(("check_cs(0x%04x): non-conforming code seg descriptor dpl != cpl, dpl=%d, cpl=%d",
+                //cs_raw, descriptor->dpl, check_cpl));
+            exception(BX_GP_EXCEPTION, cs_raw & 0xfffc);
+        }
+
+        /* RPL of destination selector must be <= CPL else #GP(selector) */
+        if (check_rpl > check_cpl) {
+            //BX_ERROR(("check_cs(0x%04x): non-conforming code seg selector rpl > cpl, rpl=%d, cpl=%d",
+                //cs_raw, check_rpl, check_cpl));
+            exception(BX_GP_EXCEPTION, cs_raw & 0xfffc);
+        }
+    }
+    // if conforming, then code segment descriptor DPL must <= CPL else #GP(selector)
+    else {
+        if (descriptor->dpl > check_cpl) {
+            //BX_ERROR(("check_cs(0x%04x): conforming code seg descriptor dpl > cpl, dpl=%d, cpl=%d",
+                //cs_raw, descriptor->dpl, check_cpl));
+            exception(BX_GP_EXCEPTION, cs_raw & 0xfffc);
+        }
+    }
+
+    // code segment must be present else #NP(selector)
+    if (!descriptor->p) {
+        //BX_ERROR(("check_cs(0x%04x): code segment not present !", cs_raw));
+        exception(BX_NP_EXCEPTION, cs_raw & 0xfffc);
+    }
+}
+
 void BX_CPP_AttrRegparmN(3)
 BX_CPU_C::load_cs(bx_selector_t* selector, bx_descriptor_t* descriptor, Bit8u cpl)
 {

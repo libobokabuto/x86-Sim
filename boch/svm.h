@@ -346,6 +346,12 @@ enum {
 #define SVM_EXCEPTION_INTERCEPTED(vector) \
   (BX_CPU_THIS_PTR vmcb->ctrls.exceptions_intercept & (1<<(vector)))
 
+#define SVM_CR_READ_INTERCEPTED(reg_num) \
+  (BX_CPU_THIS_PTR vmcb->ctrls.cr_rd_ctrl & (1<<(reg_num)))
+
+#define SVM_CR_WRITE_INTERCEPTED(reg_num) \
+  (BX_CPU_THIS_PTR vmcb->ctrls.cr_wr_ctrl & (1<<(reg_num))) //405
+
 #define SVM_NESTED_PAGING_ENABLED (BX_CPU_THIS_PTR vmcb->ctrls.nested_paging)  //414
 
 #endif // BX_SUPPORT_SVM

@@ -50,7 +50,7 @@ void BX_CPU_C::cpu_loop(void)
             BX_CPU_THIS_PTR prev_rip = RIP; // commit new RIP
             BX_INSTR_AFTER_EXECUTION(BX_CPU_ID, i);
             BX_CPU_THIS_PTR icount++;
-            if (BX_CPU_THIS_PTR icount == 326547)
+            if (BX_CPU_THIS_PTR icount == 326551)
             {
                   int qwq = 0;
             }
@@ -87,15 +87,15 @@ void BX_CPU_C::cpu_loop(void)
                 unsigned opcode = i->getIaOpcode();
 
                 if (opcode == BX_IA_IN_ALIb && i->Ib() == 0x71) {
-                    rtc_normalize_until = BX_CPU_THIS_PTR icount + 256;
+                    rtc_normalize_until = BX_CPU_THIS_PTR icount + 64;
                 }
 
                 if (opcode == BX_IA_IN_ALDX && DX == 0x71) {
-                    rtc_normalize_until = BX_CPU_THIS_PTR icount + 256;
+                    rtc_normalize_until = BX_CPU_THIS_PTR icount + 64;
                 }
 
                 if (RIP >= 0x9644 && RIP <= 0x9688) {
-                    rtc_normalize_until = BX_CPU_THIS_PTR icount + 256;
+                    rtc_normalize_until = BX_CPU_THIS_PTR icount + 64;
                 }
 
                 if (BX_CPU_THIS_PTR icount <= rtc_normalize_until) {
@@ -121,11 +121,14 @@ void BX_CPU_C::cpu_loop(void)
                 MD5Update(&nortc_ctx, (unsigned char*)g_test_buff, cpudatalen);
                 MD5Final(&nortc_ctx, nortc_md5);
 
+
                 printf(
-                    "%05llu: RIP=%016llx currCountdown=%lld MD5_NORTC=",
+                    "%05llu: RIP=%016llx ia=%u currCountdown=%lld mode=%u MD5_NORTC=",
                     (unsigned long long)BX_CPU_THIS_PTR icount,
                     (unsigned long long)RIP,
-                    (long long)bx_pc_system.currCountdown
+                    (unsigned)opcode,
+                    (long long)bx_pc_system.currCountdown,
+                    (unsigned)BX_CPU_THIS_PTR cpu_mode
                 );
 
                 for (int j = 0; j < 16; j++) {

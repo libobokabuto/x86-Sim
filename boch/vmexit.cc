@@ -9,6 +9,141 @@
 
 #include "ia_opcodes.h"
 
+Bit32u gen_instruction_info(bxInstruction_c* i, Bit32u reason, bool rw_form)
+{//36
+    Bit32u instr_info = 0;
+
+    switch (reason) {
+    case VMX_VMEXIT_VMREAD:
+    case VMX_VMEXIT_VMWRITE:
+#if BX_SUPPORT_VMX >= 2
+    case VMX_VMEXIT_GDTR_IDTR_ACCESS:
+    case VMX_VMEXIT_LDTR_TR_ACCESS:
+    case VMX_VMEXIT_INVEPT:
+    case VMX_VMEXIT_INVVPID:
+    case VMX_VMEXIT_INVPCID:
+#endif
+        if (rw_form == BX_WRITE)
+            instr_info |= i->dst() << 28;
+        else
+            instr_info |= i->src() << 28;
+        break;
+
+    case VMX_VMEXIT_RDRAND:
+    case VMX_VMEXIT_RDSEED:
+    case VMX_VMEXIT_UMWAIT:
+    case VMX_VMEXIT_TPAUSE:
+        // bits 12:11 hold operand size
+        if (i->os64L())
+            instr_info |= 1 << 12;
+        else if (i->as32L())
+            instr_info |= 1 << 11;
+        break;
+
+    default:
+        break;
+    }
+
+    // --------------------------------------
+    //  instruction information field format
+    // --------------------------------------
+    //
+    // [01:00] | Memory operand scale field (encoded)
+    // [02:02] | Undefined
+    // [06:03] | Reg1, undefined when memory operand
+    // [09:07] | Memory operand address size
+    // [10:10] | Memory/Register format (0 - mem, 1 - reg)
+    // [14:11] | Reserved
+    // [17:15] | Memory operand segment register field
+    // [21:18] | Memory operand index field
+    // [22:22] | Memory operand index field invalid
+    // [26:23] | Memory operand base field
+    // [27:27] | Memory operand base field invalid
+    // [31:28] | Reg2, if exists
+    //
+    if (i->modC0()) {
+        // reg/reg format
+        instr_info |= (1 << 10);
+        if (rw_form == BX_WRITE)
+            instr_info |= i->src() << 3;
+        else
+            instr_info |= i->dst() << 3;
+    }
+    else {
+        // memory format
+        if (i->as64L())
+            instr_info |= 1 << 8;
+        else if (i->as32L())
+            instr_info |= 1 << 7;
+
+        instr_info |= i->seg() << 15;
+
+        // index field is always initialized because of gather but not always valid
+        if (i->sibIndex() != BX_NIL_REGISTER && i->sibIndex() != 4)
+            instr_info |= i->sibScale() | (i->sibIndex() << 18);
+        else
+            instr_info |= 1 << 22; // index invalid
+
+        if (i->sibBase() != BX_NIL_REGISTER)
+            instr_info |= i->sibBase() << 23;
+        else
+            instr_info |= 1 << 27; // base invalid
+    }
+
+    return instr_info;
+}
+
+void BX_CPP_AttrRegparmN(3) BX_CPU_C::VMexit_Instruction(bxInstruction_c* i, Bit32u reason, bool rw_form)
+{//120
+    Bit64u qualification = 0;
+    Bit32u instr_info = 0;
+
+    switch (reason) {
+    case VMX_VMEXIT_VMREAD:
+    case VMX_VMEXIT_VMWRITE:
+    case VMX_VMEXIT_VMPTRLD:
+    case VMX_VMEXIT_VMPTRST:
+    case VMX_VMEXIT_VMCLEAR:
+    case VMX_VMEXIT_VMXON:
+#if BX_SUPPORT_VMX >= 2
+    case VMX_VMEXIT_GDTR_IDTR_ACCESS:
+    case VMX_VMEXIT_LDTR_TR_ACCESS:
+    case VMX_VMEXIT_INVEPT:
+    case VMX_VMEXIT_INVVPID:
+    case VMX_VMEXIT_INVPCID:
+    case VMX_VMEXIT_XSAVES:
+    case VMX_VMEXIT_XRSTORS:
+#endif
+#if BX_SUPPORT_X86_64
+        if (long64_mode()) {
+            qualification = (Bit64u)i->displ32s();
+            if (i->sibBase() == BX_64BIT_REG_RIP)
+                qualification += RIP;
+        }
+        else
+#endif
+        {
+            qualification = (Bit64u)((Bit32u)i->displ32s());
+            qualification &= i->asize_mask();
+        }
+        // fall through
+
+    case VMX_VMEXIT_RDRAND:
+    case VMX_VMEXIT_RDSEED:
+    case VMX_VMEXIT_UMWAIT:
+    case VMX_VMEXIT_TPAUSE:
+        instr_info = gen_instruction_info(i, reason, rw_form);
+        VMwrite32(VMCS_32BIT_VMEXIT_INSTRUCTION_INFO, instr_info);
+        break;
+
+    default:
+        //BX_PANIC(("VMexit_Instruction reason %d", reason));
+        break;
+    }
+
+    VMexit(reason, qualification);
+}
+
 void BX_CPU_C::VMexit_ExtInterrupt(void)
 {
     //BX_ASSERT(BX_CPU_THIS_PTR in_vmx_guest);
@@ -271,6 +406,45 @@ void BX_CPP_AttrRegparmN(3) BX_CPU_C::VMexit_IO(bxInstruction_c* i, unsigned por
         }
 
         VMexit(VMX_VMEXIT_IO_INSTRUCTION, qualification | (len - 1) | (port << 16));
+    }
+}
+
+bx_address BX_CPP_AttrRegparmN(2) BX_CPU_C::VMexit_CR0_Write(bxInstruction_c* i, bx_address val)
+{//565
+    //BX_ASSERT(BX_CPU_THIS_PTR in_vmx_guest);
+
+    VMCS_CACHE* vm = &BX_CPU_THIS_PTR vmcs;
+
+    if ((vm->vm_cr0_mask & vm->vm_cr0_read_shadow) != (vm->vm_cr0_mask & val))
+    {
+        //BX_DEBUG(("VMEXIT: CR0 write"));
+        Bit64u qualification = i->src() << 8;
+        VMexit(VMX_VMEXIT_CR_ACCESS, qualification);
+    }
+
+    // keep untouched all the bits set in CR0 mask
+    return (BX_CPU_THIS_PTR cr0.get32() & vm->vm_cr0_mask) | (val & ~vm->vm_cr0_mask);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::VMexit_CR8_Read(bxInstruction_c* i)
+{
+    //BX_ASSERT(BX_CPU_THIS_PTR in_vmx_guest);
+
+    if (BX_CPU_THIS_PTR vmcs.vmexec_ctrls1.CR8_READ_VMEXIT()) {
+        //BX_DEBUG(("VMEXIT: CR8 read"));
+        Bit64u qualification = 8 | (VMX_VMEXIT_CR_ACCESS_CR_READ << 4) | (i->dst() << 8);
+        VMexit(VMX_VMEXIT_CR_ACCESS, qualification);
+    }
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::VMexit_CR8_Write(bxInstruction_c* i)
+{//638
+    //BX_ASSERT(BX_CPU_THIS_PTR in_vmx_guest);
+
+    if (BX_CPU_THIS_PTR vmcs.vmexec_ctrls1.CR8_WRITE_VMEXIT()) {
+        //BX_DEBUG(("VMEXIT: CR8 write"));
+        Bit64u qualification = 8 | (i->src() << 8);
+        VMexit(VMX_VMEXIT_CR_ACCESS, qualification);
     }
 }
 

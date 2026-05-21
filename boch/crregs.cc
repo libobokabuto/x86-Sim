@@ -11,6 +11,30 @@
 #include "apic.h"
 #endif
 
+#if BX_SUPPORT_SVM //394
+const Bit64u BX_SVM_CR_WRITE_MASK = (BX_CONST64(1) << 63);
+#endif
+
+bx_address BX_CPU_C::read_CR0(void)
+{//953
+#if BX_SUPPORT_SVM
+    if (BX_CPU_THIS_PTR in_svm_guest) {
+        // used for SMSW instruction only
+        if (SVM_CR_READ_INTERCEPTED(0)) Svm_Vmexit(SVM_VMEXIT_CR0_READ);
+    }
+#endif
+
+    bx_address cr0_val = BX_CPU_THIS_PTR cr0.get32();
+
+#if BX_SUPPORT_VMX
+    if (BX_CPU_THIS_PTR in_vmx_guest) {
+        VMCS_CACHE* vm = &BX_CPU_THIS_PTR vmcs;
+        cr0_val = (cr0_val & ~vm->vm_cr0_mask) | (vm->vm_cr0_read_shadow & vm->vm_cr0_mask);
+    }
+#endif
+
+    return cr0_val;
+}
 
 bool BX_CPP_AttrRegparmN(1) BX_CPU_C::check_CR0(bx_address cr0_val)
 {  //990
@@ -60,6 +84,139 @@ bool BX_CPP_AttrRegparmN(1) BX_CPU_C::check_CR0(bx_address cr0_val)
     return true;
 }
 
+bool BX_CPU_C::SetCR0(bxInstruction_c* i, bx_address val)
+{
+    if (!check_CR0(val)) return false;
+
+    Bit32u val_32 = GET32L(val);
+
+#if BX_SUPPORT_CET
+    if ((val_32 & BX_CR0_WP_MASK) == 0 && BX_CPU_THIS_PTR cr4.get_CET()) {
+        //BX_ERROR(("SetCR0: attempt to clear CR0.WP when CR4.CET=1"));
+        return false;
+    }
+#endif
+
+#if BX_CPU_LEVEL >= 6
+    bool pg = (val_32 >> 31) & 0x1;
+#endif
+
+#if BX_SUPPORT_X86_64
+    if (!BX_CPU_THIS_PTR cr0.get_PG() && pg) {
+        if (BX_CPU_THIS_PTR efer.get_LME()) {
+            if (!BX_CPU_THIS_PTR cr4.get_PAE()) {
+                //BX_ERROR(("SetCR0: attempt to enter x86-64 long mode without enabling CR4.PAE !"));
+                return false;
+            }
+            if (BX_CPU_THIS_PTR sregs[BX_SEG_REG_CS].cache.u.segment.l) {
+                //BX_ERROR(("SetCR0: attempt to enter x86-64 long mode with CS.L !"));
+                return false;
+            }
+            if (BX_CPU_THIS_PTR tr.cache.type <= 3) {
+                //BX_ERROR(("SetCR0: attempt to enter x86-64 long mode with TSS286 in TR !"));
+                return false;
+            }
+            BX_CPU_THIS_PTR efer.set_LMA(1);
+        }
+    }
+    else if (BX_CPU_THIS_PTR cr0.get_PG() && !pg) {
+        if (BX_CPU_THIS_PTR cpu_mode == BX_MODE_LONG_64) {
+            //BX_ERROR(("SetCR0(): attempt to leave 64 bit mode directly to legacy mode !"));
+            return false;
+        }
+        if (BX_CPU_THIS_PTR efer.get_LMA()) {
+            if (BX_CPU_THIS_PTR cr4.get_PCIDE()) {
+                //BX_ERROR(("SetCR0(): attempt to leave 64 bit mode with CR4.PCIDE set !"));
+                return false;
+            }
+            if (BX_CPU_THIS_PTR gen_reg[BX_64BIT_REG_RIP].dword.hrx != 0) {
+                //BX_PANIC(("SetCR0(): attempt to leave x86-64 LONG mode with RIP upper != 0"));
+            }
+            BX_CPU_THIS_PTR efer.set_LMA(0);
+        }
+    }
+#endif  // #if BX_SUPPORT_X86_64
+
+    // handle reserved bits behaviour
+#if BX_CPU_LEVEL == 3
+    val_32 = val_32 | 0x7fffffe0; // reserved bits all set to 1 on 386
+#elif BX_CPU_LEVEL == 4
+    val_32 = val_32 & 0xe005003f;
+#elif BX_CPU_LEVEL == 5
+    val_32 = val_32;
+#elif BX_CPU_LEVEL == 6
+    val_32 = val_32 & 0xe005003f;
+#else
+#error "SetCR0: implement reserved bits behaviour for this CPU_LEVEL"
+#endif
+
+  // The CR0.ET is set if an 80387 is present in the configuration. If CR0.ET is reset, the
+  // configuration either contains an 80287 or does not contain a coprocessor.
+    if (is_cpu_extension_supported(BX_ISA_X87))
+        val_32 |= BX_CR0_ET_MASK;
+
+    Bit32u oldCR0 = BX_CPU_THIS_PTR cr0.get32();
+
+#if BX_SUPPORT_SVM
+    if (BX_CPU_THIS_PTR in_svm_guest) {
+        if (SVM_CR_WRITE_INTERCEPTED(0)) {
+            // LMSW instruction should VMEXIT before
+            if (BX_SUPPORT_SVM_EXTENSION(BX_CPUID_SVM_DECODE_ASSIST))
+                Svm_Vmexit(SVM_VMEXIT_CR0_WRITE, BX_SVM_CR_WRITE_MASK | i->src());
+            else
+                Svm_Vmexit(SVM_VMEXIT_CR0_WRITE);
+        }
+
+        if (SVM_INTERCEPT(SVM_INTERCEPT0_CR0_WRITE_NO_TS_MP)) {
+            if ((oldCR0 & 0xfffffff5) != (val_32 & 0xfffffff5)) {
+                // any other bit except TS or MP had changed
+                Svm_Vmexit(SVM_VMEXIT_CR0_SEL_WRITE);
+            }
+        }
+    }
+#endif
+
+#if BX_CPU_LEVEL >= 6
+    if (pg && BX_CPU_THIS_PTR cr4.get_PAE() && !long_mode()) {
+        if (!CheckPDPTR(BX_CPU_THIS_PTR cr3)) {
+            //BX_ERROR(("SetCR0(): PDPTR check failed !"));
+            return false;
+        }
+    }
+#endif
+
+    BX_CPU_THIS_PTR cr0.set32(val_32);
+
+#if BX_CPU_LEVEL >= 4
+    handleAlignmentCheck(/* CR0.AC reloaded */);
+#endif
+
+    handleCpuModeChange();
+
+    handleFpuMmxModeChange();
+#if BX_CPU_LEVEL >= 6
+    handleSseModeChange();
+#if BX_SUPPORT_AVX
+    handleAvxModeChange();
+#endif
+#endif
+
+    // Modification of PG,PE flushes TLB cache according to docs.
+    // Additionally, the TLB strategy is based on the current value of
+    // WP, so if that changes we must also flush the TLB.
+    if ((oldCR0 & 0x80010001) != (val_32 & 0x80010001)) {
+        TLB_flush(); // Flush Global entries also
+#if BX_SUPPORT_PKEYS
+        set_PKeys(BX_CPU_THIS_PTR pkru, BX_CPU_THIS_PTR pkrs); // recalculate protection keys due to CR0.WP change
+#endif
+    }
+
+#if BX_SUPPORT_X86_64
+    BX_CPU_THIS_PTR linaddr_width = BX_CPU_THIS_PTR cr4.get_LA57() ? 57 : 48;
+#endif
+
+    return true;
+}
 
 #if BX_CPU_LEVEL >= 5  //1172
 Bit32u BX_CPU_C::get_cr4_allow_mask(void)
@@ -302,6 +459,86 @@ bool BX_CPP_AttrRegparmN(1) BX_CPU_C::SetEFER(bx_address val_64)
 
     return true;
 }
+#endif
+
+#if BX_CPU_LEVEL >= 6
+
+void BX_CPU_C::WriteCR8(bxInstruction_c* i, bx_address val)
+{
+#if BX_SUPPORT_SVM
+    if (BX_CPU_THIS_PTR in_svm_guest) {
+        if (SVM_CR_WRITE_INTERCEPTED(8)) {
+            if (BX_SUPPORT_SVM_EXTENSION(BX_CPUID_SVM_DECODE_ASSIST))
+                Svm_Vmexit(SVM_VMEXIT_CR8_WRITE, BX_SVM_CR_WRITE_MASK | i->src());
+            else
+                Svm_Vmexit(SVM_VMEXIT_CR8_WRITE);
+        }
+    }
+#endif
+
+#if BX_SUPPORT_VMX
+    if (BX_CPU_THIS_PTR in_vmx_guest)
+        VMexit_CR8_Write(i);
+#endif
+
+    // CR8 is aliased to APIC->TASK PRIORITY register
+    //   APIC.TPR[7:4] = CR8[3:0]
+    //   APIC.TPR[3:0] = 0
+    // Reads of CR8 return zero extended APIC.TPR[7:4]
+    // Write to CR8 update APIC.TPR[7:4]
+    if (val & BX_CONST64(0xfffffffffffffff0)) {
+        //BX_ERROR(("WriteCR8: Attempt to set reserved bits of CR8"));
+        exception(BX_GP_EXCEPTION, 0);
+    }
+    unsigned tpr = (val & 0xf) << 4;
+
+#if BX_SUPPORT_SVM
+    if (BX_CPU_THIS_PTR in_svm_guest) {
+        SVM_V_TPR = tpr >> 4;   // V_TPR just matching CR8[3:0]
+        handleInterruptMaskChange();
+        if (SVM_V_INTR_MASKING) return;
+    }
+#endif
+
+#if BX_SUPPORT_VMX && BX_SUPPORT_X86_64
+    if (BX_CPU_THIS_PTR in_vmx_guest && BX_CPU_THIS_PTR vmcs.vmexec_ctrls1.TPR_SHADOW()) {
+        VMX_Write_Virtual_APIC(BX_LAPIC_TPR, tpr);
+        VMX_TPR_Virtualization();
+        return;
+    }
+#endif
+
+    BX_CPU_THIS_PTR lapic->set_tpr(tpr);
+}
+
+unsigned BX_CPU_C::get_cr8(void)
+{
+    return (BX_CPU_THIS_PTR lapic->get_tpr() >> 4) & 0xf;
+}
+
+Bit32u BX_CPU_C::ReadCR8(bxInstruction_c* i)
+{
+#if BX_SUPPORT_SVM
+    if (BX_CPU_THIS_PTR in_svm_guest) {
+        if (SVM_CR_READ_INTERCEPTED(8)) Svm_Vmexit(SVM_VMEXIT_CR8_READ);
+
+        if (SVM_V_INTR_MASKING) return SVM_V_TPR;
+    }
+#endif
+
+#if BX_SUPPORT_VMX && BX_SUPPORT_X86_64
+    if (BX_CPU_THIS_PTR in_vmx_guest)
+        VMexit_CR8_Read(i);
+
+    if (BX_CPU_THIS_PTR in_vmx_guest && BX_CPU_THIS_PTR vmcs.vmexec_ctrls1.TPR_SHADOW()) {
+        Bit32u tpr = (VMX_Read_Virtual_APIC(BX_LAPIC_TPR) >> 4) & 0xf;
+        return tpr;
+    }
+#endif
+
+    return BX_CPU_THIS_PTR get_cr8();
+}
+
 #endif
 
 #if BX_X86_DEBUGGER //1601

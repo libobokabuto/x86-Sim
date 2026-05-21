@@ -5,18 +5,10 @@ E:\Study\codes\bochs\boch\boch\cpu.h(1,1): warning C4819: 该文件包含不能�
 E:\Study\codes\bochs\boch\boch\cpu.h(859,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
   (编译源文件“cpu.cc”)
   
-E:\Study\codes\bochs\boch\boch\cpu.h(3941,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+E:\Study\codes\bochs\boch\boch\cpu.h(3947,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
   (编译源文件“cpu.cc”)
   
-E:\Study\codes\bochs\boch\boch\cpu.h(4362,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
+E:\Study\codes\bochs\boch\boch\cpu.h(4367,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
   (编译源文件“cpu.cc”)
-  
-E:\Study\codes\bochs\boch\boch\cpu.cc(82,21): warning C4477: “printf”: 格式字符串“%05d”需要类型“int”的参数，但可变参数 1 拥有了类型“Bit64u”
-      E:\Study\codes\bochs\boch\boch\cpu.cc(82,21):
-      请考虑在格式字符串中使用“%lld”
-      E:\Study\codes\bochs\boch\boch\cpu.cc(82,21):
-      请考虑在格式字符串中使用“%Id”
-      E:\Study\codes\bochs\boch\boch\cpu.cc(82,21):
-      请考虑在格式字符串中使用“%I64d”
   
   boch.vcxproj -> E:\Study\codes\bochs\boch\x64\Debug\boch.exe

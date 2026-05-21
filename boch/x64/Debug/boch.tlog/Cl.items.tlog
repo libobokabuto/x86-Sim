@@ -42,6 +42,7 @@ E:\Study\codes\bochs\boch\boch\parallel.cc;E:\Study\codes\bochs\boch\boch\x64\De
 E:\Study\codes\bochs\boch\boch\paramtree.cc;E:\Study\codes\bochs\boch\boch\x64\Debug\paramtree.obj
 E:\Study\codes\bochs\boch\boch\pci.cc;E:\Study\codes\bochs\boch\boch\x64\Debug\pci.obj
 E:\Study\codes\bochs\boch\boch\pc_system.cc;E:\Study\codes\bochs\boch\boch\x64\Debug\pc_system.obj
+E:\Study\codes\bochs\boch\boch\pic.cc;E:\Study\codes\bochs\boch\boch\x64\Debug\pic.obj
 E:\Study\codes\bochs\boch\boch\plugin.cc;E:\Study\codes\bochs\boch\boch\x64\Debug\plugin.obj
 E:\Study\codes\bochs\boch\boch\proc_ctrl.cc;E:\Study\codes\bochs\boch\boch\x64\Debug\proc_ctrl.obj
 E:\Study\codes\bochs\boch\boch\scancodes.cc;E:\Study\codes\bochs\boch\boch\x64\Debug\scancodes.obj

@@ -3,12 +3,17 @@
 #include "bochs.h"
 #include "cpu.h"
 #include "iodev.h"
+#include "cpuid.h"
 #define LOG_THIS BX_CPU_THIS_PTR
 #if BX_SUPPORT_SVM
 #include "svm.h"
 #endif
 #include "scalar_arith.h"
 #include "ia_opcodes.h"
+
+#if BX_SUPPORT_APIC
+#include "apic.h"
+#endif
 
 void BX_CPP_AttrRegparmN(1) BX_CPU_C::JMP_Ap(bxInstruction_c* i)
 {
@@ -953,3 +958,170 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::ADD_GdEdR(bxInstruction_c* i)
 
     BX_NEXT_INSTR(i);
 }
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::MOV_CR0Rd(bxInstruction_c* i)
+{
+    // CPL is always 0 in real mode
+    if (/* !real_mode() && */ CPL != 0) {
+        //BX_ERROR(("%s: CPL!=0 not in real mode", i->getIaOpcodeNameShort()));
+        exception(BX_GP_EXCEPTION, 0);
+    }
+
+    invalidate_prefetch_q();
+
+    Bit32u val_32 = BX_READ_32BIT_REG(i->src());
+
+    if (i->dst() == 0) {
+        // CR0
+#if BX_SUPPORT_VMX
+        if (BX_CPU_THIS_PTR in_vmx_guest)
+            val_32 = (Bit32u)VMexit_CR0_Write(i, val_32);
+#endif
+        if (!SetCR0(i, val_32))
+            exception(BX_GP_EXCEPTION, 0);
+
+        BX_INSTR_TLB_CNTRL(BX_CPU_ID, BX_INSTR_MOV_CR0, val_32);
+    }
+#if BX_CPU_LEVEL >= 6
+    else {
+        // AMD feature: LOCK CR0 allows CR8 access even in 32-bit mode
+        WriteCR8(i, val_32);
+    }
+#endif
+
+    BX_NEXT_TRACE(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::MOV_RdCR0(bxInstruction_c* i)
+{
+    // CPL is always 0 in real mode
+    if (/* !real_mode() && */ CPL != 0) {
+        //BX_ERROR(("%s: CPL!=0 not in real mode", i->getIaOpcodeNameShort()));
+        exception(BX_GP_EXCEPTION, 0);
+    }
+
+    Bit32u val_32 = 0;
+
+    if (i->src() == 0) {
+        // CR0
+#if BX_SUPPORT_SVM
+        if (BX_CPU_THIS_PTR in_svm_guest) {
+            if (SVM_CR_READ_INTERCEPTED(0))
+                Svm_Vmexit(SVM_VMEXIT_CR0_READ, BX_SUPPORT_SVM_EXTENSION(BX_CPUID_SVM_DECODE_ASSIST) ? i->dst() : 0);
+        }
+#endif
+
+        val_32 = (Bit32u)read_CR0(); /* correctly handle VMX */
+    }
+#if BX_CPU_LEVEL >= 6
+    else {
+        // AMD feature: LOCK CR0 allows CR8 access even in 32-bit mode
+        val_32 = ReadCR8(i);
+    }
+#endif
+
+    BX_WRITE_32BIT_REGZ(i->dst(), val_32);
+
+    BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::OR_EbIbR(bxInstruction_c* i)
+{
+    Bit8u op1, op2 = i->Ib();
+
+    op1 = BX_READ_8BIT_REGx(i->dst(), i->extend8bitL());
+    op1 |= op2;
+    BX_WRITE_8BIT_REGx(i->dst(), i->extend8bitL(), op1);
+
+    SET_FLAGS_OSZAPC_LOGIC_8(op1);
+
+    BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::LGDT_Ms(bxInstruction_c* i)
+{
+    //BX_ASSERT(BX_CPU_THIS_PTR cpu_mode != BX_MODE_LONG_64);
+
+    // CPL is always 0 is real mode
+    if (/* !real_mode() && */ CPL != 0) {
+        //BX_ERROR(("LGDT: CPL != 0 causes #GP"));
+        exception(BX_GP_EXCEPTION, 0);
+    }
+
+#if BX_SUPPORT_VMX >= 2
+    if (BX_CPU_THIS_PTR in_vmx_guest)
+        if (BX_CPU_THIS_PTR vmcs.vmexec_ctrls2.DESCRIPTOR_TABLE_VMEXIT())
+            VMexit_Instruction(i, VMX_VMEXIT_GDTR_IDTR_ACCESS, BX_WRITE);
+#endif
+
+#if BX_SUPPORT_SVM
+    if (BX_CPU_THIS_PTR in_svm_guest) {
+        if (SVM_INTERCEPT(SVM_INTERCEPT0_GDTR_WRITE)) Svm_Vmexit(SVM_VMEXIT_GDTR_WRITE);
+    }
+#endif
+
+    Bit32u eaddr = (Bit32u)BX_CPU_RESOLVE_ADDR_32(i);
+
+    Bit16u limit_16 = read_virtual_word_32(i->seg(), eaddr);
+    Bit32u base_32 = read_virtual_dword_32(i->seg(), (eaddr + 2) & i->asize_mask());
+
+    if (i->os32L() == 0) base_32 &= 0x00ffffff; /* ignore upper 8 bits */
+
+    BX_CPU_THIS_PTR gdtr.limit = limit_16;
+    BX_CPU_THIS_PTR gdtr.base = base_32;
+
+    BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::LIDT_Ms(bxInstruction_c* i)
+{
+    //BX_ASSERT(BX_CPU_THIS_PTR cpu_mode != BX_MODE_LONG_64);
+
+    // CPL is always 0 is real mode
+    if (/* !real_mode() && */ CPL != 0) {
+        //BX_ERROR(("LIDT: CPL != 0 causes #GP"));
+        exception(BX_GP_EXCEPTION, 0);
+    }
+
+#if BX_SUPPORT_VMX >= 2
+    if (BX_CPU_THIS_PTR in_vmx_guest)
+        if (BX_CPU_THIS_PTR vmcs.vmexec_ctrls2.DESCRIPTOR_TABLE_VMEXIT())
+            VMexit_Instruction(i, VMX_VMEXIT_GDTR_IDTR_ACCESS, BX_WRITE);
+#endif
+
+#if BX_SUPPORT_SVM
+    if (BX_CPU_THIS_PTR in_svm_guest) {
+        if (SVM_INTERCEPT(SVM_INTERCEPT0_IDTR_WRITE)) Svm_Vmexit(SVM_VMEXIT_IDTR_WRITE);
+    }
+#endif
+
+    Bit32u eaddr = (Bit32u)BX_CPU_RESOLVE_ADDR_32(i);
+
+    Bit16u limit_16 = read_virtual_word_32(i->seg(), eaddr);
+    Bit32u base_32 = read_virtual_dword_32(i->seg(), (eaddr + 2) & i->asize_mask());
+
+    if (i->os32L() == 0) base_32 &= 0x00ffffff; /* ignore upper 8 bits */
+
+    BX_CPU_THIS_PTR idtr.limit = limit_16;
+    BX_CPU_THIS_PTR idtr.base = base_32;
+
+    BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::MOV_EdIdR(bxInstruction_c* i)
+{
+    BX_WRITE_32BIT_REGZ(i->dst(), i->Id());
+
+    BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::MOV_EdIdM(bxInstruction_c* i)
+{
+    bx_address eaddr = BX_CPU_RESOLVE_ADDR(i);
+    write_virtual_dword(i->seg(), eaddr, i->Id());
+
+    BX_NEXT_INSTR(i);
+}
+
+
+
