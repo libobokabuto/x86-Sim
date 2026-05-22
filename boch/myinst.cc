@@ -1769,6 +1769,27 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::NOP(bxInstruction_c* i)
     BX_NEXT_INSTR(i);
 }
 
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::LOAD_Ed(bxInstruction_c* i)
+{
+    bx_address eaddr = BX_CPU_RESOLVE_ADDR(i);
+    TMP32 = read_virtual_dword(i->seg(), eaddr);
+    BX_CPU_CALL_METHOD(i->execute2(), (i));
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::JMP_EdR(bxInstruction_c* i)
+{
+    Bit32u new_EIP = BX_READ_32BIT_REG(i->dst());
+    branch_near32(new_EIP);
+    BX_INSTR_UCNEAR_BRANCH(BX_CPU_ID, BX_INSTR_IS_JMP_INDIRECT, PREV_RIP, new_EIP);
+
+#if BX_SUPPORT_CET
+    track_indirect_if_not_suppressed(i, CPL);
+#endif
+
+    BX_NEXT_TRACE(i);
+}
+
+
 
 
 

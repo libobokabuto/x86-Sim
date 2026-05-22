@@ -1710,7 +1710,7 @@ public:
     BX_SMF void JMP32_Ep(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void JMP16_Ep(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
 
-    BX_SMF void JMP_EdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void JMP_EdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void JMP_EwR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
 
     BX_SMF void SLDT_Ew(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
@@ -1731,7 +1731,7 @@ public:
     // LOAD methods
     BX_SMF void LOAD_Eb(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void LOAD_Ew(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
-    BX_SMF void LOAD_Ed(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void LOAD_Ed(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
 #if BX_SUPPORT_X86_64
     BX_SMF void LOAD_Eq(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
 #endif
