@@ -50,7 +50,7 @@ void BX_CPU_C::cpu_loop(void)
             BX_CPU_THIS_PTR prev_rip = RIP; // commit new RIP
             BX_INSTR_AFTER_EXECUTION(BX_CPU_ID, i);
             BX_CPU_THIS_PTR icount++;
-            if (BX_CPU_THIS_PTR icount == 326664)
+            if (BX_CPU_THIS_PTR icount == 326984)
             {
                   int qwq = 0;
             }
@@ -119,12 +119,13 @@ void BX_CPU_C::cpu_loop(void)
                     printf("%02x", raw_md5[j]);
                 }
 
+#if 0
                 printf(" NORTC=");
 
                 for (int j = 0; j < 16; j++) {
                     printf("%02x", nortc_md5[j]);
                 }
-
+#endif
 #if BX_SUPPORT_X86_64
                 printf(
                     " RAX=%016llx AL=%02x",
@@ -329,3 +330,4 @@ void BX_CPU_C::prefetch(void)
 
     }
 }
+

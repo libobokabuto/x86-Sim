@@ -676,7 +676,6 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::STOSD32_YdEAX(bxInstruction_c* i)
 }
 
 #if BX_SUPPORT_X86_64
-
 /* 32 bit opsize mode, 32 bit address size */
 void BX_CPP_AttrRegparmN(1) BX_CPU_C::STOSD64_YdEAX(bxInstruction_c* i)
 {
@@ -1171,6 +1170,19 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::SUB_GdEdR(bxInstruction_c* i)
     BX_NEXT_INSTR(i);
 }
 
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::CMP_GdEdR(bxInstruction_c* i)
+{
+    Bit32u op1_32, op2_32, diff_32;
+
+    op1_32 = BX_READ_32BIT_REG(i->dst());
+    op2_32 = BX_READ_32BIT_REG(i->src());
+    diff_32 = op1_32 - op2_32;
+
+    SET_FLAGS_OSZAPC_SUB_32(op1_32, op2_32, diff_32);
+
+    BX_NEXT_INSTR(i);
+}
+
 void BX_CPP_AttrRegparmN(1) BX_CPU_C::REP_STOSB_YbAL(bxInstruction_c* i)
 {
 #if BX_SUPPORT_X86_64
@@ -1410,6 +1422,353 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::JMP_Jd(bxInstruction_c* i)
 
     BX_LINK_TRACE(i);
 }
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::PUSH_EdR(bxInstruction_c* i)
+{
+    push_32(BX_READ_32BIT_REG(i->dst()));
+
+    BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::SUB_EdIdR(bxInstruction_c* i)
+{
+    Bit32u op1_32, op2_32 = i->Id(), diff_32;
+
+    op1_32 = BX_READ_32BIT_REG(i->dst());
+    diff_32 = op1_32 - op2_32;
+    BX_WRITE_32BIT_REGZ(i->dst(), diff_32);
+
+    SET_FLAGS_OSZAPC_SUB_32(op1_32, op2_32, diff_32);
+
+    BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::MOV32S_GdEdM(bxInstruction_c* i)
+{
+    Bit32u eaddr = (Bit32u)BX_CPU_RESOLVE_ADDR_32(i);
+    Bit32u val32 = stack_read_dword(eaddr);
+
+    BX_WRITE_32BIT_REGZ(i->dst(), val32);
+
+    BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::PUSH_Id(bxInstruction_c* i)
+{
+    push_32(i->Id());
+
+    BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::CALL_Jd(bxInstruction_c* i)
+{
+#if BX_DEBUGGER
+    BX_CPU_THIS_PTR show_flag |= Flag_call;
+#endif
+
+    RSP_SPECULATIVE;
+
+    /* push 32 bit EA of next instruction */
+    push_32(EIP);
+#if BX_SUPPORT_CET
+    if (ShadowStackEnabled(CPL) && i->Id())
+        shadow_stack_push_32(EIP);
+#endif
+
+    Bit32u new_EIP = EIP + i->Id();
+    branch_near32(new_EIP);
+
+    RSP_COMMIT;
+
+    BX_INSTR_UCNEAR_BRANCH(BX_CPU_ID, BX_INSTR_IS_CALL, PREV_RIP, EIP);
+
+    BX_LINK_TRACE(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::AND_EdIdR(bxInstruction_c* i)
+{
+    Bit32u op1_32 = BX_READ_32BIT_REG(i->dst());
+    op1_32 &= i->Id();
+    BX_WRITE_32BIT_REGZ(i->dst(), op1_32);
+
+    SET_FLAGS_OSZAPC_LOGIC_32(op1_32);
+
+    BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::CMP_EdIdR(bxInstruction_c* i)
+{
+    Bit32u op1_32, op2_32, diff_32;
+
+    op1_32 = BX_READ_32BIT_REG(i->dst());
+    op2_32 = i->Id();
+    diff_32 = op1_32 - op2_32;
+
+    SET_FLAGS_OSZAPC_SUB_32(op1_32, op2_32, diff_32);
+
+    BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::JNZ_Jd(bxInstruction_c* i)
+{
+    if (!get_ZF()) {
+        Bit32u new_EIP = EIP + (Bit32s)i->Id();
+        branch_near32(new_EIP);
+        BX_INSTR_CNEAR_BRANCH_TAKEN(BX_CPU_ID, PREV_RIP, new_EIP);
+        BX_LINK_TRACE(i);
+    }
+
+    BX_INSTR_CNEAR_BRANCH_NOT_TAKEN(BX_CPU_ID, PREV_RIP);
+    BX_NEXT_INSTR(i); // trace can continue over non-taken branch
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::LEA_GdM(bxInstruction_c* i)
+{
+    Bit32u eaddr = (Bit32u)BX_CPU_RESOLVE_ADDR(i);
+
+    BX_WRITE_32BIT_REGZ(i->dst(), eaddr);
+
+    BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::PUSH_EdM(bxInstruction_c* i)
+{
+    Bit32u eaddr = (Bit32u)BX_CPU_RESOLVE_ADDR_32(i);
+
+    Bit32u op1_32 = read_virtual_dword_32(i->seg(), eaddr);
+
+    push_32(op1_32);
+
+    BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::DEC_EdR(bxInstruction_c* i)
+{
+    Bit32u erx = --BX_READ_32BIT_REG(i->dst());
+    SET_FLAGS_OSZAP_SUB_32(erx + 1, 0, erx);
+    BX_CLEAR_64BIT_HIGH(i->dst());
+
+    BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::MOV32S_EdGdM(bxInstruction_c* i)
+{
+    Bit32u eaddr = (Bit32u)BX_CPU_RESOLVE_ADDR_32(i);
+
+    stack_write_dword(eaddr, BX_READ_32BIT_REG(i->src()));
+
+    BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::TEST_EdGdR(bxInstruction_c* i)
+{
+    Bit32u op1_32, op2_32;
+
+    op1_32 = BX_READ_32BIT_REG(i->dst());
+    op2_32 = BX_READ_32BIT_REG(i->src());
+    op1_32 &= op2_32;
+
+    SET_FLAGS_OSZAPC_LOGIC_32(op1_32);
+
+    BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::JLE_Jd(bxInstruction_c* i)
+{
+    if (get_ZF() || (getB_SF() != getB_OF())) {
+        Bit32u new_EIP = EIP + (Bit32s)i->Id();
+        branch_near32(new_EIP);
+        BX_INSTR_CNEAR_BRANCH_TAKEN(BX_CPU_ID, PREV_RIP, new_EIP);
+        BX_LINK_TRACE(i);
+    }
+
+    BX_INSTR_CNEAR_BRANCH_NOT_TAKEN(BX_CPU_ID, PREV_RIP);
+    BX_NEXT_INSTR(i); // trace can continue over non-taken branch
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::JZ_Jd(bxInstruction_c* i)
+{
+    if (get_ZF()) {
+        Bit32u new_EIP = EIP + (Bit32s)i->Id();
+        branch_near32(new_EIP);
+        BX_INSTR_CNEAR_BRANCH_TAKEN(BX_CPU_ID, PREV_RIP, new_EIP);
+        BX_LINK_TRACE(i);
+    }
+
+    BX_INSTR_CNEAR_BRANCH_NOT_TAKEN(BX_CPU_ID, PREV_RIP);
+    BX_NEXT_INSTR(i); // trace can continue over non-taken branch
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::MUL_EAXEdR(bxInstruction_c* i)
+{
+    Bit32u op1_32 = EAX;
+    Bit32u op2_32 = BX_READ_32BIT_REG(i->src());
+
+    Bit64u product_64 = ((Bit64u)op1_32) * ((Bit64u)op2_32);
+    Bit32u product_32l = GET32L(product_64);
+    Bit32u product_32h = GET32H(product_64);
+
+    /* now write product back to destination */
+    RAX = product_32l;
+    RDX = product_32h;
+
+    /* set EFLAGS */
+    SET_FLAGS_OSZAPC_LOGIC_32(product_32l);
+    if (product_32h != 0)
+    {
+        BX_CPU_THIS_PTR oszapc.assert_flags_OxxxxC();
+    }
+
+    BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::MOV32_EdGdM(bxInstruction_c* i)
+{
+    Bit32u eaddr = (Bit32u)BX_CPU_RESOLVE_ADDR_32(i);
+
+    write_virtual_dword_32(i->seg(), eaddr, BX_READ_32BIT_REG(i->src()));
+
+    BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::MOV_OdAL(bxInstruction_c* i)
+{
+    write_virtual_byte_32(i->seg(), i->Id(), AL);
+
+    BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::JNBE_Jd(bxInstruction_c* i)
+{
+    if (!(get_CF() || get_ZF())) {
+        Bit32u new_EIP = EIP + (Bit32s)i->Id();
+        branch_near32(new_EIP);
+        BX_INSTR_CNEAR_BRANCH_TAKEN(BX_CPU_ID, PREV_RIP, new_EIP);
+        BX_LINK_TRACE(i);
+    }
+
+    BX_INSTR_CNEAR_BRANCH_NOT_TAKEN(BX_CPU_ID, PREV_RIP);
+    BX_NEXT_INSTR(i); // trace can continue over non-taken branch
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::INC_EdR(bxInstruction_c* i)
+{
+    Bit32u erx = ++BX_READ_32BIT_REG(i->dst());
+    SET_FLAGS_OSZAP_ADD_32(erx - 1, 0, erx);
+    BX_CLEAR_64BIT_HIGH(i->dst());
+
+    BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::CMP_EbIbM(bxInstruction_c* i)
+{
+    bx_address eaddr = BX_CPU_RESOLVE_ADDR(i);
+
+    Bit32u op1_8 = read_virtual_byte(i->seg(), eaddr);
+    Bit32u op2_8 = i->Ib();
+    Bit32u diff_8 = op1_8 - op2_8;
+
+    SET_FLAGS_OSZAPC_SUB_8(op1_8, op2_8, diff_8);
+
+    BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::SUB_GdEdM(bxInstruction_c* i)
+{
+    Bit32u op1_32, op2_32, diff_32;
+
+    bx_address eaddr = BX_CPU_RESOLVE_ADDR(i);
+
+    op1_32 = BX_READ_32BIT_REG(i->dst());
+    op2_32 = read_virtual_dword(i->seg(), eaddr);
+    diff_32 = op1_32 - op2_32;
+    BX_WRITE_32BIT_REGZ(i->dst(), diff_32);
+
+    SET_FLAGS_OSZAPC_SUB_32(op1_32, op2_32, diff_32);
+
+    BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::ADD_EdIdR(bxInstruction_c* i)
+{
+    Bit32u op1_32, op2_32, sum_32;
+
+    op1_32 = BX_READ_32BIT_REG(i->dst());
+    op2_32 = i->Id();
+    sum_32 = op1_32 + op2_32;
+
+    BX_WRITE_32BIT_REGZ(i->dst(), sum_32);
+
+    SET_FLAGS_OSZAPC_ADD_32(op1_32, op2_32, sum_32);
+
+    BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::POP_EdR(bxInstruction_c* i)
+{
+    BX_WRITE_32BIT_REGZ(i->dst(), pop_32());
+
+    BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::RETnear32_Iw(bxInstruction_c* i)
+{
+    //BX_ASSERT(BX_CPU_THIS_PTR cpu_mode != BX_MODE_LONG_64);
+
+#if BX_DEBUGGER
+    BX_CPU_THIS_PTR show_flag |= Flag_ret;
+#endif
+
+    RSP_SPECULATIVE;
+
+    Bit32u return_EIP = pop_32();
+#if BX_SUPPORT_CET
+    if (ShadowStackEnabled(CPL)) {
+        Bit32u shadow_EIP = shadow_stack_pop_32();
+        if (shadow_EIP != return_EIP)
+            exception(BX_CP_EXCEPTION, BX_CP_NEAR_RET);
+    }
+#endif
+
+    if (return_EIP > BX_CPU_THIS_PTR sregs[BX_SEG_REG_CS].cache.u.segment.limit_scaled)
+    {
+        //BX_ERROR(("%s: offset outside of CS limits", i->getIaOpcodeNameShort()));
+        exception(BX_GP_EXCEPTION, 0);
+    }
+    EIP = return_EIP;
+
+    Bit16u imm16 = i->Iw();
+    if (BX_CPU_THIS_PTR sregs[BX_SEG_REG_SS].cache.u.segment.d_b)
+        ESP += imm16;
+    else
+        SP += imm16;
+
+    RSP_COMMIT;
+
+    BX_INSTR_UCNEAR_BRANCH(BX_CPU_ID, BX_INSTR_IS_RET, PREV_RIP, EIP);
+
+    BX_NEXT_TRACE(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::MOVSX_GdEbM(bxInstruction_c* i)
+{
+    bx_address eaddr = BX_CPU_RESOLVE_ADDR(i);
+
+    Bit8u op2_8 = read_virtual_byte(i->seg(), eaddr);
+
+    /* sign extend byte op2 into dword op1 */
+    BX_WRITE_32BIT_REGZ(i->dst(), (Bit8s)op2_8);
+
+    BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::NOP(bxInstruction_c* i)
+{
+    // No operation.
+
+    BX_NEXT_INSTR(i);
+}
+
 
 
 

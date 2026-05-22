@@ -113,7 +113,8 @@ void bx_cmos_c::init(void)
     time_t tmptime;
     struct tm* tmptm;
 
-    tmptime = time(NULL);
+    static const time_t FIXED_RTC_TIME0 = 946684800;
+    tmptime = FIXED_RTC_TIME0;
     tmptm = localtime(&tmptime);
     BX_CMOS_THIS s.timeval = timeutc(pushtm(tmptm));
 

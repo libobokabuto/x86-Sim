@@ -1,6 +1,7 @@
 E:\Study\codes\bochs\boch\boch\access.cc;E:\Study\codes\bochs\boch\boch\x64\Debug\access.obj
 E:\Study\codes\bochs\boch\boch\access2.cc;E:\Study\codes\bochs\boch\boch\x64\Debug\access2.obj
 E:\Study\codes\bochs\boch\boch\apic.cc;E:\Study\codes\bochs\boch\boch\x64\Debug\apic.obj
+E:\Study\codes\bochs\boch\boch\biosdev.cc;E:\Study\codes\bochs\boch\boch\x64\Debug\biosdev.obj
 E:\Study\codes\bochs\boch\boch\call_far.cc;E:\Study\codes\bochs\boch\boch\x64\Debug\call_far.obj
 E:\Study\codes\bochs\boch\boch\cet.cc;E:\Study\codes\bochs\boch\boch\x64\Debug\cet.obj
 E:\Study\codes\bochs\boch\boch\coms.cc;E:\Study\codes\bochs\boch\boch\x64\Debug\coms.obj

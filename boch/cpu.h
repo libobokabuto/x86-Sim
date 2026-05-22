@@ -1110,7 +1110,7 @@ public:
     BX_SMF void POPA32(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void POPA16(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void ARPL_EwGw(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
-    BX_SMF void PUSH_Id(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void PUSH_Id(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void PUSH_Iw(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
 
     BX_SMF void INSB32_YbDX(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
@@ -1138,7 +1138,7 @@ public:
 
     BX_SMF void TEST_EbGbR(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void TEST_EwGwR(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
-    BX_SMF void TEST_EdGdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void TEST_EdGdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
 
     BX_SMF void TEST_EbGbM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void TEST_EwGwM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
@@ -1161,16 +1161,16 @@ public:
     BX_SMF void MOV_GwEwR(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
 
     BX_SMF void MOV32_GdEdM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
-    BX_SMF void MOV32_EdGdM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void MOV32_EdGdM(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
 
-    BX_SMF void MOV32S_GdEdM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
-    BX_SMF void MOV32S_EdGdM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void MOV32S_GdEdM(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
+    BX_SMF void MOV32S_EdGdM(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
 
     BX_SMF void MOV_EwSwM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void MOV_EwSwR(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void MOV_SwEw(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
 
-    BX_SMF void LEA_GdM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void LEA_GdM(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void LEA_GwM(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
 
     BX_SMF void CBW(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
@@ -1187,7 +1187,7 @@ public:
     BX_SMF void MOV_ALOd(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void MOV_EAXOd(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void MOV_AXOd(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
-    BX_SMF void MOV_OdAL(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void MOV_OdAL(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void MOV_OdEAX(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void MOV_OdAX(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
 
@@ -1278,7 +1278,7 @@ public:
     BX_SMF void OUT_IbAX(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void OUT_IbEAX(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void CALL_Jw(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
-    BX_SMF void CALL_Jd(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void CALL_Jd(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void JMP_Jd(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void JMP_Jw(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void JMP_Ap(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
@@ -1338,17 +1338,17 @@ public:
     BX_SMF void JNO_Jd(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void JB_Jd(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void JNB_Jd(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
-    BX_SMF void JZ_Jd(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
-    BX_SMF void JNZ_Jd(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void JZ_Jd(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
+    BX_SMF void JNZ_Jd(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void JBE_Jd(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
-    BX_SMF void JNBE_Jd(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void JNBE_Jd(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void JS_Jd(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void JNS_Jd(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void JP_Jd(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void JNP_Jd(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void JL_Jd(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void JNL_Jd(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
-    BX_SMF void JLE_Jd(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void JLE_Jd(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void JNLE_Jd(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
 
     BX_SMF void SETO_EbR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
@@ -1452,7 +1452,7 @@ public:
     BX_SMF void MOVZX_GdEbM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void MOVZX_GdEwM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void MOVSX_GwEbM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
-    BX_SMF void MOVSX_GdEbM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void MOVSX_GdEbM(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void MOVSX_GdEwM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
 
     BX_SMF void MOVZX_GwEbR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
@@ -1493,7 +1493,7 @@ public:
     BX_SMF void AND_EbIbM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void SUB_EbIbM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void XOR_EbIbM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
-    BX_SMF void CMP_EbIbM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void CMP_EbIbM(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
 
     BX_SMF void ADD_EbIbR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void OR_EbIbR(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
@@ -1540,14 +1540,14 @@ public:
     BX_SMF void XOR_EdIdM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void CMP_EdIdM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
 
-    BX_SMF void ADD_EdIdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void ADD_EdIdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void OR_EdIdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void ADC_EdIdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void SBB_EdIdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
-    BX_SMF void AND_EdIdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
-    BX_SMF void SUB_EdIdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void AND_EdIdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
+    BX_SMF void SUB_EdIdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void XOR_EdIdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
-    BX_SMF void CMP_EdIdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void CMP_EdIdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
 
     BX_SMF void ADD_EwGwM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void OR_EwGwM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
@@ -1591,7 +1591,7 @@ public:
     BX_SMF void SBB_GdEdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void AND_GdEdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void SUB_GdEdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
-    BX_SMF void CMP_GdEdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void CMP_GdEdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void XOR_GdEdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
 
     BX_SMF void ADD_GdEdM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
@@ -1599,7 +1599,7 @@ public:
     BX_SMF void ADC_GdEdM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void SBB_GdEdM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void AND_GdEdM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
-    BX_SMF void SUB_GdEdM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void SUB_GdEdM(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void CMP_GdEdM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void XOR_GdEdM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
 
@@ -1683,17 +1683,17 @@ public:
     BX_SMF void DIV_ALEbR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void IDIV_ALEbR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
 
-    BX_SMF void MUL_EAXEdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void MUL_EAXEdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void IMUL_EAXEdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void DIV_EAXEdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void IDIV_EAXEdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
 
     BX_SMF void INC_EbR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void INC_EwR(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
-    BX_SMF void INC_EdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void INC_EdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void DEC_EbR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void DEC_EwR(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
-    BX_SMF void DEC_EdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void DEC_EdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
 
     BX_SMF void INC_EbM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void INC_EwM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
@@ -3611,7 +3611,7 @@ public:
     /* SSE4A */
 
     BX_SMF void CMPXCHG8B(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
-    BX_SMF void RETnear32_Iw(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void RETnear32_Iw(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void RETnear16_Iw(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void RETfar32_Iw(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void RETfar16_Iw(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
@@ -3676,7 +3676,7 @@ public:
     BX_SMF void IMUL_GwEwIwR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void IMUL_GwEwR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
 
-    BX_SMF void NOP(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void NOP(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void PAUSE(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void MOV_EbIbR(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void MOV_EwIwR(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
@@ -3684,12 +3684,12 @@ public:
 
     BX_SMF void PUSH_EwR(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void PUSH_EwM(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
-    BX_SMF void PUSH_EdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
-    BX_SMF void PUSH_EdM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void PUSH_EdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
+    BX_SMF void PUSH_EdM(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
 
     BX_SMF void POP_EwR(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void POP_EwM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
-    BX_SMF void POP_EdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void POP_EdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void POP_EdM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
 
     BX_SMF void POPCNT_GwEwR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }

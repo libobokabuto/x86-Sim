@@ -207,6 +207,9 @@
     <ClCompile Include="pic.cc">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="biosdev.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bochs.h">
@@ -381,6 +384,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="pic.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="biosdev.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

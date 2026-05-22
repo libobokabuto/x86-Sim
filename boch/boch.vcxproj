@@ -130,6 +130,7 @@
     <ClCompile Include="access.cc" />
     <ClCompile Include="access2.cc" />
     <ClCompile Include="apic.cc" />
+    <ClCompile Include="biosdev.cc" />
     <ClCompile Include="call_far.cc" />
     <ClCompile Include="cet.cc" />
     <ClCompile Include="coms.cc" />
@@ -204,6 +205,7 @@
   <ItemGroup>
     <ClInclude Include="access.h" />
     <ClInclude Include="apic.h" />
+    <ClInclude Include="biosdev.h" />
     <ClInclude Include="bochs.h" />
     <ClInclude Include="bswap.h" />
     <ClInclude Include="cmos.h" />

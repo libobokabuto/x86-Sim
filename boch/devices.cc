@@ -115,6 +115,8 @@ void bx_devices_c::init(BX_MEM_C* newmem)
 
     PLUG_load_plugin(serial, PLUGTYPE_OPTIONAL);//Í¬parallelÒ»Ñù
 
+    PLUG_load_plugin(biosdev, PLUGTYPE_OPTIONAL);
+
     bx_init_plugins(); //354
     DEV_cmos_checksum();//357
 }
