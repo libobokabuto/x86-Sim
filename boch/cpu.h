@@ -1160,7 +1160,7 @@ public:
     BX_SMF void MOV_GwEwM(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void MOV_GwEwR(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
 
-    BX_SMF void MOV32_GdEdM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void MOV32_GdEdM(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void MOV32_EdGdM(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
 
     BX_SMF void MOV32S_GdEdM(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
@@ -1177,10 +1177,10 @@ public:
     BX_SMF void CWD(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void CALL32_Ap(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void CALL16_Ap(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
-    BX_SMF void PUSHF_Fw(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
-    BX_SMF void POPF_Fw(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
-    BX_SMF void PUSHF_Fd(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
-    BX_SMF void POPF_Fd(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void PUSHF_Fw(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
+    BX_SMF void POPF_Fw(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
+    BX_SMF void PUSHF_Fd(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
+    BX_SMF void POPF_Fd(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void SAHF(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void LAHF(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
 
@@ -1349,7 +1349,7 @@ public:
     BX_SMF void JL_Jd(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void JNL_Jd(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void JLE_Jd(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
-    BX_SMF void JNLE_Jd(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void JNLE_Jd(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
 
     BX_SMF void SETO_EbR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void SETNO_EbR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
@@ -1563,7 +1563,7 @@ public:
     BX_SMF void ADC_EdGdM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void SBB_EdGdM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void AND_EdGdM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
-    BX_SMF void SUB_EdGdM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void SUB_EdGdM(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void XOR_EdGdM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void CMP_EdGdM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
 
@@ -4138,28 +4138,109 @@ public:
     BX_SMF Bit32u read_linear_dword(unsigned seg, bx_address offset) BX_CPP_AttrRegparmN(2);
     BX_SMF Bit64u read_linear_qword(unsigned seg, bx_address offset) BX_CPP_AttrRegparmN(2);
 
+#if BX_CPU_LEVEL >= 6
+    BX_SMF void read_linear_xmmword(unsigned seg, bx_address off, BxPackedXmmRegister* data) BX_CPP_AttrRegparmN(3);
+    BX_SMF void read_linear_xmmword_aligned(unsigned seg, bx_address off, BxPackedXmmRegister* data) BX_CPP_AttrRegparmN(3);
+    BX_SMF void read_linear_ymmword(unsigned seg, bx_address off, BxPackedYmmRegister* data) BX_CPP_AttrRegparmN(3);
+    BX_SMF void read_linear_ymmword_aligned(unsigned seg, bx_address off, BxPackedYmmRegister* data) BX_CPP_AttrRegparmN(3);
+    BX_SMF void read_linear_zmmword(unsigned seg, bx_address off, BxPackedZmmRegister* data) BX_CPP_AttrRegparmN(3);
+    BX_SMF void read_linear_zmmword_aligned(unsigned seg, bx_address off, BxPackedZmmRegister* data) BX_CPP_AttrRegparmN(3);
+#endif
+
     BX_SMF void write_linear_byte(unsigned seg, bx_address offset, Bit8u data) BX_CPP_AttrRegparmN(3); //4530
     BX_SMF void write_linear_word(unsigned seg, bx_address offset, Bit16u data) BX_CPP_AttrRegparmN(3); //4531
     BX_SMF void write_linear_dword(unsigned seg, bx_address offset, Bit32u data) BX_CPP_AttrRegparmN(3); //4532
     BX_SMF void write_linear_qword(unsigned seg, bx_address offset, Bit64u data) BX_CPP_AttrRegparmN(3);
 
+#if BX_CPU_LEVEL >= 6
+    BX_SMF void write_linear_xmmword(unsigned seg, bx_address offset, const BxPackedXmmRegister* data) BX_CPP_AttrRegparmN(3);
+    BX_SMF void write_linear_xmmword_aligned(unsigned seg, bx_address offset, const BxPackedXmmRegister* data) BX_CPP_AttrRegparmN(3);
+    BX_SMF void write_linear_ymmword(unsigned seg, bx_address off, const BxPackedYmmRegister* data) BX_CPP_AttrRegparmN(3);
+    BX_SMF void write_linear_ymmword_aligned(unsigned seg, bx_address off, const BxPackedYmmRegister* data) BX_CPP_AttrRegparmN(3);
+    BX_SMF void write_linear_zmmword(unsigned seg, bx_address off, const BxPackedZmmRegister* data) BX_CPP_AttrRegparmN(3);
+    BX_SMF void write_linear_zmmword_aligned(unsigned seg, bx_address off, const BxPackedZmmRegister* data) BX_CPP_AttrRegparmN(3);
+#endif
+
     BX_SMF Bit8u read_virtual_byte_32(unsigned seg, Bit32u offset) BX_CPP_AttrRegparmN(2);
     BX_SMF Bit16u read_virtual_word_32(unsigned seg, Bit32u offset) BX_CPP_AttrRegparmN(2);//4548
     BX_SMF Bit32u read_virtual_dword_32(unsigned seg, Bit32u offset) BX_CPP_AttrRegparmN(2);
+    BX_SMF Bit64u read_virtual_qword_32(unsigned seg, Bit32u offset) BX_CPP_AttrRegparmN(2);
+
+#if BX_CPU_LEVEL >= 6
+    BX_SMF void read_virtual_xmmword_32(unsigned seg, Bit32u off, BxPackedXmmRegister* data) BX_CPP_AttrRegparmN(3);
+    BX_SMF void read_virtual_xmmword_aligned_32(unsigned seg, Bit32u off, BxPackedXmmRegister* data) BX_CPP_AttrRegparmN(3);
+    BX_SMF void read_virtual_ymmword_32(unsigned seg, Bit32u off, BxPackedYmmRegister* data) BX_CPP_AttrRegparmN(3);
+    BX_SMF void read_virtual_ymmword_aligned_32(unsigned seg, Bit32u off, BxPackedYmmRegister* data) BX_CPP_AttrRegparmN(3);
+    BX_SMF void read_virtual_zmmword_32(unsigned seg, Bit32u off, BxPackedZmmRegister* data) BX_CPP_AttrRegparmN(3);
+    BX_SMF void read_virtual_zmmword_aligned_32(unsigned seg, Bit32u off, BxPackedZmmRegister* data) BX_CPP_AttrRegparmN(3);
+#endif
 
     BX_SMF void write_virtual_byte_32(unsigned seg, Bit32u offset, Bit8u data) BX_CPP_AttrRegparmN(3);//4560
     BX_SMF void write_virtual_word_32(unsigned seg, Bit32u offset, Bit16u data) BX_CPP_AttrRegparmN(3); //4561
     BX_SMF void write_virtual_dword_32(unsigned seg, Bit32u offset, Bit32u data) BX_CPP_AttrRegparmN(3); //4562
+    BX_SMF void write_virtual_qword_32(unsigned seg, Bit32u offset, Bit64u data) BX_CPP_AttrRegparmN(3);
+
+#if BX_CPU_LEVEL >= 6
+    BX_SMF void write_virtual_xmmword_32(unsigned seg, Bit32u offset, const BxPackedXmmRegister* data) BX_CPP_AttrRegparmN(3);
+    BX_SMF void write_virtual_xmmword_aligned_32(unsigned seg, Bit32u offset, const BxPackedXmmRegister* data) BX_CPP_AttrRegparmN(3);
+    BX_SMF void write_virtual_ymmword_32(unsigned seg, Bit32u off, const BxPackedYmmRegister* data) BX_CPP_AttrRegparmN(3);
+    BX_SMF void write_virtual_ymmword_aligned_32(unsigned seg, Bit32u off, const BxPackedYmmRegister* data) BX_CPP_AttrRegparmN(3);
+    BX_SMF void write_virtual_zmmword_32(unsigned seg, Bit32u off, const BxPackedZmmRegister* data) BX_CPP_AttrRegparmN(3);
+    BX_SMF void write_virtual_zmmword_aligned_32(unsigned seg, Bit32u off, const BxPackedZmmRegister* data) BX_CPP_AttrRegparmN(3);
+#endif
 
     BX_SMF Bit8u read_virtual_byte(unsigned seg, bx_address offset) BX_CPP_AttrRegparmN(2); //4573
     BX_SMF Bit16u read_virtual_word(unsigned seg, bx_address offset) BX_CPP_AttrRegparmN(2); //4574
     BX_SMF Bit32u read_virtual_dword(unsigned seg, bx_address offset) BX_CPP_AttrRegparmN(2);
     BX_SMF Bit64u read_virtual_qword(unsigned seg, bx_address offset) BX_CPP_AttrRegparmN(2);
 
+#if BX_CPU_LEVEL >= 6
+    BX_SMF void read_virtual_xmmword(unsigned seg, bx_address off, BxPackedXmmRegister* data) BX_CPP_AttrRegparmN(3);
+    BX_SMF void read_virtual_xmmword_aligned(unsigned seg, bx_address off, BxPackedXmmRegister* data) BX_CPP_AttrRegparmN(3);
+    BX_SMF void read_virtual_ymmword(unsigned seg, bx_address off, BxPackedYmmRegister* data) BX_CPP_AttrRegparmN(3);
+    BX_SMF void read_virtual_ymmword_aligned(unsigned seg, bx_address off, BxPackedYmmRegister* data) BX_CPP_AttrRegparmN(3);
+    BX_SMF void read_virtual_zmmword(unsigned seg, bx_address off, BxPackedZmmRegister* data) BX_CPP_AttrRegparmN(3);
+    BX_SMF void read_virtual_zmmword_aligned(unsigned seg, bx_address off, BxPackedZmmRegister* data) BX_CPP_AttrRegparmN(3);
+#endif
+
     BX_SMF void write_virtual_byte(unsigned seg, bx_address offset, Bit8u data) BX_CPP_AttrRegparmN(3); //4586
     BX_SMF void write_virtual_word(unsigned seg, bx_address offset, Bit16u data) BX_CPP_AttrRegparmN(3); //4587
     BX_SMF void write_virtual_dword(unsigned seg, bx_address offset, Bit32u data) BX_CPP_AttrRegparmN(3); //4588
     BX_SMF void write_virtual_qword(unsigned seg, bx_address offset, Bit64u data) BX_CPP_AttrRegparmN(3);
+
+#if BX_CPU_LEVEL >= 6
+    BX_SMF void write_virtual_xmmword(unsigned seg, bx_address offset, const BxPackedXmmRegister* data) BX_CPP_AttrRegparmN(3);
+    BX_SMF void write_virtual_xmmword_aligned(unsigned seg, bx_address offset, const BxPackedXmmRegister* data) BX_CPP_AttrRegparmN(3);
+    BX_SMF void write_virtual_ymmword(unsigned seg, bx_address off, const BxPackedYmmRegister* data) BX_CPP_AttrRegparmN(3);
+    BX_SMF void write_virtual_ymmword_aligned(unsigned seg, bx_address off, const BxPackedYmmRegister* data) BX_CPP_AttrRegparmN(3);
+    BX_SMF void write_virtual_zmmword(unsigned seg, bx_address off, const BxPackedZmmRegister* data) BX_CPP_AttrRegparmN(3);
+    BX_SMF void write_virtual_zmmword_aligned(unsigned seg, bx_address off, const BxPackedZmmRegister* data) BX_CPP_AttrRegparmN(3);
+#endif
+
+    BX_SMF Bit8u read_RMW_linear_byte(unsigned seg, bx_address offset) BX_CPP_AttrRegparmN(2);
+    BX_SMF Bit16u read_RMW_linear_word(unsigned seg, bx_address offset) BX_CPP_AttrRegparmN(2);
+    BX_SMF Bit32u read_RMW_linear_dword(unsigned seg, bx_address offset) BX_CPP_AttrRegparmN(2);
+    BX_SMF Bit64u read_RMW_linear_qword(unsigned seg, bx_address offset) BX_CPP_AttrRegparmN(2);
+
+    BX_SMF Bit8u read_RMW_virtual_byte_32(unsigned seg, Bit32u offset) BX_CPP_AttrRegparmN(2);
+    BX_SMF Bit16u read_RMW_virtual_word_32(unsigned seg, Bit32u offset) BX_CPP_AttrRegparmN(2);
+    BX_SMF Bit32u read_RMW_virtual_dword_32(unsigned seg, Bit32u offset) BX_CPP_AttrRegparmN(2);
+    BX_SMF Bit64u read_RMW_virtual_qword_32(unsigned seg, Bit32u offset) BX_CPP_AttrRegparmN(2);
+
+    BX_SMF Bit8u read_RMW_virtual_byte(unsigned seg, bx_address offset) BX_CPP_AttrRegparmN(2);
+    BX_SMF Bit16u read_RMW_virtual_word(unsigned seg, bx_address offset) BX_CPP_AttrRegparmN(2);
+    BX_SMF Bit32u read_RMW_virtual_dword(unsigned seg, bx_address offset) BX_CPP_AttrRegparmN(2);
+    BX_SMF Bit64u read_RMW_virtual_qword(unsigned seg, bx_address offset) BX_CPP_AttrRegparmN(2);
+    
+    BX_SMF void write_RMW_linear_byte(Bit8u val8) BX_CPP_AttrRegparmN(1);
+    BX_SMF void write_RMW_linear_word(Bit16u val16) BX_CPP_AttrRegparmN(1);
+    BX_SMF void write_RMW_linear_dword(Bit32u val32) BX_CPP_AttrRegparmN(1);
+    BX_SMF void write_RMW_linear_qword(Bit64u val64) BX_CPP_AttrRegparmN(1);
+
+#if BX_SUPPORT_X86_64
+    BX_SMF void read_RMW_linear_dqword_aligned_64(unsigned seg, bx_address laddr, Bit64u* hi, Bit64u* lo);
+    BX_SMF void write_RMW_linear_dqword(Bit64u hi, Bit64u lo);
+#endif
 
 	BX_SMF bxICacheEntry_c* getICacheEntry(void);
 
@@ -4171,11 +4252,12 @@ public:
     BX_SMF void write_new_stack_dword(bx_address laddr, unsigned curr_pl, Bit32u data);
     BX_SMF void write_new_stack_qword(bx_address laddr, unsigned curr_pl, Bit64u data); //4631
 
-
+    BX_SMF void stack_write_byte(bx_address offset, Bit8u data) BX_CPP_AttrRegparmN(2);
     BX_SMF void stack_write_word(bx_address offset, Bit16u data) BX_CPP_AttrRegparmN(2); //4635
     BX_SMF void stack_write_dword(bx_address offset, Bit32u data) BX_CPP_AttrRegparmN(2);
     BX_SMF void stack_write_qword(bx_address offset, Bit64u data) BX_CPP_AttrRegparmN(2);
-
+    
+    BX_SMF Bit8u stack_read_byte(bx_address offset) BX_CPP_AttrRegparmN(1);
     BX_SMF Bit16u stack_read_word(bx_address offset) BX_CPP_AttrRegparmN(1);  //4640
     BX_SMF Bit32u stack_read_dword(bx_address offset) BX_CPP_AttrRegparmN(1);
     BX_SMF Bit64u stack_read_qword(bx_address offset) BX_CPP_AttrRegparmN(1);
@@ -4428,8 +4510,13 @@ public:
 #endif
     BX_SMF bx_address agen_read(unsigned seg, bx_address offset, unsigned len); //5054
     BX_SMF Bit32u agen_read32(unsigned seg, Bit32u offset, unsigned len); //5055
+    BX_SMF bx_address agen_read_aligned(unsigned seg, bx_address offset, unsigned len);
+    BX_SMF Bit32u agen_read_aligned32(unsigned seg, Bit32u offset, unsigned len);
+
     BX_SMF bx_address agen_write(unsigned seg, bx_address offset, unsigned len);//5060
     BX_SMF Bit32u agen_write32(unsigned seg, Bit32u offset, unsigned len); //5061
+    BX_SMF bx_address agen_write_aligned(unsigned seg, bx_address offset, unsigned len);
+    BX_SMF Bit32u agen_write_aligned32(unsigned seg, Bit32u offset, unsigned len);
     DECLARE_EFLAG_ACCESSOR(ID, 21)
     DECLARE_EFLAG_ACCESSOR(VIP, 20)
     DECLARE_EFLAG_ACCESSOR(VIF, 19)
@@ -4778,6 +4865,7 @@ BX_CPP_INLINE bx_address BX_CPU_C::get_laddr(unsigned seg, bx_address offset)
     return get_laddr32(seg, (Bit32u)offset);
 }
 
+
 //5570
 BX_CPP_INLINE Bit32u BX_CPU_C::agen_read32(unsigned s, Bit32u offset, unsigned len)
 {
@@ -4798,6 +4886,27 @@ BX_CPP_INLINE Bit32u BX_CPU_C::agen_read32(unsigned s, Bit32u offset, unsigned l
 
     return get_laddr32(s, offset);
 }
+
+BX_CPP_INLINE Bit32u BX_CPU_C::agen_read_aligned32(unsigned s, Bit32u offset, unsigned len)
+{
+    bx_segment_reg_t* seg = &BX_CPU_THIS_PTR sregs[s];
+
+    if (seg->cache.valid & SegAccessROK4G) {
+        return offset;
+    }
+
+    if (seg->cache.valid & SegAccessROK) {
+        if (offset <= (seg->cache.u.segment.limit_scaled - len + 1)) {
+            return get_laddr32(s, offset);
+        }
+    }
+
+    if (!read_virtual_checks(seg, offset, len, true /* aligned */))
+        exception(int_number(s), 0);
+
+    return get_laddr32(s, offset);
+}
+
 BX_CPP_INLINE Bit32u BX_CPU_C::agen_write32(unsigned s, Bit32u offset, unsigned len)
 {
     // 5610
@@ -4818,6 +4927,26 @@ BX_CPP_INLINE Bit32u BX_CPU_C::agen_write32(unsigned s, Bit32u offset, unsigned 
     return get_laddr32(s, offset);
 }
 //5650
+BX_CPP_INLINE Bit32u BX_CPU_C::agen_write_aligned32(unsigned s, Bit32u offset, unsigned len)
+{
+    bx_segment_reg_t* seg = &BX_CPU_THIS_PTR sregs[s];
+
+    if (seg->cache.valid & SegAccessWOK4G) {
+        return offset;
+    }
+
+    if (seg->cache.valid & SegAccessWOK) {
+        if (offset <= (seg->cache.u.segment.limit_scaled - len + 1)) {
+            return get_laddr32(s, offset);
+        }
+    }
+
+    if (!write_virtual_checks(seg, offset, len, true /* aligned */))
+        exception(int_number(s), 0);
+
+    return get_laddr32(s, offset);
+}
+
 BX_CPP_INLINE bx_address BX_CPU_C::agen_read(unsigned s, bx_address offset, unsigned len)
 {
 #if BX_SUPPORT_X86_64
@@ -4826,6 +4955,16 @@ BX_CPP_INLINE bx_address BX_CPU_C::agen_read(unsigned s, bx_address offset, unsi
     }
 #endif
     return agen_read32(s, (Bit32u)offset, len);
+}
+
+BX_CPP_INLINE bx_address BX_CPU_C::agen_read_aligned(unsigned s, bx_address offset, unsigned len)
+{
+#if BX_SUPPORT_X86_64
+    if (BX_CPU_THIS_PTR cpu_mode == BX_MODE_LONG_64) {
+        return get_laddr64(s, offset);
+    }
+#endif
+    return agen_read_aligned32(s, (Bit32u)offset, len);
 }
 
 BX_CPP_INLINE bx_address BX_CPU_C::agen_write(unsigned s, bx_address offset, unsigned len)
@@ -4838,7 +4977,15 @@ BX_CPP_INLINE bx_address BX_CPU_C::agen_write(unsigned s, bx_address offset, uns
     return agen_write32(s, (Bit32u)offset, len);
 }
 
-
+BX_CPP_INLINE bx_address BX_CPU_C::agen_write_aligned(unsigned s, bx_address offset, unsigned len)
+{
+#if BX_SUPPORT_X86_64
+    if (BX_CPU_THIS_PTR cpu_mode == BX_MODE_LONG_64) {
+        return get_laddr64(s, offset);
+    }
+#endif
+    return agen_write_aligned32(s, (Bit32u)offset, len);
+}
 
 /*BX_CPP_INLINE bool BX_CPU_C::real_mode(void)
 {
@@ -4899,6 +5046,8 @@ __forceinline void BX_CPU_C::set_IOPL(Bit32u val) {
 } __forceinline Bit32u BX_CPU_C::get_IOPL() {
     return 3 & ((&bx_cpu)->eflags >> 12);
 } //5837
+IMPLEMENT_EFLAG_ACCESSOR(ID, 21)
+IMPLEMENT_EFLAG_ACCESSOR(VIP, 20)
 IMPLEMENT_EFLAG_ACCESSOR(VIF, 19)
 IMPLEMENT_EFLAG_ACCESSOR(VM, 17)
 IMPLEMENT_EFLAG_ACCESSOR(RF, 16)
@@ -4908,6 +5057,8 @@ IMPLEMENT_EFLAG_ACCESSOR(IF, 9) //5839
 IMPLEMENT_EFLAG_ACCESSOR(TF, 8)
 IMPLEMENT_EFLAG_ACCESSOR(AC, 18)
 
+IMPLEMENT_EFLAG_SET_ACCESSOR(ID, 21)
+IMPLEMENT_EFLAG_SET_ACCESSOR(VIP, 20)
 IMPLEMENT_EFLAG_SET_ACCESSOR(VIF, 19) //5844
 IMPLEMENT_EFLAG_SET_ACCESSOR_VM(17)
 IMPLEMENT_EFLAG_SET_ACCESSOR_RF(16) //5851行
