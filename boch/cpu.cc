@@ -46,11 +46,16 @@ void BX_CPU_C::cpu_loop(void)
             // want to allow changing of the instruction inside instrumentation callback
             BX_INSTR_BEFORE_EXECUTION(BX_CPU_ID, i);
             RIP += i->ilen();
+
+            BX_CPU_THIS_PTR trace_empty_instr = false;
+            BX_CPU_THIS_PTR trace_empty_instr_line = 0;
+            BX_CPU_THIS_PTR trace_empty_instr_func = NULL;
+
             BX_CPU_CALL_METHOD(i->execute1, (i)); // might iterate repeat instruction
             BX_CPU_THIS_PTR prev_rip = RIP; // commit new RIP
             BX_INSTR_AFTER_EXECUTION(BX_CPU_ID, i);
             BX_CPU_THIS_PTR icount++;
-            if (BX_CPU_THIS_PTR icount == 327500)
+            if (BX_CPU_THIS_PTR icount == 327540)
             {
                   int qwq = 0;
             }
@@ -139,6 +144,21 @@ void BX_CPU_C::cpu_loop(void)
                     (unsigned)(EAX & 0xff)
                 );
 #endif
+
+                printf(
+                    " STUB=%u",
+                    BX_CPU_THIS_PTR trace_empty_instr ? 1u : 0u
+                );
+
+                if (BX_CPU_THIS_PTR trace_empty_instr) {
+                    printf(
+                        " STUB_FN=%s:%d",
+                        BX_CPU_THIS_PTR trace_empty_instr_func ? BX_CPU_THIS_PTR trace_empty_instr_func : "unknown",
+                        BX_CPU_THIS_PTR trace_empty_instr_line
+                    );
+                }
+
+
 
                 if (just_read_cmos) {
                     printf(" RTC_READ");

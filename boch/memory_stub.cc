@@ -18,10 +18,30 @@ Bit8u* const BX_MEMORY_STUB_C::swapped_out = ((Bit8u*)NULL - sizeof(Bit8u)); //4
 
 BX_MEMORY_STUB_C::BX_MEMORY_STUB_C()
 {
+	//put("memory", "MEM0");
+
+	vector = NULL;
+	actual_vector = NULL;
+	blocks = NULL;
+	rom = NULL;
+	bogus = NULL;
+	len = 0;
+	used_blocks = 0;
+	allocated = 0;
+
+#if BX_LARGE_RAMFILE
+	next_swapout_idx = 0;
+	overflow_file = NULL;
+#endif
 }
 
 BX_MEMORY_STUB_C::~BX_MEMORY_STUB_C()
 {
+}
+
+Bit64u BX_MEMORY_STUB_C::get_memory_len(void)
+{
+	return (BX_MEM_THIS len);
 }
 
 Bit8u* BX_MEMORY_STUB_C::alloc_vector_aligned(Bit64u bytes, Bit64u alignment)

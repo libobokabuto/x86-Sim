@@ -750,6 +750,10 @@ public:
     Bit64u icount;
     Bit64u icount_last_sync;
 
+    bool trace_empty_instr; //自己加的
+    int trace_empty_instr_line;//自己加的
+    const char* trace_empty_instr_func;//自己加的
+
 #define BX_INHIBIT_INTERRUPTS        0x01
 #define BX_INHIBIT_DEBUG             0x02
 
@@ -1088,7 +1092,12 @@ public:
 	BX_SMF void cpu_loop(void);
     void init_statistics(void);//1416
     
-    static BX_CPP_INLINE void gao_no(int, const char*) {} //319
+    static BX_CPP_INLINE void gao_no(int line, const char* func)
+    {
+        BX_CPU_THIS_PTR trace_empty_instr = true;
+        BX_CPU_THIS_PTR trace_empty_instr_line = line;
+        BX_CPU_THIS_PTR trace_empty_instr_func = func;
+    }
 
 #if 1
     // <TAG-CLASS-CPU-START> 1426
@@ -1469,7 +1478,7 @@ public:
     BX_SMF void ZERO_IDIOM_GdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
 
     BX_SMF void ADD_GbEbR(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
-    BX_SMF void OR_GbEbR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void OR_GbEbR(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void ADC_GbEbR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void SBB_GbEbR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void AND_GbEbR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }

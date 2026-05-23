@@ -117,6 +117,29 @@ void bx_devices_c::init(BX_MEM_C* newmem)
 
     PLUG_load_plugin(biosdev, PLUGTYPE_OPTIONAL);
 
+    
+    // misc. CMOS memory size
+    const Bit64u base_memory_in_k = 640;
+    Bit64u memory_in_k = mem->get_memory_len() / 1024;
+
+    Bit64u extended_memory_in_k = memory_in_k > 1024 ? (memory_in_k - 1024) : 0;
+    if (extended_memory_in_k > 0xfc00)
+        extended_memory_in_k = 0xfc00;
+
+    DEV_cmos_set_reg(0x15, (Bit8u)(base_memory_in_k & 0xff));
+    DEV_cmos_set_reg(0x16, (Bit8u)((base_memory_in_k >> 8) & 0xff));
+    DEV_cmos_set_reg(0x17, (Bit8u)(extended_memory_in_k & 0xff));
+    DEV_cmos_set_reg(0x18, (Bit8u)((extended_memory_in_k >> 8) & 0xff));
+    DEV_cmos_set_reg(0x30, (Bit8u)(extended_memory_in_k & 0xff));
+    DEV_cmos_set_reg(0x31, (Bit8u)((extended_memory_in_k >> 8) & 0xff));
+
+    Bit64u extended_memory_in_64k =
+        memory_in_k > 16384 ? (memory_in_k - 16384) / 64 : 0;
+    if (extended_memory_in_64k > 0xbf00)
+        extended_memory_in_64k = 0xbf00;
+
+    DEV_cmos_set_reg(0x34, (Bit8u)(extended_memory_in_64k & 0xff));
+    DEV_cmos_set_reg(0x35, (Bit8u)((extended_memory_in_64k >> 8) & 0xff));
     bx_init_plugins(); //354
     DEV_cmos_checksum();//357
 }

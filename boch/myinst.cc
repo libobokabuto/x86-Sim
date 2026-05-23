@@ -1994,3 +1994,17 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::SUB_EdGdM(bxInstruction_c* i)
 
     BX_NEXT_INSTR(i);
 }
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::OR_GbEbR(bxInstruction_c* i)
+{
+    Bit8u op1, op2;
+
+    op1 = BX_READ_8BIT_REGx(i->dst(), i->extend8bitL());
+    op2 = BX_READ_8BIT_REGx(i->src(), i->extend8bitL());
+    op1 |= op2;
+    BX_WRITE_8BIT_REGx(i->dst(), i->extend8bitL(), op1);
+
+    SET_FLAGS_OSZAPC_LOGIC_8(op1);
+
+    BX_NEXT_INSTR(i);
+}

@@ -3,8 +3,28 @@
   "WorkspaceRootPath": "E:\\Study\\codes\\bochs\\boch\\",
   "Documents": [
     {
+      "AbsoluteMoniker": "D:0:0:{D65B3958-FA88-4B98-9F2D-9D23C2B1A7FE}|boch\\boch.vcxproj|E:\\Study\\codes\\bochs\\boch\\boch\\cpu.cc||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{D65B3958-FA88-4B98-9F2D-9D23C2B1A7FE}|boch\\boch.vcxproj|solutionrelative:boch\\cpu.cc||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{D65B3958-FA88-4B98-9F2D-9D23C2B1A7FE}|boch\\boch.vcxproj|E:\\Study\\codes\\bochs\\boch\\boch\\myinst.cc||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{D65B3958-FA88-4B98-9F2D-9D23C2B1A7FE}|boch\\boch.vcxproj|solutionrelative:boch\\myinst.cc||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
       "AbsoluteMoniker": "D:0:0:{D65B3958-FA88-4B98-9F2D-9D23C2B1A7FE}|boch\\boch.vcxproj|E:\\Study\\codes\\bochs\\boch\\boch\\cpu.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
       "RelativeMoniker": "D:0:0:{D65B3958-FA88-4B98-9F2D-9D23C2B1A7FE}|boch\\boch.vcxproj|solutionrelative:boch\\cpu.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{D65B3958-FA88-4B98-9F2D-9D23C2B1A7FE}|boch\\boch.vcxproj|E:\\Study\\codes\\bochs\\boch\\boch\\devices.cc||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{D65B3958-FA88-4B98-9F2D-9D23C2B1A7FE}|boch\\boch.vcxproj|solutionrelative:boch\\devices.cc||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{D65B3958-FA88-4B98-9F2D-9D23C2B1A7FE}|boch\\boch.vcxproj|E:\\Study\\codes\\bochs\\boch\\boch\\coms.cc||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{D65B3958-FA88-4B98-9F2D-9D23C2B1A7FE}|boch\\boch.vcxproj|solutionrelative:boch\\coms.cc||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{D65B3958-FA88-4B98-9F2D-9D23C2B1A7FE}|boch\\boch.vcxproj|E:\\Study\\codes\\bochs\\boch\\boch\\init.cc||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{D65B3958-FA88-4B98-9F2D-9D23C2B1A7FE}|boch\\boch.vcxproj|solutionrelative:boch\\init.cc||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{D65B3958-FA88-4B98-9F2D-9D23C2B1A7FE}|boch\\boch.vcxproj|E:\\Study\\codes\\bochs\\boch\\boch\\access.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
@@ -15,20 +35,8 @@
       "RelativeMoniker": "D:0:0:{D65B3958-FA88-4B98-9F2D-9D23C2B1A7FE}|boch\\boch.vcxproj|solutionrelative:boch\\access2.cc||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{D65B3958-FA88-4B98-9F2D-9D23C2B1A7FE}|boch\\boch.vcxproj|E:\\Study\\codes\\bochs\\boch\\boch\\myinst.cc||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
-      "RelativeMoniker": "D:0:0:{D65B3958-FA88-4B98-9F2D-9D23C2B1A7FE}|boch\\boch.vcxproj|solutionrelative:boch\\myinst.cc||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{D65B3958-FA88-4B98-9F2D-9D23C2B1A7FE}|boch\\boch.vcxproj|E:\\Study\\codes\\bochs\\boch\\boch\\cpu.cc||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
-      "RelativeMoniker": "D:0:0:{D65B3958-FA88-4B98-9F2D-9D23C2B1A7FE}|boch\\boch.vcxproj|solutionrelative:boch\\cpu.cc||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
-    },
-    {
       "AbsoluteMoniker": "D:0:0:{D65B3958-FA88-4B98-9F2D-9D23C2B1A7FE}|boch\\boch.vcxproj|E:\\Study\\codes\\bochs\\boch\\boch\\stack.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
       "RelativeMoniker": "D:0:0:{D65B3958-FA88-4B98-9F2D-9D23C2B1A7FE}|boch\\boch.vcxproj|solutionrelative:boch\\stack.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{D65B3958-FA88-4B98-9F2D-9D23C2B1A7FE}|boch\\boch.vcxproj|E:\\Study\\codes\\bochs\\boch\\boch\\coms.cc||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
-      "RelativeMoniker": "D:0:0:{D65B3958-FA88-4B98-9F2D-9D23C2B1A7FE}|boch\\boch.vcxproj|solutionrelative:boch\\coms.cc||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{D65B3958-FA88-4B98-9F2D-9D23C2B1A7FE}|boch\\boch.vcxproj|E:\\Study\\codes\\bochs\\boch\\boch\\ctrl_xfer32.cc||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
@@ -37,10 +45,6 @@
     {
       "AbsoluteMoniker": "D:0:0:{D65B3958-FA88-4B98-9F2D-9D23C2B1A7FE}|boch\\boch.vcxproj|E:\\Study\\codes\\bochs\\boch\\boch\\biosdev.cc||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
       "RelativeMoniker": "D:0:0:{D65B3958-FA88-4B98-9F2D-9D23C2B1A7FE}|boch\\boch.vcxproj|solutionrelative:boch\\biosdev.cc||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{D65B3958-FA88-4B98-9F2D-9D23C2B1A7FE}|boch\\boch.vcxproj|E:\\Study\\codes\\bochs\\boch\\boch\\devices.cc||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
-      "RelativeMoniker": "D:0:0:{D65B3958-FA88-4B98-9F2D-9D23C2B1A7FE}|boch\\boch.vcxproj|solutionrelative:boch\\devices.cc||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{D65B3958-FA88-4B98-9F2D-9D23C2B1A7FE}|boch\\boch.vcxproj|E:\\Study\\codes\\bochs\\boch\\boch\\plugin.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
@@ -179,10 +183,6 @@
       "RelativeMoniker": "D:0:0:{D65B3958-FA88-4B98-9F2D-9D23C2B1A7FE}|boch\\boch.vcxproj|solutionrelative:boch\\keyboard.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{D65B3958-FA88-4B98-9F2D-9D23C2B1A7FE}|boch\\boch.vcxproj|E:\\Study\\codes\\bochs\\boch\\boch\\init.cc||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
-      "RelativeMoniker": "D:0:0:{D65B3958-FA88-4B98-9F2D-9D23C2B1A7FE}|boch\\boch.vcxproj|solutionrelative:boch\\init.cc||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
-    },
-    {
       "AbsoluteMoniker": "D:0:0:{D65B3958-FA88-4B98-9F2D-9D23C2B1A7FE}|boch\\boch.vcxproj|E:\\Study\\codes\\bochs\\boch\\boch\\apic.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
       "RelativeMoniker": "D:0:0:{D65B3958-FA88-4B98-9F2D-9D23C2B1A7FE}|boch\\boch.vcxproj|solutionrelative:boch\\apic.h||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
     },
@@ -310,11 +310,11 @@
       "DocumentGroups": [
         {
           "DockedHeight": 173,
-          "SelectedChildIndex": 3,
+          "SelectedChildIndex": 1,
           "Children": [
             {
               "$type": "Document",
-              "DocumentIndex": 42,
+              "DocumentIndex": 43,
               "Title": "main.cpp",
               "DocumentMoniker": "E:\\Study\\codes\\bochs\\boch\\boch\\main.cpp",
               "RelativeDocumentMoniker": "boch\\main.cpp",
@@ -327,13 +327,13 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 4,
+              "DocumentIndex": 0,
               "Title": "cpu.cc",
               "DocumentMoniker": "E:\\Study\\codes\\bochs\\boch\\boch\\cpu.cc",
               "RelativeDocumentMoniker": "boch\\cpu.cc",
               "ToolTip": "E:\\Study\\codes\\bochs\\boch\\boch\\cpu.cc",
               "RelativeToolTip": "boch\\cpu.cc",
-              "ViewState": "AgIAACUAAAAAAAAAAAAAADAAAAAAAAAAAAAAAA==",
+              "ViewState": "AgIAACoAAAAAAAAAAAAAADkAAAAxAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
               "WhenOpened": "2026-05-05T09:29:15.556Z",
               "IsPinned": true,
@@ -341,13 +341,13 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 3,
+              "DocumentIndex": 1,
               "Title": "myinst.cc",
               "DocumentMoniker": "E:\\Study\\codes\\bochs\\boch\\boch\\myinst.cc",
               "RelativeDocumentMoniker": "boch\\myinst.cc",
               "ToolTip": "E:\\Study\\codes\\bochs\\boch\\boch\\myinst.cc",
               "RelativeToolTip": "boch\\myinst.cc",
-              "ViewState": "AgIAABUHAAAAAAAAAADwv8sHAAABAAAAAAAAAA==",
+              "ViewState": "AgIAAOoCAAAAAAAAAAD4vwMDAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
               "WhenOpened": "2026-05-06T12:36:59.889Z",
               "IsPinned": true,
@@ -355,13 +355,13 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 0,
+              "DocumentIndex": 2,
               "Title": "cpu.h",
               "DocumentMoniker": "E:\\Study\\codes\\bochs\\boch\\boch\\cpu.h",
               "RelativeDocumentMoniker": "boch\\cpu.h",
               "ToolTip": "E:\\Study\\codes\\bochs\\boch\\boch\\cpu.h",
               "RelativeToolTip": "boch\\cpu.h",
-              "ViewState": "AgIAAPISAAAAAAAAAADwvwMTAAAAAAAAAAAAAA==",
+              "ViewState": "AgIAALoFAAAAAAAAAAD4v8gFAABCAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000680|",
               "WhenOpened": "2026-05-06T12:10:57.984Z",
               "IsPinned": true,
@@ -373,20 +373,59 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 2,
+              "DocumentIndex": 5,
+              "Title": "init.cc",
+              "DocumentMoniker": "E:\\Study\\codes\\bochs\\boch\\boch\\init.cc",
+              "RelativeDocumentMoniker": "boch\\init.cc",
+              "ToolTip": "E:\\Study\\codes\\bochs\\boch\\boch\\init.cc",
+              "RelativeToolTip": "boch\\init.cc",
+              "ViewState": "AgIAAIgAAAAAAAAAAAAAAKUAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2026-05-11T12:25:11.158Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
               "Title": "access2.cc",
               "DocumentMoniker": "E:\\Study\\codes\\bochs\\boch\\boch\\access2.cc",
               "RelativeDocumentMoniker": "boch\\access2.cc",
               "ToolTip": "E:\\Study\\codes\\bochs\\boch\\boch\\access2.cc",
               "RelativeToolTip": "boch\\access2.cc",
-              "ViewState": "AgIAAIUCAAAAAAAAAADwv3wDAAAGAAAAAAAAAA==",
+              "ViewState": "AgIAAD8CAAAAAAAAAADwv3wDAAAGAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
               "WhenOpened": "2026-05-09T11:01:20.797Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 4,
+              "Title": "coms.cc",
+              "DocumentMoniker": "E:\\Study\\codes\\bochs\\boch\\boch\\coms.cc",
+              "RelativeDocumentMoniker": "boch\\coms.cc",
+              "ToolTip": "E:\\Study\\codes\\bochs\\boch\\boch\\coms.cc",
+              "RelativeToolTip": "boch\\coms.cc",
+              "ViewState": "AgIAAHAAAAAAAAAAAAD4v5kAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2026-05-19T06:17:37.639Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "devices.cc",
+              "DocumentMoniker": "E:\\Study\\codes\\bochs\\boch\\boch\\devices.cc",
+              "RelativeDocumentMoniker": "boch\\devices.cc",
+              "ToolTip": "E:\\Study\\codes\\bochs\\boch\\boch\\devices.cc",
+              "RelativeToolTip": "boch\\devices.cc",
+              "ViewState": "AgIAAEgBAAAAAAAAAAD4v1kBAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2026-05-17T11:22:38.192Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
               "Title": "access.h",
               "DocumentMoniker": "E:\\Study\\codes\\bochs\\boch\\boch\\access.h",
               "RelativeDocumentMoniker": "boch\\access.h",
@@ -399,20 +438,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 6,
-              "Title": "coms.cc",
-              "DocumentMoniker": "E:\\Study\\codes\\bochs\\boch\\boch\\coms.cc",
-              "RelativeDocumentMoniker": "boch\\coms.cc",
-              "ToolTip": "E:\\Study\\codes\\bochs\\boch\\boch\\coms.cc",
-              "RelativeToolTip": "boch\\coms.cc",
-              "ViewState": "AgIAAEEAAAAAAAAAAAAEwFAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
-              "WhenOpened": "2026-05-19T06:17:37.639Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 5,
+              "DocumentIndex": 8,
               "Title": "stack.h",
               "DocumentMoniker": "E:\\Study\\codes\\bochs\\boch\\boch\\stack.h",
               "RelativeDocumentMoniker": "boch\\stack.h",
@@ -425,7 +451,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 7,
+              "DocumentIndex": 9,
               "Title": "ctrl_xfer32.cc",
               "DocumentMoniker": "E:\\Study\\codes\\bochs\\boch\\boch\\ctrl_xfer32.cc",
               "RelativeDocumentMoniker": "boch\\ctrl_xfer32.cc",
@@ -438,7 +464,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 11,
+              "DocumentIndex": 12,
               "Title": "biosdev.h",
               "DocumentMoniker": "E:\\Study\\codes\\bochs\\boch\\boch\\biosdev.h",
               "RelativeDocumentMoniker": "boch\\biosdev.h",
@@ -450,7 +476,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 8,
+              "DocumentIndex": 10,
               "Title": "biosdev.cc",
               "DocumentMoniker": "E:\\Study\\codes\\bochs\\boch\\boch\\biosdev.cc",
               "RelativeDocumentMoniker": "boch\\biosdev.cc",
@@ -462,19 +488,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 9,
-              "Title": "devices.cc",
-              "DocumentMoniker": "E:\\Study\\codes\\bochs\\boch\\boch\\devices.cc",
-              "RelativeDocumentMoniker": "boch\\devices.cc",
-              "ToolTip": "E:\\Study\\codes\\bochs\\boch\\boch\\devices.cc",
-              "RelativeToolTip": "boch\\devices.cc",
-              "ViewState": "AgIAAE0BAAAAAAAAAAAowGUBAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
-              "WhenOpened": "2026-05-17T11:22:38.192Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 10,
+              "DocumentIndex": 11,
               "Title": "plugin.h",
               "DocumentMoniker": "E:\\Study\\codes\\bochs\\boch\\boch\\plugin.h",
               "RelativeDocumentMoniker": "boch\\plugin.h",
@@ -486,7 +500,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 13,
+              "DocumentIndex": 14,
               "Title": "cet.cc",
               "DocumentMoniker": "E:\\Study\\codes\\bochs\\boch\\boch\\cet.cc",
               "RelativeDocumentMoniker": "boch\\cet.cc",
@@ -498,7 +512,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 12,
+              "DocumentIndex": 13,
               "Title": "parallel.cc",
               "DocumentMoniker": "E:\\Study\\codes\\bochs\\boch\\boch\\parallel.cc",
               "RelativeDocumentMoniker": "boch\\parallel.cc",
@@ -510,7 +524,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 14,
+              "DocumentIndex": 15,
               "Title": "segment_ctrl_pro.cc",
               "DocumentMoniker": "E:\\Study\\codes\\bochs\\boch\\boch\\segment_ctrl_pro.cc",
               "RelativeDocumentMoniker": "boch\\segment_ctrl_pro.cc",
@@ -522,7 +536,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 15,
+              "DocumentIndex": 16,
               "Title": "jmp_far.cc",
               "DocumentMoniker": "E:\\Study\\codes\\bochs\\boch\\boch\\jmp_far.cc",
               "RelativeDocumentMoniker": "boch\\jmp_far.cc",
@@ -534,7 +548,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 16,
+              "DocumentIndex": 17,
               "Title": "vmexit.cc",
               "DocumentMoniker": "E:\\Study\\codes\\bochs\\boch\\boch\\vmexit.cc",
               "RelativeDocumentMoniker": "boch\\vmexit.cc",
@@ -546,7 +560,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 17,
+              "DocumentIndex": 18,
               "Title": "crregs.cc",
               "DocumentMoniker": "E:\\Study\\codes\\bochs\\boch\\boch\\crregs.cc",
               "RelativeDocumentMoniker": "boch\\crregs.cc",
@@ -558,7 +572,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 18,
+              "DocumentIndex": 19,
               "Title": "svm.h",
               "DocumentMoniker": "E:\\Study\\codes\\bochs\\boch\\boch\\svm.h",
               "RelativeDocumentMoniker": "boch\\svm.h",
@@ -570,7 +584,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 34,
+              "DocumentIndex": 35,
               "Title": "serial.h",
               "DocumentMoniker": "E:\\Study\\codes\\bochs\\boch\\boch\\serial.h",
               "RelativeDocumentMoniker": "boch\\serial.h",
@@ -582,7 +596,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 19,
+              "DocumentIndex": 20,
               "Title": "proc_ctrl.cc",
               "DocumentMoniker": "E:\\Study\\codes\\bochs\\boch\\boch\\proc_ctrl.cc",
               "RelativeDocumentMoniker": "boch\\proc_ctrl.cc",
@@ -594,7 +608,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 20,
+              "DocumentIndex": 21,
               "Title": "svm.cc",
               "DocumentMoniker": "E:\\Study\\codes\\bochs\\boch\\boch\\svm.cc",
               "RelativeDocumentMoniker": "boch\\svm.cc",
@@ -606,7 +620,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 21,
+              "DocumentIndex": 22,
               "Title": "pic.cc",
               "DocumentMoniker": "E:\\Study\\codes\\bochs\\boch\\boch\\pic.cc",
               "RelativeDocumentMoniker": "boch\\pic.cc",
@@ -618,7 +632,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 25,
+              "DocumentIndex": 26,
               "Title": "pic.h",
               "DocumentMoniker": "E:\\Study\\codes\\bochs\\boch\\boch\\pic.h",
               "RelativeDocumentMoniker": "boch\\pic.h",
@@ -630,7 +644,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 28,
+              "DocumentIndex": 29,
               "Title": "serial.cc",
               "DocumentMoniker": "E:\\Study\\codes\\bochs\\boch\\boch\\serial.cc",
               "RelativeDocumentMoniker": "boch\\serial.cc",
@@ -642,7 +656,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 38,
+              "DocumentIndex": 39,
               "Title": "parallel.h",
               "DocumentMoniker": "E:\\Study\\codes\\bochs\\boch\\boch\\parallel.h",
               "RelativeDocumentMoniker": "boch\\parallel.h",
@@ -654,7 +668,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 29,
+              "DocumentIndex": 30,
               "Title": "utctime.h",
               "DocumentMoniker": "E:\\Study\\codes\\bochs\\boch\\boch\\utctime.h",
               "RelativeDocumentMoniker": "boch\\utctime.h",
@@ -666,7 +680,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 31,
+              "DocumentIndex": 32,
               "Title": "misc_mem.cc",
               "DocumentMoniker": "E:\\Study\\codes\\bochs\\boch\\boch\\misc_mem.cc",
               "RelativeDocumentMoniker": "boch\\misc_mem.cc",
@@ -678,7 +692,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 35,
+              "DocumentIndex": 36,
               "Title": "plugin.cc",
               "DocumentMoniker": "E:\\Study\\codes\\bochs\\boch\\boch\\plugin.cc",
               "RelativeDocumentMoniker": "boch\\plugin.cc",
@@ -690,7 +704,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 36,
+              "DocumentIndex": 37,
               "Title": "paramtree.h",
               "DocumentMoniker": "E:\\Study\\codes\\bochs\\boch\\boch\\paramtree.h",
               "RelativeDocumentMoniker": "boch\\paramtree.h",
@@ -702,7 +716,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 37,
+              "DocumentIndex": 38,
               "Title": "paramtree.cc",
               "DocumentMoniker": "E:\\Study\\codes\\bochs\\boch\\boch\\paramtree.cc",
               "RelativeDocumentMoniker": "boch\\paramtree.cc",
@@ -882,7 +896,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 43,
+              "DocumentIndex": 44,
               "Title": "keyboard.h",
               "DocumentMoniker": "E:\\Study\\codes\\bochs\\boch\\boch\\keyboard.h",
               "RelativeDocumentMoniker": "boch\\keyboard.h",
@@ -894,7 +908,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 40,
+              "DocumentIndex": 41,
               "Title": "keyboard.cc",
               "DocumentMoniker": "E:\\Study\\codes\\bochs\\boch\\boch\\keyboard.cc",
               "RelativeDocumentMoniker": "boch\\keyboard.cc",
@@ -931,7 +945,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 39,
+              "DocumentIndex": 40,
               "Title": "dma.cc",
               "DocumentMoniker": "E:\\Study\\codes\\bochs\\boch\\boch\\dma.cc",
               "RelativeDocumentMoniker": "boch\\dma.cc",
@@ -943,7 +957,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 32,
+              "DocumentIndex": 33,
               "Title": "bochs.h",
               "DocumentMoniker": "E:\\Study\\codes\\bochs\\boch\\boch\\bochs.h",
               "RelativeDocumentMoniker": "boch\\bochs.h",
@@ -1003,7 +1017,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 24,
+              "DocumentIndex": 25,
               "Title": "iodev.h",
               "DocumentMoniker": "E:\\Study\\codes\\bochs\\boch\\boch\\iodev.h",
               "RelativeDocumentMoniker": "boch\\iodev.h",
@@ -1039,18 +1053,6 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 44,
-              "Title": "init.cc",
-              "DocumentMoniker": "E:\\Study\\codes\\bochs\\boch\\boch\\init.cc",
-              "RelativeDocumentMoniker": "boch\\init.cc",
-              "ToolTip": "E:\\Study\\codes\\bochs\\boch\\boch\\init.cc",
-              "RelativeToolTip": "boch\\init.cc",
-              "ViewState": "AgIAALAAAAAAAAAAAAAgwIIAAAAUAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
-              "WhenOpened": "2026-05-11T12:25:11.158Z"
-            },
-            {
-              "$type": "Document",
               "DocumentIndex": 47,
               "Title": "exception.cc",
               "DocumentMoniker": "E:\\Study\\codes\\bochs\\boch\\boch\\exception.cc",
@@ -1063,7 +1065,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 30,
+              "DocumentIndex": 31,
               "Title": "scalar_arith.h",
               "DocumentMoniker": "E:\\Study\\codes\\bochs\\boch\\boch\\scalar_arith.h",
               "RelativeDocumentMoniker": "boch\\scalar_arith.h",
@@ -1075,7 +1077,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 33,
+              "DocumentIndex": 34,
               "Title": "osdep.h",
               "DocumentMoniker": "E:\\Study\\codes\\bochs\\boch\\boch\\osdep.h",
               "RelativeDocumentMoniker": "boch\\osdep.h",
@@ -1111,7 +1113,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 22,
+              "DocumentIndex": 23,
               "Title": "pc_system.cc",
               "DocumentMoniker": "E:\\Study\\codes\\bochs\\boch\\boch\\pc_system.cc",
               "RelativeDocumentMoniker": "boch\\pc_system.cc",
@@ -1123,7 +1125,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 23,
+              "DocumentIndex": 24,
               "Title": "pc_system.h",
               "DocumentMoniker": "E:\\Study\\codes\\bochs\\boch\\boch\\pc_system.h",
               "RelativeDocumentMoniker": "boch\\pc_system.h",
@@ -1147,7 +1149,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 41,
+              "DocumentIndex": 42,
               "Title": "event.cc",
               "DocumentMoniker": "E:\\Study\\codes\\bochs\\boch\\boch\\event.cc",
               "RelativeDocumentMoniker": "boch\\event.cc",
@@ -1183,7 +1185,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 27,
+              "DocumentIndex": 28,
               "Title": "tlb.h",
               "DocumentMoniker": "E:\\Study\\codes\\bochs\\boch\\boch\\tlb.h",
               "RelativeDocumentMoniker": "boch\\tlb.h",
@@ -1219,7 +1221,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 26,
+              "DocumentIndex": 27,
               "Title": "crregs.h",
               "DocumentMoniker": "E:\\Study\\codes\\bochs\\boch\\boch\\crregs.h",
               "RelativeDocumentMoniker": "boch\\crregs.h",

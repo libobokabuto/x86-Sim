@@ -160,6 +160,10 @@ void BX_CPU_C::reset(unsigned source)
         BX_CPU_THIS_PTR icount = 0;
     BX_CPU_THIS_PTR icount_last_sync = BX_CPU_THIS_PTR icount;
 
+    BX_CPU_THIS_PTR trace_empty_instr = false;
+    BX_CPU_THIS_PTR trace_empty_instr_line = 0;
+    BX_CPU_THIS_PTR trace_empty_instr_func = NULL;
+
     BX_CPU_THIS_PTR inhibit_mask = 0;
     BX_CPU_THIS_PTR inhibit_icount = 0;
 
