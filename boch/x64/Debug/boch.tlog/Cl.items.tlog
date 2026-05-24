@@ -5,6 +5,7 @@ E:\Study\codes\bochs\boch\boch\biosdev.cc;E:\Study\codes\bochs\boch\boch\x64\Deb
 E:\Study\codes\bochs\boch\boch\call_far.cc;E:\Study\codes\bochs\boch\boch\x64\Debug\call_far.obj
 E:\Study\codes\bochs\boch\boch\cet.cc;E:\Study\codes\bochs\boch\boch\x64\Debug\cet.obj
 E:\Study\codes\bochs\boch\boch\coms.cc;E:\Study\codes\bochs\boch\boch\x64\Debug\coms.obj
+E:\Study\codes\bochs\boch\boch\corei7_haswell_4770.cc;E:\Study\codes\bochs\boch\boch\x64\Debug\corei7_haswell_4770.obj
 E:\Study\codes\bochs\boch\boch\cpu.cc;E:\Study\codes\bochs\boch\boch\x64\Debug\cpu.obj
 E:\Study\codes\bochs\boch\boch\cpuid.cc;E:\Study\codes\bochs\boch\boch\x64\Debug\cpuid.obj
 E:\Study\codes\bochs\boch\boch\crregs.cc;E:\Study\codes\bochs\boch\boch\x64\Debug\crregs.obj
@@ -25,6 +26,7 @@ E:\Study\codes\bochs\boch\boch\fetchdecode_opmap_avx.cc;E:\Study\codes\bochs\boc
 E:\Study\codes\bochs\boch\boch\fetchdecode_opmap_evex.cc;E:\Study\codes\bochs\boch\boch\x64\Debug\fetchdecode_opmap_evex.obj
 E:\Study\codes\bochs\boch\boch\flag_ctrl_pro.cc;E:\Study\codes\bochs\boch\boch\x64\Debug\flag_ctrl_pro.obj
 E:\Study\codes\bochs\boch\boch\gui.cc;E:\Study\codes\bochs\boch\boch\x64\Debug\gui.obj
+E:\Study\codes\bochs\boch\boch\i486dx4.cc;E:\Study\codes\bochs\boch\boch\x64\Debug\i486dx4.obj
 E:\Study\codes\bochs\boch\boch\icache.cc;E:\Study\codes\bochs\boch\boch\x64\Debug\icache.obj
 E:\Study\codes\bochs\boch\boch\init.cc;E:\Study\codes\bochs\boch\boch\x64\Debug\init.obj
 E:\Study\codes\bochs\boch\boch\io.cc;E:\Study\codes\bochs\boch\boch\x64\Debug\io.obj

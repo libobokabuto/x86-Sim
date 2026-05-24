@@ -1194,10 +1194,10 @@ public:
     BX_SMF void LAHF(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
 
     BX_SMF void MOV_ALOd(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
-    BX_SMF void MOV_EAXOd(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void MOV_EAXOd(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void MOV_AXOd(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void MOV_OdAL(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
-    BX_SMF void MOV_OdEAX(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void MOV_OdEAX(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void MOV_OdAX(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
 
     // repeatable instructions
@@ -1349,9 +1349,9 @@ public:
     BX_SMF void JNB_Jd(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void JZ_Jd(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void JNZ_Jd(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
-    BX_SMF void JBE_Jd(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void JBE_Jd(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void JNBE_Jd(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
-    BX_SMF void JS_Jd(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void JS_Jd(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void JNS_Jd(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void JP_Jd(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void JNP_Jd(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
@@ -1394,13 +1394,13 @@ public:
     BX_SMF void SETLE_EbM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void SETNLE_EbM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
 
-    BX_SMF void CPUID(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void CPUID(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
 
     BX_SMF void SHRD_EwGwR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void SHRD_EwGwM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void SHLD_EwGwR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void SHLD_EwGwM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
-    BX_SMF void SHRD_EdGdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void SHRD_EdGdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void SHRD_EdGdM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void SHLD_EdGdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void SHLD_EdGdM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
@@ -1459,13 +1459,13 @@ public:
 
     BX_SMF void MOVZX_GwEbM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void MOVZX_GdEbM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
-    BX_SMF void MOVZX_GdEwM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void MOVZX_GdEwM(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void MOVSX_GwEbM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void MOVSX_GdEbM(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void MOVSX_GdEwM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
 
     BX_SMF void MOVZX_GwEbR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
-    BX_SMF void MOVZX_GdEbR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void MOVZX_GdEbR(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void MOVZX_GdEwR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void MOVSX_GwEbR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void MOVSX_GdEbR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
@@ -1595,7 +1595,7 @@ public:
     BX_SMF void CMP_GwEwM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
 
     BX_SMF void ADD_GdEdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
-    BX_SMF void OR_GdEdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void OR_GdEdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void ADC_GdEdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void SBB_GdEdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void AND_GdEdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
@@ -1609,7 +1609,7 @@ public:
     BX_SMF void SBB_GdEdM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void AND_GdEdM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void SUB_GdEdM(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
-    BX_SMF void CMP_GdEdM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void CMP_GdEdM(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void XOR_GdEdM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
 
     BX_SMF void NOT_EbM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
@@ -1673,14 +1673,14 @@ public:
     BX_SMF void RCL_EdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void RCR_EdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void SHL_EdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
-    BX_SMF void SHR_EdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void SHR_EdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void SAR_EdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
 
     BX_SMF void TEST_EbIbR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void TEST_EwIwR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void TEST_EdIdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
 
-    BX_SMF void TEST_EbIbM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void TEST_EbIbM(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void TEST_EwIwM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void TEST_EdIdM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
 
@@ -1694,7 +1694,7 @@ public:
 
     BX_SMF void MUL_EAXEdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void IMUL_EAXEdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
-    BX_SMF void DIV_EAXEdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void DIV_EAXEdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void IDIV_EAXEdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
 
     BX_SMF void INC_EbR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
@@ -4502,8 +4502,13 @@ public:
     BX_SMF void    hwbreakpoint_match(bx_address laddr, unsigned len, unsigned rw); //4981
     BX_SMF Bit32u  hwdebug_compare(bx_address laddr, unsigned len, unsigned opa, unsigned opb); //4982
 #endif
-    BX_SMF void init_FetchDecodeTables(void); //4985
-    BX_SMF int  assignHandler(bxInstruction_c* i, Bit32u fetchModeMask); //4986
+    BX_SMF void init_FetchDecodeTables(void); //4986
+    BX_SMF int  assignHandler(bxInstruction_c* i, Bit32u fetchModeMask); //4987
+
+#if BX_SUPPORT_APIC
+    BX_SMF BX_CPP_INLINE Bit8u get_apic_id(void) { return BX_CPU_THIS_PTR bx_cpuid; }
+#endif
+
     BX_SMF BX_CPP_INLINE bool is_cpu_extension_supported(unsigned extension) {
         assert(extension < BX_ISA_EXTENSION_LAST);
         return BX_CPU_THIS_PTR ia_extensions_bitmask[extension / 32] & (1 << (extension % 32));

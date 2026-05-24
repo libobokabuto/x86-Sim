@@ -49,43 +49,52 @@ BX_CPU_C::BX_CPU_C(unsigned id) : bx_cpuid(id)
 
 }
 #include <stdlib.h>
-
+#if BX_CPU_LEVEL >= 4
 #include "cpuid.h"
+#include "i386.h"
+#include "i486dx4.h"
+#include "corei7_haswell_4770.h"
+static bx_cpuid_t* cpuid_factory(BX_CPU_C* cpu)
+{
+    // 源码这里用 SIM->get_param_enum(BXPN_CPU_MODEL)->get()
+    // 你这里不补 SIM，所以固定返回最小真实 CPUID 模型。
+    return create_corei7_haswell_4770_cpuid(cpu);
+}
+
+#endif
 
 void BX_CPU_C::initialize(void)
 {
-	//178
-	/*
-	#if BX_CPU_LEVEL >= 4
-  BX_CPU_THIS_PTR cpuid = cpuid_factory(this);
-  if (! BX_CPU_THIS_PTR cpuid) {
-    BX_PANIC(("Failed to create CPUID module !"));
-  }
-  else {
-    const char *cpu_model_name = cpuid->get_name();
-    BX_INFO(("initialized CPU model %s", cpu_model_name));
+#if BX_CPU_LEVEL >= 4
+    // 不走 SIM，不走 cpuid_factory，先固定一个最小可用 CPUID 模型。
+    BX_CPU_THIS_PTR cpuid = cpuid_factory(this);
 
-    const char* features_to_exclude = SIM->get_param_string(BXPN_CPU_EXCLUDE_FEATURES)->getptr();
-    add_remove_cpuid_features(features_to_exclude, false);
+    if (!BX_CPU_THIS_PTR cpuid) {
+        // 这里不要继续往下走，否则后面 cpuid->xxx 还是会空指针。
+        return;
+    }
 
-    const char* features_to_add = SIM->get_param_string(BXPN_CPU_ADD_FEATURES)->getptr();
-    add_remove_cpuid_features(features_to_add, true);
-  }
-  */
-  /*
-  BX_CPU_THIS_PTR cpuid->get_cpu_extensions(BX_CPU_THIS_PTR ia_extensions_bitmask);
-  
+    // 关键：把 CPUID 模型支持的 ISA feature 同步到 CPU。
+    // init_FetchDecodeTables() 会依赖 ia_extensions_bitmask 判断哪些指令可用。
+    BX_CPU_THIS_PTR cpuid->get_cpu_extensions(BX_CPU_THIS_PTR ia_extensions_bitmask);
+
 #if BX_SUPPORT_VMX
-  BX_CPU_THIS_PTR vmx_extensions_bitmask = BX_CPU_THIS_PTR cpuid->get_vmx_extensions_bitmask();
+    BX_CPU_THIS_PTR vmx_extensions_bitmask =
+        BX_CPU_THIS_PTR cpuid->get_vmx_extensions_bitmask();
 #endif
+
 #if BX_SUPPORT_SVM
-  BX_CPU_THIS_PTR svm_extensions_bitmask = BX_CPU_THIS_PTR cpuid->get_svm_extensions_bitmask();
+    BX_CPU_THIS_PTR svm_extensions_bitmask =
+        BX_CPU_THIS_PTR cpuid->get_svm_extensions_bitmask();
 #endif
-*/
-  /*
-  BX_CPU_THIS_PTR cpuid->sanity_checks();
+
+    // 不补 SIM 时，这两段不要写：
+    // add_remove_cpuid_features(features_to_exclude, false);
+    // add_remove_cpuid_features(features_to_add, true);
+    //
+    BX_CPU_THIS_PTR cpuid->sanity_checks(); //也先别调，会牵出更多 CPUID helper。
 #endif
-	*/
+
     init_FetchDecodeTables();
 
 #if BX_CPU_LEVEL >= 6
@@ -106,19 +115,15 @@ void BX_CPU_C::initialize(void)
     }
 #endif
 
-#if BX_CPU_LEVEL >= 5 //228
+#if BX_CPU_LEVEL >= 5
     init_MSRs();
-
 
 #if BX_CONFIGURE_MSRS
     for (unsigned n = 0; n < BX_MSR_MAX_INDEX; n++) {
         BX_CPU_THIS_PTR msrs[n] = 0;
     }
-    //const char* msrs_filename = SIM->get_param_string(BXPN_CONFIGURABLE_MSRS_PATH)->getptr();
-    //load_MSRs(msrs_filename);
 #endif
-    //BX_CPU_THIS_PTR ignore_bad_msrs = SIM->get_param_bool(BXPN_IGNORE_BAD_MSRS)->get();
-#endif//241
+#endif
 
     init_SMRAM();
 
@@ -128,6 +133,12 @@ void BX_CPU_C::initialize(void)
 
     init_statistics();
 }
+
+void BX_CPU_C::init_statistics(void)
+{
+    //253
+}
+
 void BX_CPU_C::reset(unsigned source)
 {  //856-1269
     unsigned n;
@@ -555,10 +566,7 @@ void BX_CPU_C::reset(unsigned source)
 }
 
 
-void BX_CPU_C::init_statistics(void)
-{
-    //253
-}
+
 BX_CPU_C::~BX_CPU_C()
 {
 	//826

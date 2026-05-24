@@ -2008,3 +2008,232 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::OR_GbEbR(bxInstruction_c* i)
 
     BX_NEXT_INSTR(i);
 }
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::MOVZX_GdEbR(bxInstruction_c* i)
+{
+    Bit8u op2_8 = BX_READ_8BIT_REGx(i->src(), i->extend8bitL());
+
+    /* zero extend byte op2 into dword op1 */
+    BX_WRITE_32BIT_REGZ(i->dst(), (Bit32u)op2_8);
+
+    BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::DIV_EAXEdR(bxInstruction_c* i)
+{
+    Bit32u op2_32 = BX_READ_32BIT_REG(i->src());
+    if (op2_32 == 0) {
+        exception(BX_DE_EXCEPTION, 0);
+    }
+
+    Bit64u op1_64 = GET64_FROM_HI32_LO32(EDX, EAX);
+
+    Bit64u quotient_64 = op1_64 / op2_32;
+    Bit32u remainder_32 = (Bit32u)(op1_64 % op2_32);
+    Bit32u quotient_32l = (Bit32u)(quotient_64 & 0xFFFFFFFF);
+
+    if (quotient_64 != quotient_32l)
+    {
+        exception(BX_DE_EXCEPTION, 0);
+    }
+
+    /* set EFLAGS:
+     * DIV affects the following flags: O,S,Z,A,P,C are undefined
+     */
+
+     /* now write quotient back to destination */
+    RAX = quotient_32l;
+    RDX = remainder_32;
+
+    BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::OR_GdEdR(bxInstruction_c* i)
+{
+    Bit32u op1_32, op2_32;
+
+    op1_32 = BX_READ_32BIT_REG(i->dst());
+    op2_32 = BX_READ_32BIT_REG(i->src());
+    op1_32 |= op2_32;
+    BX_WRITE_32BIT_REGZ(i->dst(), op1_32);
+
+    SET_FLAGS_OSZAPC_LOGIC_32(op1_32);
+
+    BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::JBE_Jd(bxInstruction_c* i)
+{
+    if (get_CF() || get_ZF()) {
+        Bit32u new_EIP = EIP + (Bit32s)i->Id();
+        branch_near32(new_EIP);
+        BX_INSTR_CNEAR_BRANCH_TAKEN(BX_CPU_ID, PREV_RIP, new_EIP);
+        BX_LINK_TRACE(i);
+    }
+
+    BX_INSTR_CNEAR_BRANCH_NOT_TAKEN(BX_CPU_ID, PREV_RIP);
+    BX_NEXT_INSTR(i); // trace can continue over non-taken branch
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::CMP_GdEdM(bxInstruction_c* i)
+{
+    Bit32u op1_32, op2_32, diff_32;
+
+    bx_address eaddr = BX_CPU_RESOLVE_ADDR(i);
+
+    op1_32 = BX_READ_32BIT_REG(i->dst());
+    op2_32 = read_virtual_dword(i->seg(), eaddr);
+    diff_32 = op1_32 - op2_32;
+
+    SET_FLAGS_OSZAPC_SUB_32(op1_32, op2_32, diff_32);
+
+    BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::JS_Jd(bxInstruction_c* i)
+{
+    if (get_SF()) {
+        Bit32u new_EIP = EIP + (Bit32s)i->Id();
+        branch_near32(new_EIP);
+        BX_INSTR_CNEAR_BRANCH_TAKEN(BX_CPU_ID, PREV_RIP, new_EIP);
+        BX_LINK_TRACE(i);
+    }
+
+    BX_INSTR_CNEAR_BRANCH_NOT_TAKEN(BX_CPU_ID, PREV_RIP);
+    BX_NEXT_INSTR(i); // trace can continue over non-taken branch
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::SHRD_EdGdR(bxInstruction_c* i)
+{
+    Bit32u op1_32, op2_32, result_32;
+    unsigned count;
+    unsigned cf, of;
+
+    if (i->getIaOpcode() == BX_IA_SHRD_EdGd)
+        count = CL;
+    else // BX_IA_SHRD_EdGdIb
+        count = i->Ib();
+
+    count &= 0x1f; // use only 5 LSB's
+
+    if (!count) {
+        BX_CLEAR_64BIT_HIGH(i->dst()); // always clear upper part of the register
+    }
+    else {
+        op1_32 = BX_READ_32BIT_REG(i->dst());
+        op2_32 = BX_READ_32BIT_REG(i->src());
+
+        result_32 = (op2_32 << (32 - count)) | (op1_32 >> count);
+
+        BX_WRITE_32BIT_REGZ(i->dst(), result_32);
+
+        SET_FLAGS_OSZAPC_LOGIC_32(result_32);
+
+        cf = (op1_32 >> (count - 1)) & 0x1;
+        of = ((result_32 << 1) ^ result_32) >> 31; // of = result30 ^ result31
+        BX_CPU_THIS_PTR oszapc.set_flags_OxxxxC(of, cf);
+    }
+
+    BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::SHR_EdR(bxInstruction_c* i)
+{
+    unsigned count;
+
+    if (i->getIaOpcode() == BX_IA_SHR_Ed)
+        count = CL;
+    else
+        count = i->Ib();
+
+    count &= 0x1f;
+
+    if (!count) {
+        BX_CLEAR_64BIT_HIGH(i->dst()); // always clear upper part of the register
+    }
+    else {
+        Bit32u op1_32 = BX_READ_32BIT_REG(i->dst());
+        Bit32u result_32 = (op1_32 >> count);
+        BX_WRITE_32BIT_REGZ(i->dst(), result_32);
+
+        unsigned cf = (op1_32 >> (count - 1)) & 0x1;
+        // note, that of == result31 if count == 1 and
+        //            of == 0        if count >= 2
+        unsigned of = ((result_32 << 1) ^ result_32) >> 31;
+
+        SET_FLAGS_OSZAPC_LOGIC_32(result_32);
+        BX_CPU_THIS_PTR oszapc.set_flags_OxxxxC(of, cf);
+    }
+
+    BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::CPUID(bxInstruction_c* i)
+{
+#if BX_CPU_LEVEL >= 4
+
+#if BX_SUPPORT_VMX
+    if (BX_CPU_THIS_PTR in_vmx_guest) {
+        VMexit(VMX_VMEXIT_CPUID, 0);
+    }
+#endif
+
+#if BX_SUPPORT_SVM
+    if (BX_CPU_THIS_PTR in_svm_guest) {
+        if (SVM_INTERCEPT(SVM_INTERCEPT0_CPUID)) Svm_Vmexit(SVM_VMEXIT_CPUID);
+    }
+#endif
+
+    struct cpuid_function_t leaf;
+    BX_CPU_THIS_PTR cpuid->get_cpuid_leaf(EAX, ECX, &leaf);
+
+    RAX = leaf.eax;
+    RBX = leaf.ebx;
+    RCX = leaf.ecx;
+    RDX = leaf.edx;
+#endif
+
+    BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::MOV_OdEAX(bxInstruction_c* i)
+{
+    write_virtual_dword_32(i->seg(), i->Id(), EAX);
+
+    BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::MOV_EAXOd(bxInstruction_c* i)
+{
+    RAX = read_virtual_dword_32(i->seg(), i->Id());
+
+    BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::TEST_EbIbM(bxInstruction_c* i)
+{
+    bx_address eaddr = BX_CPU_RESOLVE_ADDR(i);
+
+    Bit8u op1 = read_virtual_byte(i->seg(), eaddr);
+    op1 &= i->Ib();
+    SET_FLAGS_OSZAPC_LOGIC_8(op1);
+
+    BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::MOVZX_GdEwM(bxInstruction_c* i)
+{
+    bx_address eaddr = BX_CPU_RESOLVE_ADDR(i);
+
+    Bit16u op2_16 = read_virtual_word(i->seg(), eaddr);
+
+    /* zero extend word op2 into dword op1 */
+    BX_WRITE_32BIT_REGZ(i->dst(), (Bit32u)op2_16);
+
+    BX_NEXT_INSTR(i);
+}
+
+
+
+
+

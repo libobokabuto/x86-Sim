@@ -2,7 +2,7 @@
 #include "bochs.h"
 #include "cpu.h"
 #include "cpuid.h"
-
+//#include "vmx.h"
 #define LOG_THIS BX_CPU(0)->
 #if BX_SUPPORT_VMX
 #include "vmx_ctrls.h"
@@ -10,6 +10,78 @@
 const Bit32u VMCS_REVISION_ID_FIELD_ADDR = 0x0000;
 const Bit32u VMCS_VMX_ABORT_FIELD_ADDR = 0x0004;
 const Bit32u VMCS_LAUNCH_STATE_FIELD_ADDR = 0x0008;
+
+
+VMCS_Mapping::VMCS_Mapping(Bit32u revision) : revision_id(revision), ar_format(VMCS_AR_ROTATE)
+{
+	clear();
+	init_generic_mapping();
+}
+
+VMCS_Mapping::VMCS_Mapping(Bit32u revision, const char* filename) : revision_id(revision), ar_format(VMCS_AR_ROTATE)
+{
+	clear();
+
+	// read mapping from file
+	//BX_PANIC(("Reading VMCS mapping from file not implemented yet"));
+
+	init_generic_mapping(); // for now
+}
+
+BX_CPP_INLINE Bit32u vmcs_encoding(Bit32u type, Bit32u field)
+{
+	Bit32u encoding = ((type & 0xc) << 11) + ((type & 0x3) << 10) + field;
+	return encoding;
+}
+
+void VMCS_Mapping::init_generic_mapping()
+{
+	vmcs_revision_id_field_offset = VMCS_REVISION_ID_FIELD_ADDR;
+	vmx_abort_field_offset = VMCS_VMX_ABORT_FIELD_ADDR;
+	vmcs_launch_state_field_offset = VMCS_LAUNCH_STATE_FIELD_ADDR;
+
+	// try to build generic VMCS map
+
+	static const unsigned encodings_per_width[4] = {
+	  VMX_HIGHEST_16BIT_VMCS_ENCODING,
+	  VMX_HIGHEST_64BIT_VMCS_ENCODING,
+	  VMX_HIGHEST_32BIT_VMCS_ENCODING,
+	  VMX_HIGHEST_NATURAL_WIDTH_VMCS_ENCODING
+	};
+
+	unsigned offset = VMCS_DATA_OFFSET;
+
+	for (unsigned encoding_width = 0; encoding_width < 4; encoding_width++) {
+		// start from 4 types of 16-bit wide VMCS encodings, 32 encodings total, allocate 4 bytes for each => 512 bytes
+		// then 64-bit encodings: 4 types, 80 encodings (0x50), 4 bytes each field => 1280 bytes
+		// then 32-bit encodings: 4 types, 48 encodings (0x30), 4 bytes each field =>  768 bytes
+		// then Natural-width encodings: 4 types, 48 encodings (0x30), 4 bytes each field => 768 bytes
+		for (unsigned encoding_class = 0; encoding_class < 4; encoding_class++) {
+			for (unsigned field = 0; field < encodings_per_width[encoding_width]; field++) {
+				Bit32u type = encoding_width * 4 + encoding_class;
+				Bit32u encoding = vmcs_encoding(type, field);
+				if (vmcs_map[type][field] != 0xffffffff) {
+					//BX_PANIC(("VMCS type %d field %d (encoding = 0x%08x) is already initialized", type, field, encoding));
+				}
+				vmcs_map[type][field] = offset + field * 4;
+				if (vmcs_map[type][field] >= (VMX_VMCS_AREA_SIZE - 4)) {
+					//BX_PANIC(("VMCS type %d field %d (encoding = 0x%08x) is out of VMCS boundaries at 0x%08x", type, field, encoding, vmcs_map[type][field]));
+				}
+				//BX_DEBUG(("VMCS field 0x%08x located at 0x%08x", encoding, vmcs_map[type][field]));
+			}
+			offset += 4 * encodings_per_width[encoding_width];
+		}
+	}
+}
+
+void VMCS_Mapping::clear()
+{
+	for (unsigned type = 0; type < 16; type++) {
+		for (unsigned field = 0; field < VMX_HIGHEST_VMCS_ENCODING; field++) {
+			vmcs_map[type][field] = 0xffffffff;
+		}
+	}
+}
 
 unsigned VMCS_Mapping::vmcs_field_offset(Bit32u encoding) const
 {

@@ -134,6 +134,7 @@
     <ClCompile Include="call_far.cc" />
     <ClCompile Include="cet.cc" />
     <ClCompile Include="coms.cc" />
+    <ClCompile Include="corei7_haswell_4770.cc" />
     <ClCompile Include="cpu.cc" />
     <ClCompile Include="cpuid.cc" />
     <ClCompile Include="crregs.cc" />
@@ -164,6 +165,7 @@
     <ClCompile Include="fetchdecode_opmap_evex.cc" />
     <ClCompile Include="flag_ctrl_pro.cc" />
     <ClCompile Include="gui.cc" />
+    <ClCompile Include="i486dx4.cc" />
     <ClCompile Include="icache.cc" />
     <ClCompile Include="init.cc" />
     <ClCompile Include="io.cc" />
@@ -210,6 +212,7 @@
     <ClInclude Include="bswap.h" />
     <ClInclude Include="cmos.h" />
     <ClInclude Include="config.h" />
+    <ClInclude Include="corei7_haswell_4770.h" />
     <ClInclude Include="cpu.h" />
     <ClInclude Include="cpuid.h" />
     <ClInclude Include="cpustats.h" />
@@ -225,7 +228,9 @@
     <ClInclude Include="fetchdecode.h" />
     <ClInclude Include="fetchdecode_opmap.h" />
     <ClInclude Include="gui.h" />
+    <ClInclude Include="i386.h" />
     <ClInclude Include="i387.h" />
+    <ClInclude Include="i486dx4.h" />
     <ClInclude Include="ia_opcodes.h" />
     <ClInclude Include="icache.h" />
     <ClInclude Include="instr.h" />

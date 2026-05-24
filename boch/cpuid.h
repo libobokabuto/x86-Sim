@@ -9,9 +9,21 @@ struct cpuid_function_t {
 
 	bool is_empty() { return (eax | ebx | ecx | edx) == 0; }
 };
+class VMCS_Mapping;
 
 class bx_cpuid_t {
 public:
+	bx_cpuid_t(BX_CPU_C* _cpu);
+#if BX_SUPPORT_VMX
+	bx_cpuid_t(BX_CPU_C* _cpu, Bit32u vmcs_revision);
+	bx_cpuid_t(BX_CPU_C* _cpu, Bit32u vmcs_revision, const char* filename);
+#endif
+	virtual ~bx_cpuid_t() {}
+
+	void init();
+
+	virtual const char* get_name(void) const = 0;
+
 	BX_CPP_INLINE void get_cpu_extensions(Bit32u* extensions) const {
 		for (unsigned n = 0; n < BX_ISA_EXTENSIONS_ARRAY_SIZE; n++)
 			extensions[n] = ia_extensions_bitmask[n];
@@ -29,6 +41,12 @@ public:
 	virtual Bit32u get_svm_extensions_bitmask(void) const { return 0; }
 #endif
 
+	virtual void get_cpuid_leaf(Bit32u function, Bit32u subfunction, cpuid_function_t* leaf) const = 0;
+
+	virtual void dump_cpuid(void) const = 0;
+
+	void sanity_checks() const;
+
 #if BX_CPU_LEVEL >= 5
 	virtual int rdmsr(Bit32u index, Bit64u* msr) { return -1; }
 	virtual int wrmsr(Bit32u index, Bit64u  msr) { return -1; }
@@ -39,6 +57,17 @@ public:
 #endif
 	bool support_avx10_512() const; //89
 
+	BX_CPP_INLINE void enable_cpu_extension(unsigned extension) {
+		assert(extension < BX_ISA_EXTENSION_LAST);
+		ia_extensions_bitmask[extension / 32] |= (1 << (extension % 32));
+		warning_messages(extension);
+	}
+
+	BX_CPP_INLINE void disable_cpu_extension(unsigned extension) {
+		assert(extension < BX_ISA_EXTENSION_LAST);
+		ia_extensions_bitmask[extension / 32] &= ~(1 << (extension % 32));
+	}
+
 protected:
 	BX_CPU_C* cpu;
 
@@ -47,6 +76,51 @@ protected:
 	unsigned nthreads;
 	//102
 	Bit32u ia_extensions_bitmask[BX_ISA_EXTENSIONS_ARRAY_SIZE]; //109
+
+	void get_leaf_0(unsigned max_leaf, const char* vendor_string, cpuid_function_t* leaf, unsigned limited_max_leaf = 0x02) const;
+	void get_ext_cpuid_brand_string_leaf(const char* brand_string, Bit32u function, cpuid_function_t* leaf) const;
+	
+#if BX_SUPPORT_APIC
+	void get_std_cpuid_extended_topology_leaf(Bit32u subfunction, cpuid_function_t* leaf) const;
+#endif
+
+#if BX_CPU_LEVEL >= 6
+	void get_std_cpuid_xsave_leaf(Bit32u subfunction, cpuid_function_t* leaf) const;
+#endif
+
+	void get_std_cpuid_monitor_mwait_leaf(cpuid_function_t* leaf, Bit32u edx_power_states) const;
+
+	Bit32u get_std_cpuid_leaf_1_ecx(Bit32u extra = 0) const;
+	Bit32u get_std_cpuid_leaf_1_edx_common(Bit32u extra = 0) const;
+	Bit32u get_std_cpuid_leaf_1_edx(Bit32u extra = 0) const;
+	Bit32u get_std_cpuid_leaf_7_ebx(Bit32u extra = 0) const;
+
+	Bit32u get_ext_cpuid_leaf_1_ecx(Bit32u extra = 0) const;
+	Bit32u get_ext_cpuid_leaf_1_edx_intel() const;
+
+	void get_ext_cpuid_leaf_8(cpuid_function_t* leaf) const;
+
+	BX_CPP_INLINE void get_leaf(cpuid_function_t* leaf, Bit32u eax, Bit32u ebx, Bit32u ecx, Bit32u edx) const
+	{
+		leaf->eax = eax;
+		leaf->ebx = ebx;
+		leaf->ecx = ecx;
+		leaf->edx = edx;
+	}
+
+	BX_CPP_INLINE void get_reserved_leaf(cpuid_function_t* leaf) const
+	{
+		leaf->eax = 0;
+		leaf->ebx = 0;
+		leaf->ecx = 0;
+		leaf->edx = 0;
+	}
+
+	void dump_cpuid_leaf(unsigned function, unsigned subfunction = 0) const;
+	void dump_cpuid(unsigned max_std_leaf, unsigned max_ext_leaf) const;
+
+	void warning_messages(unsigned extension) const;
+
 #if BX_SUPPORT_VMX
 	VMCS_Mapping vmcs_map;
 #endif

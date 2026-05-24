@@ -1,4 +1,5 @@
 #pragma once
+
 x86_feature(BX_ISA_386, "386ni")                                        /* 386 or earlier instruction */
 x86_feature(BX_ISA_X87, "x87")                                          /* FPU (x87) instruction */
 x86_feature(BX_ISA_486, "486ni")                                        /* 486 new instruction */

@@ -210,6 +210,12 @@
     <ClCompile Include="biosdev.cc">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="i486dx4.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="corei7_haswell_4770.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bochs.h">
@@ -387,6 +393,15 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="biosdev.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="i386.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="i486dx4.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="corei7_haswell_4770.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
