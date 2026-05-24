@@ -31,5 +31,11 @@
 typedef Bit64s ssize_t;
 #endif
 
+#if BX_HAVE_REALTIME_USEC
+// 64-bit time in useconds.
+BOCHSAPI_MSVCONLY extern Bit64u bx_get_realtime64_usec(void);
+#endif
+
+
 
 

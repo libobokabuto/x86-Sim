@@ -85,7 +85,7 @@ public:
 		bool continuous, bool active, const char* id);
 	void activate_timer_ticks(unsigned index, Bit64u instructions, bool continuous); //125
 	
-	
+	Bit64u time_usec();
 
 	static BX_CPP_INLINE Bit64u time_ticks() {
 		return bx_pc_system.ticksTotal +

@@ -263,13 +263,6 @@ void BX_CPU_C::VMexit_Event(unsigned type, unsigned vector, Bit16u errcode, bool
     VMexit(reason, qualification);
 }
 
-enum {
-    VMX_VMEXIT_IO_PORTIN = (1 << 3),
-    VMX_VMEXIT_IO_INSTR_STRING = (1 << 4),
-    VMX_VMEXIT_IO_INSTR_REP = (1 << 5),
-    VMX_VMEXIT_IO_INSTR_IMM = (1 << 6)
-};
-
 void BX_CPU_C::VMexit_TripleFault(void)
 {
     if (!BX_CPU_THIS_PTR in_vmx_guest) return;
@@ -292,6 +285,54 @@ const Bit32u BX_VMX_LO_MSR_START = 0x00000000;
 const Bit32u BX_VMX_LO_MSR_END = 0x00001FFF;
 const Bit32u BX_VMX_HI_MSR_START = 0xC0000000;
 const Bit32u BX_VMX_HI_MSR_END = 0xC0001FFF;
+
+void BX_CPP_AttrRegparmN(2) BX_CPU_C::VMexit_MSR(unsigned op, Bit32u msr)
+{
+    //BX_ASSERT(BX_CPU_THIS_PTR in_vmx_guest);
+
+    bool readmsr = (op == VMX_VMEXIT_RDMSR || op == VMX_VMEXIT_RDMSRLIST);
+
+    VMCS_CACHE* vm = &BX_CPU_THIS_PTR vmcs;
+
+    if (!vm->vmexec_ctrls1.MSR_BITMAPS()) {
+        //BX_DEBUG(("VMEXIT: %sMSR 0x%08x", (readmsr) ? "RD" : "WR", msr));
+        VMexit(op, 0);
+    }
+
+    bool vmexit = false;
+    if (msr >= BX_VMX_HI_MSR_START) {
+        if (msr > BX_VMX_HI_MSR_END) vmexit = true;
+        else {
+            // check MSR-HI bitmaps
+            bx_phy_address pAddr = vm->msr_bitmap_addr + ((msr - BX_VMX_HI_MSR_START) >> 3) + 1024 + (readmsr ? 0 : 2048);
+            Bit8u field = read_physical_byte(pAddr, MEMTYPE(resolve_memtype(pAddr)), BX_MSR_BITMAP_ACCESS);
+            if (field & (1 << (msr & 7)))
+                vmexit = true;
+        }
+    }
+    else {
+        if (msr > BX_VMX_LO_MSR_END) vmexit = true;
+        else {
+            // check MSR-LO bitmaps
+            bx_phy_address pAddr = vm->msr_bitmap_addr + (msr >> 3) + (readmsr ? 0 : 2048);
+            Bit8u field = read_physical_byte(pAddr, MEMTYPE(resolve_memtype(pAddr)), BX_MSR_BITMAP_ACCESS);
+            if (field & (1 << (msr & 7)))
+                vmexit = true;
+        }
+    }
+
+    if (vmexit) {
+        //BX_DEBUG(("VMEXIT: %sMSR 0x%08x", (readmsr) ? "RD" : "WR", msr));
+        VMexit(op, (op >= VMX_VMEXIT_RDMSRLIST) ? msr : 0);
+    }
+}
+
+enum {
+    VMX_VMEXIT_IO_PORTIN = (1 << 3),
+    VMX_VMEXIT_IO_INSTR_STRING = (1 << 4),
+    VMX_VMEXIT_IO_INSTR_REP = (1 << 5),
+    VMX_VMEXIT_IO_INSTR_IMM = (1 << 6)
+};
 
 void BX_CPP_AttrRegparmN(3) BX_CPU_C::VMexit_IO(bxInstruction_c* i, unsigned port, unsigned len)
 { //385

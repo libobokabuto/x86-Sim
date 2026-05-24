@@ -15,4 +15,3 @@ void bx_shadow_filedata_c::set_sr_handlers(void* devptr, filedata_save_handler s
 	this->restore_handler = restore;
 }
 
-

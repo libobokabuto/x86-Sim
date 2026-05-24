@@ -141,3 +141,13 @@ void bx_gui_c::statusbar_setitem(int element, bool active, bool w)
         }
     }
 }
+
+void bx_gui_c::beep_on(float frequency)
+{
+    //BX_DEBUG(("GUI Beep ON (frequency=%.2f)", frequency));
+}
+
+void bx_gui_c::beep_off()
+{
+    //BX_DEBUG(("GUI Beep OFF"));
+}

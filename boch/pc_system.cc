@@ -306,6 +306,11 @@ void bx_pc_system_c::nullTimer(void* this_ptr)
 #endif
 }
 
+Bit64u bx_pc_system_c::time_usec()
+{
+    return (Bit64u)(((double)(Bit64s)time_ticks()) / m_ips);
+}
+
 void bx_pc_system_c::deactivate_timer(unsigned i)
 { //563
 #if BX_TIMER_DEBUG

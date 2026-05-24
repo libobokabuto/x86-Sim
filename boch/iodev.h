@@ -198,7 +198,15 @@ class BOCHSAPI bx_vga_stub_c
 };
 class BOCHSAPI bx_speaker_stub_c : public bx_devmodel_c {
 public:
+    virtual void beep_on(float frequency) {
+        bx_gui->beep_on(frequency);
+    }
+    virtual void beep_off() {
+        bx_gui->beep_off();
+    }
+    virtual void set_line(bool level) {}
 };
+
 #if BX_SUPPORT_PCI
 class BOCHSAPI bx_pci2isa_stub_c : public bx_pci_device_c {
 public:
@@ -207,6 +215,7 @@ public:
 class BOCHSAPI bx_pci_ide_stub_c : public bx_pci_device_c {
 public:
 };
+
 class BOCHSAPI bx_acpi_ctrl_stub_c : public bx_pci_device_c {
 public:
 };
@@ -260,6 +269,8 @@ public:
     void gen_scancode(Bit32u key);//427
     void release_keys(void);//429
     void kbd_set_indicator(Bit8u devid, Bit8u ledid, bool state); //431
+    void add_sound_device(void);
+    void remove_sound_device(void);//435
     bx_cmos_stub_c* pluginCmosDevice;
     bx_dma_stub_c* pluginDmaDevice;
     bx_hard_drive_stub_c* pluginHardDrive;

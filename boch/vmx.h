@@ -714,6 +714,7 @@ typedef struct bx_VMCS   //750
     Bit32u vm_pf_mask;
     Bit32u vm_pf_match;
     Bit64u io_bitmap_addr[2];
+    bx_phy_address msr_bitmap_addr;
     Bit64u msr_data; //785
 
     Bit64u ia32_spec_ctrl_shadow;

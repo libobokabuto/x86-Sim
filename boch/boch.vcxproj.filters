@@ -216,6 +216,30 @@
     <ClCompile Include="corei7_haswell_4770.cc">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="pit.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="pit82c54.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="speaker.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="bxthread.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="soundlow.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="osdep.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="soundmod.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="virt_timer.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bochs.h">
@@ -402,6 +426,27 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="corei7_haswell_4770.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="pit.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="pit82c54.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="speaker.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="bxthread.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="soundlow.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="soundmod.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="virt_timer.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

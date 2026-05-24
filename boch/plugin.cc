@@ -268,6 +268,37 @@ plugin_t bx_builtin_plugins[] = {
   */
   {"NULL", PLUGTYPE_NULL, 0, NULL, 0}
 };
+
+Bit8u bx_get_plugins_count_np(Bit16u type)
+{ //1146
+    int i = 0;
+    Bit8u count = 0;
+
+    while (strcmp(bx_builtin_plugins[i].name, "NULL")) {
+        if ((type & bx_builtin_plugins[i].type) != 0)
+            count++;
+        i++;
+    }
+    return count;
+}
+
+const char* bx_get_plugin_name_np(Bit16u type, Bit8u index)
+{//1159
+    int i = 0;
+    Bit8u count = 0;
+
+    while (strcmp(bx_builtin_plugins[i].name, "NULL")) {
+        if ((type & bx_builtin_plugins[i].type) != 0) {
+            if (count == index)
+                return bx_builtin_plugins[i].name;
+            count++;
+        }
+        i++;
+    }
+    return NULL;
+}
+
+
 int bx_load_plugin_np(const char* name, Bit16u type)
 {
     //1191

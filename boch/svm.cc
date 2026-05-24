@@ -42,7 +42,6 @@ BX_CPP_INLINE void BX_CPU_C::vmcb_write16(unsigned offset, Bit16u val_16)
     }
 }
 
-
 BX_CPP_INLINE void BX_CPU_C::vmcb_write32(unsigned offset, Bit32u val_32)
 {
     bx_phy_address pAddr = BX_CPU_THIS_PTR vmcbptr + offset;
@@ -57,7 +56,6 @@ BX_CPP_INLINE void BX_CPU_C::vmcb_write32(unsigned offset, Bit32u val_32)
         write_physical_dword(pAddr, val_32, MEMTYPE(BX_CPU_THIS_PTR vmcb_memtype), BX_VMCS_ACCESS);
     }
 }
-
 
 BX_CPP_INLINE void BX_CPU_C::vmcb_write64(unsigned offset, Bit64u val_64)
 { //185
@@ -411,6 +409,36 @@ void BX_CPU_C::SvmInterceptIO(bxInstruction_c* i, unsigned port, unsigned len)
             qualification |= SVM_VMEXIT_IO_INSTR_ASIZE16;
 
         Svm_Vmexit(SVM_VMEXIT_IO, qualification, RIP);
+    }
+}
+
+void BX_CPU_C::SvmInterceptMSR(unsigned op, Bit32u msr)
+{
+    if (!BX_CPU_THIS_PTR in_svm_guest) return;
+
+    if (!SVM_INTERCEPT(SVM_INTERCEPT0_MSR)) return;
+
+    //BX_ASSERT(op == BX_READ || op == BX_WRITE);
+
+    bool vmexit = true;
+
+    int msr_map_offset = -1;
+    if (msr <= 0x1fff) msr_map_offset = 0;
+    else if (msr >= 0xc0000000 && msr <= 0xc0001fff) msr_map_offset = 2048;
+    else if (msr >= 0xc0010000 && msr <= 0xc0011fff) msr_map_offset = 4096;
+
+    if (msr_map_offset >= 0) {
+        bx_phy_address msr_bitmap_addr = BX_CPU_THIS_PTR vmcb->ctrls.msrpm_base + msr_map_offset;
+        Bit32u msr_offset = (msr & 0x1fff) * 2 + op;
+
+        bx_phy_address pAddr = msr_bitmap_addr + (msr_offset / 8);
+        Bit8u msr_bitmap = read_physical_byte(pAddr, MEMTYPE(resolve_memtype(pAddr)), BX_MSR_BITMAP_ACCESS);
+
+        vmexit = (msr_bitmap >> (msr_offset & 7)) & 0x1;
+    }
+
+    if (vmexit) {
+        Svm_Vmexit(SVM_VMEXIT_MSR, op); // 0 - RDMSR, 1 - WRMSR
     }
 }
 

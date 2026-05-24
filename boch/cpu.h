@@ -108,7 +108,9 @@ const Bit64u BX_PHY_ADDRESS_RESERVED_BITS = (~BX_PHY_ADDRESS_MASK); //33
 #define BX_WRITE_32BIT_REGZ(index, val) {\
   BX_CPU_THIS_PTR gen_reg[index].rrx = (Bit32u) val; \
 }//167-169
-
+#define BX_WRITE_64BIT_REG(index, val) {\
+  BX_CPU_THIS_PTR gen_reg[index].rrx = val; \
+}
 #define BX_CLEAR_64BIT_HIGH(index) {\
   BX_CPU_THIS_PTR gen_reg[index].dword.hrx = 0; \
 } //174-176行 
@@ -1345,7 +1347,7 @@ public:
 
     BX_SMF void JO_Jd(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void JNO_Jd(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
-    BX_SMF void JB_Jd(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void JB_Jd(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void JNB_Jd(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void JZ_Jd(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void JNZ_Jd(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
@@ -1618,7 +1620,7 @@ public:
 
     BX_SMF void NOT_EbR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void NOT_EwR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
-    BX_SMF void NOT_EdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void NOT_EdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
 
     BX_SMF void NEG_EbM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void NEG_EwM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
@@ -1676,7 +1678,7 @@ public:
     BX_SMF void SHR_EdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void SAR_EdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
 
-    BX_SMF void TEST_EbIbR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void TEST_EbIbR(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void TEST_EwIwR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void TEST_EdIdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
 
@@ -4054,10 +4056,10 @@ public:
     BX_SMF void INVLPG(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void RSM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
 
-    BX_SMF void WRMSR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void WRMSR(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void RDTSC(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void RDPMC(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
-    BX_SMF void RDMSR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void RDMSR(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void SYSENTER(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void SYSEXIT(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
 
@@ -4717,6 +4719,7 @@ public:
     BX_SMF void VMexit_TripleFault(void); //5318
     BX_SMF void VMexit_ExtInterrupt(void); //5319
     BX_SMF void VMexit_TaskSwitch(Bit16u tss_selector, unsigned source) BX_CPP_AttrRegparmN(2); //5320
+    BX_SMF void VMexit_MSR(unsigned op, Bit32u msr) BX_CPP_AttrRegparmN(2);
     BX_SMF void VMexit_IO(bxInstruction_c* i, unsigned port, unsigned len) BX_CPP_AttrRegparmN(3);
     BX_SMF bx_address VMexit_CR0_Write(bxInstruction_c* i, bx_address) BX_CPP_AttrRegparmN(2);//5326
     BX_SMF void VMexit_CR8_Read(bxInstruction_c* i) BX_CPP_AttrRegparmN(1);//5330
@@ -4734,7 +4737,8 @@ public:
     BX_SMF void SvmInterceptException(unsigned type, unsigned vector,
         Bit16u errcode, bool errcode_valid, Bit64u qualification = 0); //5358
     BX_SMF void SvmInterceptIO(bxInstruction_c* i, unsigned port, unsigned len); //5360
-    BX_SMF void SvmInterceptTaskSwitch(Bit16u tss_selector, unsigned source, bool push_error, Bit32u error_code); //5362
+    BX_SMF void SvmInterceptMSR(unsigned op, Bit32u msr);//5362
+    BX_SMF void SvmInterceptTaskSwitch(Bit16u tss_selector, unsigned source, bool push_error, Bit32u error_code); //5363
     BX_SMF void SvmVirtualInterruptAcknowledge(void); //5364
     BX_SMF void Svm_Update_VM_CR_MSR(Bit64u val);//5365
 #endif //5367

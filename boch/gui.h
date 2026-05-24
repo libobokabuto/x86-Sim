@@ -22,6 +22,8 @@ public: //127
 	bx_gui_c(void);
 	virtual ~bx_gui_c();
 	virtual void statusbar_setitem_specific(int element, bool active, bool w) {} //160
+	virtual void beep_on(float frequency);//181
+	virtual void beep_off();//182
 	int register_statusitem(const char* text, bool auto_off = 0); //209
 	void statusbar_setitem(int element, bool active, bool w = 0); //211
 protected: //247

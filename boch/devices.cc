@@ -107,7 +107,10 @@ void bx_devices_c::init(BX_MEM_C* newmem)
     PLUG_load_plugin(cmos, PLUGTYPE_CORE); //238
 
     PLUG_load_plugin(dma, PLUGTYPE_CORE); //239
+
     PLUG_load_plugin(pic, PLUGTYPE_CORE);//240
+
+    PLUG_load_plugin(pit, PLUGTYPE_CORE);
 
     PLUG_load_plugin(keyboard, PLUGTYPE_STANDARD); //250
 
@@ -116,6 +119,8 @@ void bx_devices_c::init(BX_MEM_C* newmem)
     PLUG_load_plugin(serial, PLUGTYPE_OPTIONAL);//Í¬parallelÒ»Ñù
 
     PLUG_load_plugin(biosdev, PLUGTYPE_OPTIONAL);
+
+    PLUG_load_plugin(speaker, PLUGTYPE_OPTIONAL);
 
     
     // misc. CMOS memory size
@@ -383,6 +388,16 @@ bx_devices_c::outp(Bit16u addr, Bit32u value, unsigned io_len)
     else if (addr != 0x0cf8) { // don't flood the logfile when probing PCI
         //BX_ERROR(("write to port 0x%04x with len %d ignored", addr, io_len));
     }
+}
+
+void bx_devices_c::add_sound_device(void)
+{
+    sound_device_count++;
+}
+
+void bx_devices_c::remove_sound_device(void)
+{
+    sound_device_count--;
 }
 
 void bx_devices_c::register_default_keyboard(void* dev, bx_kbd_gen_scancode_t kbd_gen_scancode,

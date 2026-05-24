@@ -2233,7 +2233,124 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::MOVZX_GdEwM(bxInstruction_c* i)
     BX_NEXT_INSTR(i);
 }
 
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::RDMSR(bxInstruction_c* i)
+{
+#if BX_CPU_LEVEL >= 5
+    // CPL is always 0 in real mode
+    if (/* !real_mode() && */ CPL != 0) {
+        //BX_ERROR(("%s: CPL != 0 not in real mode", i->getIaOpcodeNameShort()));
+        exception(BX_GP_EXCEPTION, 0);
+    }
 
+    Bit32u index = ECX;
+#if BX_SUPPORT_X86_64 && BX_SUPPORT_AVX
+    if (i->getIaOpcode() == BX_IA_RDMSR_EqId) index = i->Id();
+#endif
+    Bit64u val64 = 0;
+
+#if BX_SUPPORT_SVM
+    if (BX_CPU_THIS_PTR in_svm_guest) {
+        if (SVM_INTERCEPT(SVM_INTERCEPT0_MSR)) SvmInterceptMSR(BX_READ, index);
+    }
+#endif
+
+#if BX_SUPPORT_VMX
+    if (BX_CPU_THIS_PTR in_vmx_guest)
+        VMexit_MSR(VMX_VMEXIT_RDMSR, index);
+#endif
+
+    if (!rdmsr(index, &val64))
+        exception(BX_GP_EXCEPTION, 0);
+
+#if BX_SUPPORT_X86_64 && BX_SUPPORT_AVX
+    if (i->getIaOpcode() == BX_IA_RDMSR_EqId) {
+        BX_WRITE_64BIT_REG(i->dst(), val64);
+    }
+    else
+#endif
+    {
+        RAX = GET32L(val64);
+        RDX = GET32H(val64);
+    }
+#endif
+
+    BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::TEST_EbIbR(bxInstruction_c* i)
+{
+    Bit8u op1 = BX_READ_8BIT_REGx(i->dst(), i->extend8bitL());
+    op1 &= i->Ib();
+    SET_FLAGS_OSZAPC_LOGIC_8(op1);
+
+    BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::JB_Jd(bxInstruction_c* i)
+{
+    if (get_CF()) {
+        Bit32u new_EIP = EIP + (Bit32s)i->Id();
+        branch_near32(new_EIP);
+        BX_INSTR_CNEAR_BRANCH_TAKEN(BX_CPU_ID, PREV_RIP, new_EIP);
+        BX_LINK_TRACE(i);
+    }
+
+    BX_INSTR_CNEAR_BRANCH_NOT_TAKEN(BX_CPU_ID, PREV_RIP);
+    BX_NEXT_INSTR(i); // trace can continue over non-taken branch
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::WRMSR(bxInstruction_c* i)
+{
+#if BX_CPU_LEVEL >= 5
+    // CPL is always 0 in real mode
+    if (/* !real_mode() && */ CPL != 0) {
+        //BX_ERROR(("%s: CPL != 0 not in real mode", i->getIaOpcodeNameShort()));
+        exception(BX_GP_EXCEPTION, 0);
+    }
+
+    invalidate_prefetch_q();
+
+    Bit64u val_64;
+    Bit32u index;
+
+#if BX_SUPPORT_X86_64 && BX_SUPPORT_AVX
+    if (i->getIaOpcode() == BX_IA_WRMSRNS_IdEq) {
+        val_64 = BX_READ_64BIT_REG(i->src());
+        index = i->Id();
+    }
+    else
+#endif
+    {
+        val_64 = GET64_FROM_HI32_LO32(EDX, EAX);
+        index = ECX;
+    }
+
+#if BX_SUPPORT_SVM
+    if (BX_CPU_THIS_PTR in_svm_guest) {
+        if (SVM_INTERCEPT(SVM_INTERCEPT0_MSR)) SvmInterceptMSR(BX_WRITE, index);
+    }
+#endif
+
+#if BX_SUPPORT_VMX
+    if (BX_CPU_THIS_PTR in_vmx_guest)
+        VMexit_MSR(VMX_VMEXIT_WRMSR, index);
+#endif
+
+    if (!wrmsr(index, val_64))
+        exception(BX_GP_EXCEPTION, 0);
+#endif
+
+    BX_NEXT_TRACE(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::NOT_EdR(bxInstruction_c* i)
+{
+    Bit32u op1_32 = BX_READ_32BIT_REG(i->dst());
+    op1_32 = ~op1_32;
+    BX_WRITE_32BIT_REGZ(i->dst(), op1_32);
+
+    BX_NEXT_INSTR(i);
+}
 
 
 
