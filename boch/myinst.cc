@@ -2352,5 +2352,48 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::NOT_EdR(bxInstruction_c* i)
     BX_NEXT_INSTR(i);
 }
 
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::JL_Jd(bxInstruction_c* i)
+{
+    if (getB_SF() != getB_OF()) {
+        Bit32u new_EIP = EIP + (Bit32s)i->Id();
+        branch_near32(new_EIP);
+        BX_INSTR_CNEAR_BRANCH_TAKEN(BX_CPU_ID, PREV_RIP, new_EIP);
+        BX_LINK_TRACE(i);
+    }
+
+    BX_INSTR_CNEAR_BRANCH_NOT_TAKEN(BX_CPU_ID, PREV_RIP);
+    BX_NEXT_INSTR(i); // trace can continue over non-taken branch
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::OR_EdIdR(bxInstruction_c* i)
+{
+    Bit32u op1_32 = BX_READ_32BIT_REG(i->dst());
+    op1_32 |= i->Id();
+    BX_WRITE_32BIT_REGZ(i->dst(), op1_32);
+
+    SET_FLAGS_OSZAPC_LOGIC_32(op1_32);
+
+    BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::CMP_EdIdM(bxInstruction_c* i)
+{
+    Bit32u op1_32, op2_32, diff_32;
+
+    bx_address eaddr = BX_CPU_RESOLVE_ADDR(i);
+
+    op1_32 = read_virtual_dword(i->seg(), eaddr);
+    op2_32 = i->Id();
+    diff_32 = op1_32 - op2_32;
+
+    SET_FLAGS_OSZAPC_SUB_32(op1_32, op2_32, diff_32);
+
+    BX_NEXT_INSTR(i);
+}
+
+
+
+
+
 
 

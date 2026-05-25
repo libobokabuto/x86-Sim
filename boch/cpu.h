@@ -1357,7 +1357,7 @@ public:
     BX_SMF void JNS_Jd(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void JP_Jd(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void JNP_Jd(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
-    BX_SMF void JL_Jd(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void JL_Jd(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void JNL_Jd(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void JLE_Jd(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void JNLE_Jd(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
@@ -1549,10 +1549,10 @@ public:
     BX_SMF void AND_EdIdM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void SUB_EdIdM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void XOR_EdIdM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
-    BX_SMF void CMP_EdIdM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void CMP_EdIdM(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
 
     BX_SMF void ADD_EdIdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
-    BX_SMF void OR_EdIdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void OR_EdIdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void ADC_EdIdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void SBB_EdIdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
     BX_SMF void AND_EdIdR(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
