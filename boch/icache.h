@@ -112,8 +112,8 @@ public:
 	{
 		//146
 		// took +1 garbend for instruction chaining speedup (end-of-trace opcode)
-		if (0) {
-			
+		if ((mpindex + BX_MAX_TRACE_LENGTH + 1) > BxICacheMemPool) {
+			flushICacheEntries();
 		}
 		e->i = &mpool[mpindex];
 		e->tlen = 0;
