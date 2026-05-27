@@ -121,6 +121,12 @@ bool bx_pc_system_c::get_enable_a20(void)
 #endif
 }
 
+void bx_pc_system_c::MemoryMappingChanged(void)
+{
+    for (unsigned i = 0; i < BX_SMP_PROCESSORS; i++)
+        BX_CPU(i)->TLB_flush();
+}
+
 Bit8u bx_pc_system_c::IAC(void)
 {
     return DEV_pic_iac();

@@ -18,16 +18,31 @@ enum {
 	BX_PCI_INTD = 4
 };
 
-#if BX_SUPPORT_PCI
+
 class bx_pci_vbridge_c;
 
 class bx_pci_bridge_c : public bx_pci_device_c {
 public:
-	
+	bx_pci_bridge_c();
+	virtual ~bx_pci_bridge_c();
+	virtual void init(void);
+	virtual void reset(unsigned type);
+	virtual void register_state(void);
+	virtual void after_restore_state(void);
 
+	static bool agp_ap_read_handler(bx_phy_address addr, unsigned len, void* data, void* param);
+	static bool agp_ap_write_handler(bx_phy_address addr, unsigned len, void* data, void* param);
+
+	Bit32u agp_aperture_read(bx_phy_address addr, unsigned len, bool agp);
+	void   agp_aperture_write(bx_phy_address addr, Bit32u value, unsigned len, bool agp);
+
+	virtual void pci_write_handler(Bit8u address, Bit32u value, unsigned io_len);
+#if BX_DEBUGGER
+	//virtual void debug_dump(int argc, char** argv);
+#endif
 
 private:
-	
+	void smram_control(Bit8u value);
 
 	unsigned chipset;
 	Bit8u DRBA[8];
@@ -38,9 +53,16 @@ private:
 
 class bx_pci_vbridge_c : public bx_pci_device_c {
 public:
-	
+	bx_pci_vbridge_c();
+	virtual ~bx_pci_vbridge_c();
+	virtual void init(void);
+	virtual void reset(unsigned type);
+	virtual void register_state(void);
+	virtual void after_restore_state(void);
+
+	virtual void pci_write_handler(Bit8u address, Bit32u value, unsigned io_len);
 };
-#endif
+
 
 
 

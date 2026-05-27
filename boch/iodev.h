@@ -31,6 +31,14 @@ typedef Bit8u(*bx_kbd_get_elements_t)(void*);
 typedef void (*bx_mouse_enq_t)(void*, int, int, int, unsigned, bool);
 typedef void (*bx_mouse_enabled_changed_t)(void*, bool);
 
+#if BX_USE_DEV_SMF
+#  define BX_DEV_SMF  static
+#  define BX_DEV_THIS bx_devices.
+#else
+#  define BX_DEV_SMF
+#  define BX_DEV_THIS this->
+#endif
+
 class BOCHSAPI bx_devmodel_c {
 public:
     virtual ~bx_devmodel_c() {}
@@ -38,6 +46,10 @@ public:
     virtual void reset(unsigned type) {}
 
 };
+
+class bx_list_c;
+class device_image_t;
+class cdrom_base_c;
 
 #if BX_SUPPORT_PCI
 //#define BX_DEBUG_PCI_READ(addr, value, io_len) \
@@ -94,6 +106,20 @@ public:
     virtual ~bx_pci_device_c() {
         if (pci_rom != NULL) delete[] pci_rom;
     }
+
+    virtual Bit32u pci_read_handler(Bit8u address, unsigned io_len);
+    void pci_write_handler_common(Bit8u address, Bit32u value, unsigned io_len);
+    virtual void pci_write_handler(Bit8u address, Bit32u value, unsigned io_len) {}
+    virtual void pci_bar_change_notify(void) {}
+
+    void init_pci_conf(Bit16u vid, Bit16u did, Bit8u rev, Bit32u classc,
+        Bit8u headt, Bit8u intpin);
+    void init_bar_io(Bit8u num, Bit16u size, bx_read_handler_t rh,
+        bx_write_handler_t wh, const Bit8u* mask);
+    void init_bar_mem(Bit8u num, Bit32u size, memory_handler_t rh, memory_handler_t wh);
+    void set_name(const char* name) { pci_name = name; }
+    const char* get_name(void) { return pci_name; }
+
 protected:
     const char* pci_name;
     Bit8u pci_conf[256];
@@ -255,22 +281,57 @@ public:
     BX_MEM_C* mem;//392
     bool register_io_read_handler(void* this_ptr, bx_read_handler_t f,
         Bit32u addr, const char* name, Bit8u mask); //393
+    bool unregister_io_read_handler(void* this_ptr, bx_read_handler_t f,
+        Bit32u addr, Bit8u mask);
     bool register_io_write_handler(void* this_ptr, bx_write_handler_t f,
         Bit32u addr, const char* name, Bit8u mask); //398
+    bool unregister_io_write_handler(void* this_ptr, bx_write_handler_t f,
+        Bit32u addr, Bit8u mask);
+    bool register_io_read_handler_range(void* this_ptr, bx_read_handler_t f,
+        Bit32u begin_addr, Bit32u end_addr,
+        const char* name, Bit8u mask);
+    bool register_io_write_handler_range(void* this_ptr, bx_write_handler_t f,
+        Bit32u begin_addr, Bit32u end_addr,
+        const char* name, Bit8u mask);
+    bool unregister_io_read_handler_range(void* this_ptr, bx_read_handler_t f,
+        Bit32u begin, Bit32u end, Bit8u mask);
+    bool unregister_io_write_handler_range(void* this_ptr, bx_write_handler_t f,
+        Bit32u begin, Bit32u end, Bit8u mask);
     bool register_default_io_read_handler(void* this_ptr, bx_read_handler_t f, const char* name, Bit8u mask);//411
     bool register_default_io_write_handler(void* this_ptr, bx_write_handler_t f, const char* name, Bit8u mask);//412
     bool register_irq(unsigned irq, const char* name); //413
     bool unregister_irq(unsigned irq, const char* name);//414
-    void register_default_keyboard(void* dev, bx_kbd_gen_scancode_t kbd_gen_scancode,
-        bx_kbd_get_elements_t kbd_get_elements); //414
     Bit32u inp(Bit16u addr, unsigned io_len) BX_CPP_AttrRegparmN(2);
     void   outp(Bit16u addr, Bit32u value, unsigned io_len) BX_CPP_AttrRegparmN(3); //416
+
+    void register_default_keyboard(void* dev, bx_kbd_gen_scancode_t kbd_gen_scancode,
+        bx_kbd_get_elements_t kbd_get_elements); //414
+    void register_removable_keyboard(void* dev, bx_kbd_gen_scancode_t kbd_gen_scancode,
+        bx_kbd_get_elements_t kbd_get_elements,
+        Bit8u led_mask);
+    void unregister_removable_keyboard(void* dev);
+    
     void register_default_mouse(void* dev, bx_mouse_enq_t mouse_enq, bx_mouse_enabled_changed_t mouse_enabled_changed); //424
+    void register_removable_mouse(void* dev, bx_mouse_enq_t mouse_enq, bx_mouse_enabled_changed_t mouse_enabled_changed);
+    void unregister_removable_mouse(void* dev);
     void gen_scancode(Bit32u key);//427
     void release_keys(void);//429
     void kbd_set_indicator(Bit8u devid, Bit8u ledid, bool state); //431
     void add_sound_device(void);
     void remove_sound_device(void);//435
+#if BX_SUPPORT_PCI
+    Bit32u pci_get_confAddr(void) { return pci.confAddr; }
+    Bit32u pci_get_slot_mapping(void) { return pci.map_slot_to_dev; }
+    bool register_pci_handlers(bx_pci_device_c* device, Bit8u* devfunc,
+        const char* name, const char* descr, Bit8u bus = 0);
+    bool pci_set_base_mem(void* this_ptr, memory_handler_t f1, memory_handler_t f2,
+        Bit32u* addr, Bit8u* pci_conf, unsigned size);
+    bool pci_set_base_io(void* this_ptr, bx_read_handler_t f1, bx_write_handler_t f2,
+        Bit32u* addr, Bit8u* pci_conf, unsigned size,
+        const Bit8u* iomask, const char* name);
+#endif
+    bool is_agp_present();
+
     bx_cmos_stub_c* pluginCmosDevice;
     bx_dma_stub_c* pluginDmaDevice;
     bx_hard_drive_stub_c* pluginHardDrive;
@@ -314,6 +375,10 @@ public:
     bx_pci_ide_stub_c stubPciIde;
     bx_acpi_ctrl_stub_c stubACPIController;
 #endif
+    Bit8u* bulkIOHostAddr;
+    unsigned bulkIOQuantumsRequested;
+    unsigned bulkIOQuantumsTransferred;
+
 private:
     struct io_handler_struct { //511
         struct io_handler_struct* next;
@@ -331,6 +396,10 @@ private:
     struct io_handler_struct** write_port_to_handler; //524
 
     char* irq_handler_name[BX_MAX_IRQS]; //528
+
+    static Bit32u read_handler(void* this_ptr, Bit32u address, unsigned io_len);
+    static void   write_handler(void* this_ptr, Bit32u address, Bit32u value, unsigned io_len);
+
     static Bit32u default_read_handler(void* this_ptr, Bit32u address, unsigned io_len);//535
     static void   default_write_handler(void* this_ptr, Bit32u address, Bit32u value, unsigned io_len);//536
     
@@ -361,6 +430,7 @@ private:
 
     struct {
         bool enabled;
+
 #if BX_SUPPORT_PCI
         Bit32u advopts;
         Bit8u handler_id[0x101];  // 256 PCI devices/functions + 1 AGP device
@@ -380,5 +450,19 @@ private:
     Bit8u sound_device_count; //610
 };
 
+BX_CPP_INLINE void DEV_MEM_READ_PHYSICAL(bx_phy_address phy_addr, unsigned len, Bit8u* ptr)
+{
+    unsigned remainingInPage = 0x1000 - (phy_addr & 0xfff);
+    if (len <= remainingInPage) {
+        BX_MEM(0)->readPhysicalPage(NULL, phy_addr, len, ptr);
+    }
+    else {
+        BX_MEM(0)->readPhysicalPage(NULL, phy_addr, remainingInPage, ptr);
+        ptr += remainingInPage;
+        phy_addr += remainingInPage;
+        len -= remainingInPage;
+        BX_MEM(0)->readPhysicalPage(NULL, phy_addr, len, ptr);
+    }
+}
 
 BOCHSAPI extern bx_devices_c bx_devices;

@@ -2391,6 +2391,44 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::CMP_EdIdM(bxInstruction_c* i)
     BX_NEXT_INSTR(i);
 }
 
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::OUT_DXEAX(bxInstruction_c* i)
+{
+    unsigned port = DX;
+
+    if (!allow_io(i, port, 4)) {
+        //BX_DEBUG(("OUT_DXEAX: I/O access not allowed !"));
+        exception(BX_GP_EXCEPTION, 0);
+    }
+
+    BX_OUTP(port, EAX, 4);
+
+    BX_NEXT_TRACE(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::IN_AXDX(bxInstruction_c* i)
+{
+    unsigned port = DX;
+
+    if (!allow_io(i, port, 2)) {
+        //BX_DEBUG(("IN_AXDX: I/O access not allowed !"));
+        exception(BX_GP_EXCEPTION, 0);
+    }
+
+    AX = BX_INP(port, 2);
+
+    BX_NEXT_TRACE(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::CMP_EwIwR(bxInstruction_c* i)
+{
+    Bit32u op1_16 = BX_READ_16BIT_REG(i->dst());
+    Bit32u op2_16 = i->Iw();
+    Bit32u diff_16 = op1_16 - op2_16;
+
+    SET_FLAGS_OSZAPC_SUB_16(op1_16, op2_16, diff_16);
+
+    BX_NEXT_INSTR(i);
+}
 
 
 

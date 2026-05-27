@@ -50,6 +50,11 @@ void bx_soundmod_ctl_c::init()
     }
 }
 
+void bx_soundmod_ctl_c::exit()
+{
+    bx_sound_lowlevel_c::cleanup();
+}
+
 bx_sound_lowlevel_c* bx_soundmod_ctl_c::get_driver(const char* modname)
 {
     if (!bx_sound_lowlevel_c::module_present(modname)) {

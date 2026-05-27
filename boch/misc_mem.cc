@@ -26,11 +26,13 @@ BX_MEM_C::BX_MEM_C() : BX_MEMORY_STUB_C()
 	//42
 	memory_handlers = NULL;
 }
+
 BX_MEM_C::~BX_MEM_C()
 {
 	//47
 	cleanup_memory();
 }
+
 void BX_MEM_C::init_memory(Bit64u guest, Bit64u host, Bit32u block_size)
 {
 	//52
@@ -100,10 +102,12 @@ void BX_MEM_C::register_state()
 	//bx_param_bool_c* flash_data = new bx_param_bool_c(list, "flash_data", "", "", false);
 	//flash_data->set_sr_handlers(this, memory_param_save_handler, memory_param_restore_handler);
 }
+
 void BX_MEM_C::cleanup_memory()
 {
 	//212
 }
+
 void BX_MEM_C::load_ROM(const char* path, bx_phy_address romaddress, Bit8u type)
 {
 	struct _stat stat_buf;
@@ -368,11 +372,123 @@ Bit8u* BX_MEM_C::getHostMemAddr(BX_CPU_C* cpu, bx_phy_address addr, unsigned rw)
 	}
 }
 
+bool
+BX_MEM_C::registerMemoryHandlers(void* param, memory_handler_t read_handler,
+	memory_handler_t write_handler, memory_direct_access_handler_t da_handler,
+	bx_phy_address begin_addr, bx_phy_address end_addr)
+{
+	if (end_addr < begin_addr)
+		return false;
+	if (!read_handler) // allow NULL write and fetch handler
+		return false;
+	//BX_INFO(("Register memory access handlers: 0x" FMT_PHY_ADDRX " - 0x" FMT_PHY_ADDRX, begin_addr, end_addr));
+	for (Bit32u page_idx = (Bit32u)(begin_addr >> 20); page_idx <= (Bit32u)(end_addr >> 20); page_idx++) {
+		Bit16u bitmap = 0xffff;
+		if (begin_addr > (page_idx << 20)) {
+			bitmap &= (0xffff << ((begin_addr >> 16) & 0xf));
+		}
+		if (end_addr < ((page_idx + 1) << 20)) {
+			bitmap &= (0xffff >> (0x0f - ((end_addr >> 16) & 0xf)));
+		}
+		if (BX_MEM_THIS memory_handlers[page_idx] != NULL) {
+			if ((bitmap & BX_MEM_THIS memory_handlers[page_idx]->bitmap) != 0) {
+				//BX_ERROR(("Register failed: overlapping memory handlers!"));
+				return false;
+			}
+			else {
+				bitmap |= BX_MEM_THIS memory_handlers[page_idx]->bitmap;
+			}
+		}
+		struct memory_handler_struct* memory_handler = new struct memory_handler_struct;
+		memory_handler->next = BX_MEM_THIS memory_handlers[page_idx];
+		BX_MEM_THIS memory_handlers[page_idx] = memory_handler;
+		memory_handler->read_handler = read_handler;
+		memory_handler->write_handler = write_handler;
+		memory_handler->da_handler = da_handler;
+		memory_handler->param = param;
+		memory_handler->begin = begin_addr;
+		memory_handler->end = end_addr;
+		memory_handler->bitmap = bitmap;
+	}
+	return true;
+}
+
+bool BX_MEM_C::unregisterMemoryHandlers(void* param, bx_phy_address begin_addr, bx_phy_address end_addr)
+{
+	bool ret = true;
+	//BX_INFO(("Memory access handlers unregistered: 0x" FMT_PHY_ADDRX " - 0x" FMT_PHY_ADDRX, begin_addr, end_addr));
+	for (Bit32u page_idx = (Bit32u)(begin_addr >> 20); page_idx <= (Bit32u)(end_addr >> 20); page_idx++) {
+		Bit16u bitmap = 0xffff;
+		if (begin_addr > (page_idx << 20)) {
+			bitmap &= (0xffff << ((begin_addr >> 16) & 0xf));
+		}
+		if (end_addr < ((page_idx + 1) << 20)) {
+			bitmap &= (0xffff >> (0x0f - ((end_addr >> 16) & 0xf)));
+		}
+		struct memory_handler_struct* memory_handler = BX_MEM_THIS memory_handlers[page_idx];
+		struct memory_handler_struct* prev = NULL;
+		while (memory_handler &&
+			memory_handler->param != param &&
+			memory_handler->begin != begin_addr &&
+			memory_handler->end != end_addr)
+		{
+			memory_handler->bitmap &= ~bitmap;
+			prev = memory_handler;
+			memory_handler = memory_handler->next;
+		}
+		if (!memory_handler) {
+			ret = false;  // we should have found it
+			continue; // anyway, try the other pages
+		}
+		if (prev)
+			prev->next = memory_handler->next;
+		else
+			BX_MEM_THIS memory_handlers[page_idx] = memory_handler->next;
+		delete memory_handler;
+	}
+	return ret;
+}
+
+void BX_MEM_C::enable_smram(bool enable, bool restricted)
+{
+	BX_MEM_THIS smram_available = true;
+	BX_MEM_THIS smram_enable = enable;
+	BX_MEM_THIS smram_restricted = restricted;
+}
+
 void BX_MEM_C::disable_smram(void)
 {
 	BX_MEM_THIS smram_available = false;
 	BX_MEM_THIS smram_enable = false;
 	BX_MEM_THIS smram_restricted = false;
+}
+
+bool BX_MEM_C::is_smram_accessible(void)
+{
+	return(BX_MEM_THIS smram_available) &&
+		(BX_MEM_THIS smram_enable || !BX_MEM_THIS smram_restricted);
+}
+
+void BX_MEM_C::set_memory_type(memory_area_t area, bool rw, bool dram)
+{
+	if (area <= BX_MEM_AREA_F0000) {
+		BX_MEM_THIS memory_type[area][rw] = dram;
+	}
+}
+
+void BX_MEM_C::set_bios_write(bool enabled)
+{
+	BX_MEM_THIS bios_write_enabled = enabled;
+}
+
+void BX_MEM_C::set_bios_rom_access(Bit8u region, bool enabled)
+{
+	if (enabled) {
+		BX_MEM_THIS bios_rom_access |= region;
+	}
+	else {
+		BX_MEM_THIS bios_rom_access &= ~region;
+	}
 }
 
 Bit8u BX_MEM_C::flash_read(Bit32u addr)

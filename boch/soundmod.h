@@ -9,6 +9,7 @@ public:
 	bx_soundmod_ctl_c();
 	~bx_soundmod_ctl_c();
 	void init(void);
+	void exit(void);
 	bx_soundlow_waveout_c* get_waveout(bool using_file);
 private:
 	bx_sound_lowlevel_c* get_driver(const char* modname);
