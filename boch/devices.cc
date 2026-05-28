@@ -50,7 +50,6 @@ bx_devices_c::~bx_devices_c()
 
 }
 
-
 void bx_devices_c::init_stubs()
 {
     pluginCmosDevice = &stubCmos;
@@ -75,7 +74,6 @@ void bx_devices_c::init_stubs()
     pluginACPIController = &stubACPIController;
 #endif
 }
-
 
 void bx_devices_c::init(BX_MEM_C* newmem)
 {
@@ -151,6 +149,7 @@ void bx_devices_c::init(BX_MEM_C* newmem)
         // Source also parses BXPN_PCI_ADV_OPTS from SIM here.
         // SIM 处理：先跳过，使用上面固定的 pci.advopts。
         PLUG_load_plugin(pci, PLUGTYPE_CORE);
+        PLUG_load_plugin(pci2isa, PLUGTYPE_CORE);
     }
 #endif
 
@@ -163,6 +162,12 @@ void bx_devices_c::init(BX_MEM_C* newmem)
     PLUG_load_plugin(pit, PLUGTYPE_CORE);
 
     PLUG_load_plugin(keyboard, PLUGTYPE_STANDARD); //250
+
+#if BX_SUPPORT_PCI
+    if (pci.enabled) {
+        PLUG_load_plugin(pci_ide, PLUGTYPE_STANDARD);
+    }
+#endif
 
     PLUG_load_plugin(parallel, PLUGTYPE_OPTIONAL); //自己加的按 PLUGTYPE_OPTIONAL 加载，不按 CORE
 
@@ -1176,6 +1181,39 @@ void bx_pci_device_c::init_bar_mem(Bit8u num, Bit32u size, memory_handler_t rh,
         pci_bar[num].size = size;
         pci_bar[num].mem.rh = rh;
         pci_bar[num].mem.wh = wh;
+    }
+}
+
+void bx_pci_device_c::register_pci_state(bx_list_c* list)
+{
+    new bx_shadow_data_c(list, "pci_conf", pci_conf, 256, 1);
+}
+
+void bx_pci_device_c::after_restore_pci_state(memory_handler_t mem_read_handler)
+{
+    for (int i = 0; i < 6; i++) {
+        if (pci_bar[i].type == BX_PCI_BAR_TYPE_MEM) {
+            if (DEV_pci_set_base_mem(this, pci_bar[i].mem.rh, pci_bar[i].mem.wh,
+                &pci_bar[i].addr, &pci_conf[0x10 + i * 4],
+                pci_bar[i].size)) {
+                //BX_INFO(("BAR #%d: mem base address = 0x%08x", i, pci_bar[i].addr));
+                pci_bar_change_notify();
+            }
+        }
+        else if (pci_bar[i].type == BX_PCI_BAR_TYPE_IO) {
+            if (DEV_pci_set_base_io(this, pci_bar[i].io.rh, pci_bar[i].io.wh,
+                &pci_bar[i].addr, &pci_conf[0x10 + i * 4],
+                pci_bar[i].size, pci_bar[i].io.mask, pci_name)) {
+                //BX_INFO(("BAR #%d: i/o base address = 0x%04x", i, pci_bar[i].addr));
+                pci_bar_change_notify();
+            }
+        }
+    }
+    if (pci_rom_size > 0) {
+        if (DEV_pci_set_base_mem(this, mem_read_handler, NULL, &pci_rom_address,
+            &pci_conf[0x30], pci_rom_size)) {
+            //BX_INFO(("new ROM address: 0x%08x", pci_rom_address));
+        }
     }
 }
 

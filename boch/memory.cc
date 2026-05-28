@@ -146,7 +146,6 @@ mem_write:
     }
 }
 
-
 void BX_MEM_C::readPhysicalPage(BX_CPU_C* cpu, bx_phy_address addr, unsigned len, void* data)
 {
     Bit8u* data_ptr;
@@ -296,6 +295,43 @@ mem_read:
         else {
             // bogus memory
             memset(data, 0xFF, len);
+        }
+    }
+}
+
+void BX_MEM_C::dmaReadPhysicalPage(bx_phy_address addr, unsigned len, Bit8u* data)
+{
+    // Note: accesses should always be contained within a single page
+    if ((addr >> 12) != ((addr + len - 1) >> 12)) {
+        //BX_PANIC(("dmaReadPhysicalPage: cross page access at address 0x" FMT_PHY_ADDRX ", len=%d", addr, len));
+    }
+
+    Bit8u* memptr = getHostMemAddr(NULL, addr, BX_READ);
+    if (memptr != NULL) {
+        memcpy(data, memptr, len);
+    }
+    else {
+        for (unsigned i = 0; i < len; i++) {
+            readPhysicalPage(NULL, addr + i, 1, &data[i]);
+        }
+    }
+}
+
+void BX_MEM_C::dmaWritePhysicalPage(bx_phy_address addr, unsigned len, Bit8u* data)
+{
+    // Note: accesses should always be contained within a single page
+    if ((addr >> 12) != ((addr + len - 1) >> 12)) {
+        //BX_PANIC(("dmaWritePhysicalPage: cross page access at address 0x" FMT_PHY_ADDRX ", len=%d", addr, len));
+    }
+
+    Bit8u* memptr = getHostMemAddr(NULL, addr, BX_WRITE);
+    if (memptr != NULL) {
+        pageWriteStampTable.decWriteStamp(addr);
+        memcpy(memptr, data, len);
+    }
+    else {
+        for (unsigned i = 0; i < len; i++) {
+            writePhysicalPage(NULL, addr + i, 1, &data[i]);
         }
     }
 }

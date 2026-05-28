@@ -117,6 +117,9 @@ public:
     void init_bar_io(Bit8u num, Bit16u size, bx_read_handler_t rh,
         bx_write_handler_t wh, const Bit8u* mask);
     void init_bar_mem(Bit8u num, Bit32u size, memory_handler_t rh, memory_handler_t wh);
+    void register_pci_state(bx_list_c* list);
+    void after_restore_pci_state(memory_handler_t mem_read_handler);
+    
     void set_name(const char* name) { pci_name = name; }
     const char* get_name(void) { return pci_name; }
 
@@ -140,6 +143,20 @@ protected:
 class BOCHSAPI bx_hard_drive_stub_c : public bx_devmodel_c {
     //196
 public:
+    virtual Bit32u virt_read_handler(Bit32u address, unsigned io_len) { return 0; }
+    virtual void virt_write_handler(Bit32u address, Bit32u value, unsigned io_len) {}
+
+    virtual bool bmdma_read_sector(Bit8u channel, Bit8u* buffer, Bit32u* sector_size) {
+        //STUBFUNC(HD, bmdma_read_sector); 
+         return 0;
+    }
+    virtual bool bmdma_write_sector(Bit8u channel, Bit8u* buffer) {
+        //STUBFUNC(HD, bmdma_write_sector); 
+        return 0;
+    }
+    virtual void bmdma_complete(Bit8u channel) {
+        //STUBFUNC(HD, bmdma_complete);
+    }
 };
 class BOCHSAPI bx_cmos_stub_c : public bx_devmodel_c {
 public:
@@ -236,14 +253,24 @@ public:
 #if BX_SUPPORT_PCI
 class BOCHSAPI bx_pci2isa_stub_c : public bx_pci_device_c {
 public:
+public:
+    virtual void pci_set_irq(Bit8u devfunc, unsigned line, bool level) {
+        //STUBFUNC(pci2isa, pci_set_irq);
+    }
 };
 
 class BOCHSAPI bx_pci_ide_stub_c : public bx_pci_device_c {
 public:
+    virtual bool bmdma_present(void) {
+        return 0;
+    }
+    virtual void bmdma_start_transfer(Bit8u channel) {}
+    virtual void bmdma_set_irq(Bit8u channel) {}
 };
 
 class BOCHSAPI bx_acpi_ctrl_stub_c : public bx_pci_device_c {
 public:
+    virtual void generate_smi(Bit8u value) {}
 };
 #endif
 #if BX_SUPPORT_IODEBUG
@@ -256,7 +283,7 @@ public:
 #if BX_SUPPORT_APIC
 class BOCHSAPI bx_ioapic_stub_c : public bx_devmodel_c {
 public:
-
+    virtual void set_enabled(bool enabled, Bit16u base_offset) {}
     virtual void receive_eoi(Bit8u vector) {}//359
     virtual void set_irq_level(Bit8u int_in, bool level) {}
 };
@@ -462,6 +489,45 @@ BX_CPP_INLINE void DEV_MEM_READ_PHYSICAL(bx_phy_address phy_addr, unsigned len, 
         phy_addr += remainingInPage;
         len -= remainingInPage;
         BX_MEM(0)->readPhysicalPage(NULL, phy_addr, len, ptr);
+    }
+}
+
+BX_CPP_INLINE void DEV_MEM_READ_PHYSICAL_DMA(bx_phy_address phy_addr, unsigned len, Bit8u* ptr)
+{
+    while (len > 0) {
+        unsigned remainingInPage = 0x1000 - (phy_addr & 0xfff);
+        if (len < remainingInPage) remainingInPage = len;
+        BX_MEM(0)->dmaReadPhysicalPage(phy_addr, remainingInPage, ptr);
+        ptr += remainingInPage;
+        phy_addr += remainingInPage;
+        len -= remainingInPage;
+    }
+}
+
+BX_CPP_INLINE void DEV_MEM_WRITE_PHYSICAL(bx_phy_address phy_addr, unsigned len, Bit8u* ptr)
+{
+    unsigned remainingInPage = 0x1000 - (phy_addr & 0xfff);
+    if (len <= remainingInPage) {
+        BX_MEM(0)->writePhysicalPage(NULL, phy_addr, len, ptr);
+    }
+    else {
+        BX_MEM(0)->writePhysicalPage(NULL, phy_addr, remainingInPage, ptr);
+        ptr += remainingInPage;
+        phy_addr += remainingInPage;
+        len -= remainingInPage;
+        BX_MEM(0)->writePhysicalPage(NULL, phy_addr, len, ptr);
+    }
+}
+
+BX_CPP_INLINE void DEV_MEM_WRITE_PHYSICAL_DMA(bx_phy_address phy_addr, unsigned len, Bit8u* ptr)
+{
+    while (len > 0) {
+        unsigned remainingInPage = 0x1000 - (phy_addr & 0xfff);
+        if (len < remainingInPage) remainingInPage = len;
+        BX_MEM(0)->dmaWritePhysicalPage(phy_addr, remainingInPage, ptr);
+        ptr += remainingInPage;
+        phy_addr += remainingInPage;
+        len -= remainingInPage;
     }
 }
 

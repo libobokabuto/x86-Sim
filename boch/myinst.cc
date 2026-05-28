@@ -2430,6 +2430,187 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::CMP_EwIwR(bxInstruction_c* i)
     BX_NEXT_INSTR(i);
 }
 
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::SAR_EdR(bxInstruction_c* i)
+{
+    unsigned count;
+
+    if (i->getIaOpcode() == BX_IA_SAR_Ed)
+        count = CL;
+    else
+        count = i->Ib();
+
+    count &= 0x1f;
+
+    if (!count) {
+        BX_CLEAR_64BIT_HIGH(i->dst()); // always clear upper part of the register
+    }
+    else {
+        Bit32u op1_32 = BX_READ_32BIT_REG(i->dst());
+
+        /* count < 32, since only lower 5 bits used */
+        Bit32u result_32 = ((Bit32s)op1_32) >> count;
+
+        BX_WRITE_32BIT_REGZ(i->dst(), result_32);
+
+        SET_FLAGS_OSZAPC_LOGIC_32(result_32);
+        unsigned cf = (op1_32 >> (count - 1)) & 1;
+        BX_CPU_THIS_PTR oszapc.set_flags_OxxxxC(0, cf); /* signed overflow cannot happen in SAR instruction */
+    }
+
+    BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::JNL_Jd(bxInstruction_c* i)
+{
+    if (getB_SF() == getB_OF()) {
+        Bit32u new_EIP = EIP + (Bit32s)i->Id();
+        branch_near32(new_EIP);
+        BX_INSTR_CNEAR_BRANCH_TAKEN(BX_CPU_ID, PREV_RIP, new_EIP);
+        BX_LINK_TRACE(i);
+    }
+
+    BX_INSTR_CNEAR_BRANCH_NOT_TAKEN(BX_CPU_ID, PREV_RIP);
+    BX_NEXT_INSTR(i); // trace can continue over non-taken branch
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::ADD_EbGbM(bxInstruction_c* i)
+{
+    bx_address eaddr = BX_CPU_RESOLVE_ADDR(i);
+
+    Bit32u op1 = read_RMW_virtual_byte(i->seg(), eaddr);
+    Bit32u op2 = BX_READ_8BIT_REGx(i->src(), i->extend8bitL());
+    Bit32u sum = op1 + op2;
+
+    write_RMW_linear_byte(sum);
+
+    SET_FLAGS_OSZAPC_ADD_8(op1, op2, sum);
+
+    BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::REP_CMPSB_XbYb(bxInstruction_c* i)
+{
+#if BX_SUPPORT_X86_64
+    if (i->as64L()) {
+        BX_CPU_THIS_PTR repeat_ZF(i, &BX_CPU_C::CMPSB64_XbYb);
+    }
+    else
+#endif
+        if (i->as32L()) {
+            BX_CPU_THIS_PTR repeat_ZF(i, &BX_CPU_C::CMPSB32_XbYb);
+            BX_CLEAR_64BIT_HIGH(BX_64BIT_REG_RSI); // always clear upper part of RSI/RDI
+            BX_CLEAR_64BIT_HIGH(BX_64BIT_REG_RDI);
+        }
+        else {
+            BX_CPU_THIS_PTR repeat_ZF(i, &BX_CPU_C::CMPSB16_XbYb);
+        }
+
+    BX_NEXT_INSTR(i);
+}
+
+/* 16 bit address size */
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::CMPSB16_XbYb(bxInstruction_c* i)
+{
+    Bit8u op1_8, op2_8, diff_8;
+
+    Bit16u si = SI;
+    Bit16u di = DI;
+
+    op1_8 = read_virtual_byte_32(i->seg(), si);
+    op2_8 = read_virtual_byte_32(BX_SEG_REG_ES, di);
+
+    diff_8 = op1_8 - op2_8;
+
+    SET_FLAGS_OSZAPC_SUB_8(op1_8, op2_8, diff_8);
+
+    if (BX_CPU_THIS_PTR get_DF()) {
+        si--;
+        di--;
+    }
+    else {
+        si++;
+        di++;
+    }
+
+    DI = di;
+    SI = si;
+}
+
+/* 32 bit address size */
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::CMPSB32_XbYb(bxInstruction_c* i)
+{
+    Bit8u op1_8, op2_8, diff_8;
+
+    Bit32u esi = ESI;
+    Bit32u edi = EDI;
+
+    op1_8 = read_virtual_byte(i->seg(), esi);
+    op2_8 = read_virtual_byte(BX_SEG_REG_ES, edi);
+
+    diff_8 = op1_8 - op2_8;
+
+    SET_FLAGS_OSZAPC_SUB_8(op1_8, op2_8, diff_8);
+
+    if (BX_CPU_THIS_PTR get_DF()) {
+        esi--;
+        edi--;
+    }
+    else {
+        esi++;
+        edi++;
+    }
+
+    // zero extension of RSI/RDI
+    RDI = edi;
+    RSI = esi;
+}
+
+#if BX_SUPPORT_X86_64
+/* 64 bit address size */
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::CMPSB64_XbYb(bxInstruction_c* i)
+{
+    Bit8u op1_8, op2_8, diff_8;
+
+    Bit64u rsi = RSI;
+    Bit64u rdi = RDI;
+
+    op1_8 = read_linear_byte(i->seg(), get_laddr64(i->seg(), rsi));
+    op2_8 = read_linear_byte(BX_SEG_REG_ES, rdi);
+
+    diff_8 = op1_8 - op2_8;
+
+    SET_FLAGS_OSZAPC_SUB_8(op1_8, op2_8, diff_8);
+
+    if (BX_CPU_THIS_PTR get_DF()) {
+        rsi--;
+        rdi--;
+    }
+    else {
+        rsi++;
+        rdi++;
+    }
+
+    RDI = rdi;
+    RSI = rsi;
+}
+#endif
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::MOVZX_GdEbM(bxInstruction_c* i)
+{
+    bx_address eaddr = BX_CPU_RESOLVE_ADDR(i);
+
+    Bit8u op2_8 = read_virtual_byte(i->seg(), eaddr);
+
+    /* zero extend byte op2 into dword op1 */
+    BX_WRITE_32BIT_REGZ(i->dst(), (Bit32u)op2_8);
+
+    BX_NEXT_INSTR(i);
+}
+
+
+
+
+
 
 
 

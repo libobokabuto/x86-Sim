@@ -10,10 +10,13 @@
 #define BX_PLUGIN_PIC       "pic" //55
 #define BX_PLUGIN_PIT       "pit"//56
 #define BX_PLUGIN_PCI       "pci"  //57
+#define BX_PLUGIN_PCI2ISA   "pci2isa"//58
+#define BX_PLUGIN_PCI_IDE   "pci_ide"
 #define BX_PLUGIN_SPEAKER   "speaker"//72
-
+#define BX_PLUGIN_ACPI      "acpi" //73
 
 #define BX_REGISTER_DEVICE_DEVMODEL(a,b,c,d) pluginRegisterDeviceDevmodel(a,b,c,d)  //80
+#define PLUG_device_present(a) pluginDevicePresent(a)//82
 
 #if BX_PLUGINS//84
 #define DEV_register_ioread_handler(b,c,d,e,f)  pluginRegisterIOReadHandler(b,c,d,e,f)
@@ -53,12 +56,22 @@
 #define DEV_register_default_keyboard(a,b,c) (bx_devices.register_default_keyboard(a,b,c)) //147
 #define DEV_register_default_mouse(a,b,c) (bx_devices.register_default_mouse(a,b,c)) //150
 #define DEV_ioapic_present() (bx_devices.pluginIOAPIC != &bx_devices.stubIOAPIC)//155
+#define DEV_ioapic_set_enabled(a,b) (bx_devices.pluginIOAPIC->set_enabled(a,b))
 #define DEV_ioapic_receive_eoi(a) (bx_devices.pluginIOAPIC->receive_eoi(a)) //157
 #define DEV_ioapic_set_irq_level(a,b) (bx_devices.pluginIOAPIC->set_irq_level(a,b))//158
 #define DEV_cmos_get_reg(a) (bx_devices.pluginCmosDevice->get_reg(a)) //161
 #define DEV_cmos_set_reg(a,b) (bx_devices.pluginCmosDevice->set_reg(a,b)) //162
 #define DEV_cmos_checksum() (bx_devices.pluginCmosDevice->checksum_cmos()) //163
 #define DEV_kbd_set_indicator(a,b,c) (bx_devices.kbd_set_indicator(a,b,c)) //173
+
+///////// hard drive macros
+#define DEV_hd_read_handler(a, b, c) \
+    (bx_devices.pluginHardDrive->virt_read_handler(b, c))
+#define DEV_hd_write_handler(a, b, c, d) \
+    (bx_devices.pluginHardDrive->virt_write_handler(b, c, d))
+#define DEV_hd_bmdma_read_sector(a,b,c) bx_devices.pluginHardDrive->bmdma_read_sector(a,b,c)
+#define DEV_hd_bmdma_write_sector(a,b) bx_devices.pluginHardDrive->bmdma_write_sector(a,b)
+#define DEV_hd_bmdma_complete(a) bx_devices.pluginHardDrive->bmdma_complete(a)
 
 ///////// DMA macros
 #define DEV_dma_raise_hlda() \
@@ -122,6 +135,8 @@ typedef struct _device_t
 extern device_t* devices;//293
 
 BOCHSAPI void pluginRegisterDeviceDevmodel(plugin_t* plugin, Bit16u type, bx_devmodel_c* dev, const char* name); //303
+BOCHSAPI bool pluginDevicePresent(const char* name);
+
 extern void bx_init_plugins(void); //347
 extern void bx_reset_plugins(unsigned);//348
 #if !BX_PLUGINS
@@ -144,4 +159,6 @@ PLUGIN_ENTRY_FOR_MODULE(pic);//416
 PLUGIN_ENTRY_FOR_MODULE(pit);
 PLUGIN_ENTRY_FOR_MODULE(parallel);//421
 PLUGIN_ENTRY_FOR_MODULE(pci); //422
+PLUGIN_ENTRY_FOR_MODULE(pci2isa);//423
+PLUGIN_ENTRY_FOR_MODULE(pci_ide);
 PLUGIN_ENTRY_FOR_MODULE(speaker);//438

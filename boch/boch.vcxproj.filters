@@ -240,6 +240,12 @@
     <ClCompile Include="virt_timer.cc">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="pci2isa.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="pci_ide.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bochs.h">
@@ -447,6 +453,12 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="virt_timer.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="pci2isa.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="pci_ide.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

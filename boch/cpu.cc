@@ -56,15 +56,15 @@ void BX_CPU_C::cpu_loop(void)
             BX_CPU_THIS_PTR prev_rip = RIP; // commit new RIP
             BX_INSTR_AFTER_EXECUTION(BX_CPU_ID, i);
             BX_CPU_THIS_PTR icount++;
-            if (BX_CPU_THIS_PTR icount == 492114)
+            if (BX_CPU_THIS_PTR icount == 1148707)
             {
-                  int qwq = 0;
+                   int qwq = 0;
             }
             
             uint64_t trace_index = BX_CPU_THIS_PTR icount;
             //trace_index >= 300000
             //(trace_index % 500) < 10
-            const uint64_t trace_start = 492000;  // 从第 15 万条之后开始打印
+            const uint64_t trace_start = 1148500;  // 从第 15 万条之后开始打印
             const uint64_t trace_step = 1000;    // 每 1000 条一个周期
             const uint64_t trace_count = 1000;      // 每个周期打印 10 条
 
@@ -289,6 +289,140 @@ void BX_CPP_AttrRegparmN(2) BX_CPU_C::repeat(bxInstruction_c* i, BxRepIterationP
     BX_CPU_THIS_PTR async_event |= BX_ASYNC_EVENT_STOP_TRACE;
 }
 
+void BX_CPP_AttrRegparmN(2) BX_CPU_C::repeat_ZF(bxInstruction_c* i, BxRepIterationPtr_tR execute)
+{
+    unsigned rep = i->lockRepUsedValue();
+
+    // non repeated instruction
+    if (rep < 2) {
+        BX_CPU_CALL_REP_ITERATION(execute, (i));
+        return;
+    }
+
+    BX_CPU_THIS_PTR clear_RF();
+
+    if (rep == 3) { /* repeat prefix 0xF3 */
+#if BX_SUPPORT_X86_64
+        if (i->as64L()) {
+            while (1) {
+                if (RCX != 0) {
+                    BX_CPU_CALL_REP_ITERATION(execute, (i));
+                    BX_INSTR_REPEAT_ITERATION(BX_CPU_ID, i);
+                    RCX--;
+                }
+                if (!get_ZF() || RCX == 0) return;
+
+                if (BX_CPU_THIS_PTR async_event)
+                    break; // exit always if debugger enabled
+
+                BX_CPU_THIS_PTR icount++;
+
+                BX_SYNC_TIME_IF_SINGLE_PROCESSOR(BX_REPEAT_TIME_UPDATE_INTERVAL);
+            }
+        }
+        else
+#endif
+            if (i->as32L()) {
+                while (1) {
+                    if (ECX != 0) {
+                        BX_CPU_CALL_REP_ITERATION(execute, (i));
+                        BX_INSTR_REPEAT_ITERATION(BX_CPU_ID, i);
+                        RCX = ECX - 1;
+                    }
+                    if (!get_ZF() || ECX == 0) return;
+
+                    if (BX_CPU_THIS_PTR async_event)
+                        break; // exit always if debugger enabled
+
+                    BX_CPU_THIS_PTR icount++;
+
+                    BX_SYNC_TIME_IF_SINGLE_PROCESSOR(BX_REPEAT_TIME_UPDATE_INTERVAL);
+                }
+            }
+            else  // 16bit addrsize
+            {
+                while (1) {
+                    if (CX != 0) {
+                        BX_CPU_CALL_REP_ITERATION(execute, (i));
+                        BX_INSTR_REPEAT_ITERATION(BX_CPU_ID, i);
+                        CX--;
+                    }
+                    if (!get_ZF() || CX == 0) return;
+
+                    if (BX_CPU_THIS_PTR async_event)
+                        break; // exit always if debugger enabled
+
+                    BX_CPU_THIS_PTR icount++;
+
+                    BX_SYNC_TIME_IF_SINGLE_PROCESSOR(BX_REPEAT_TIME_UPDATE_INTERVAL);
+                }
+            }
+    }
+    else {          /* repeat prefix 0xF2 */
+#if BX_SUPPORT_X86_64
+        if (i->as64L()) {
+            while (1) {
+                if (RCX != 0) {
+                    BX_CPU_CALL_REP_ITERATION(execute, (i));
+                    BX_INSTR_REPEAT_ITERATION(BX_CPU_ID, i);
+                    RCX--;
+                }
+                if (get_ZF() || RCX == 0) return;
+
+                if (BX_CPU_THIS_PTR async_event)
+                    break; // exit always if debugger enabled
+
+                BX_CPU_THIS_PTR icount++;
+
+                BX_SYNC_TIME_IF_SINGLE_PROCESSOR(BX_REPEAT_TIME_UPDATE_INTERVAL);
+            }
+        }
+        else
+#endif
+            if (i->as32L()) {
+                while (1) {
+                    if (ECX != 0) {
+                        BX_CPU_CALL_REP_ITERATION(execute, (i));
+                        BX_INSTR_REPEAT_ITERATION(BX_CPU_ID, i);
+                        RCX = ECX - 1;
+                    }
+                    if (get_ZF() || ECX == 0) return;
+
+                    if (BX_CPU_THIS_PTR async_event)
+                        break; // exit always if debugger enabled
+
+                    BX_CPU_THIS_PTR icount++;
+
+                    BX_SYNC_TIME_IF_SINGLE_PROCESSOR(BX_REPEAT_TIME_UPDATE_INTERVAL);
+                }
+            }
+            else  // 16bit addrsize
+            {
+                while (1) {
+                    if (CX != 0) {
+                        BX_CPU_CALL_REP_ITERATION(execute, (i));
+                        BX_INSTR_REPEAT_ITERATION(BX_CPU_ID, i);
+                        CX--;
+                    }
+                    if (get_ZF() || CX == 0) return;
+
+                    if (BX_CPU_THIS_PTR async_event)
+                        break; // exit always if debugger enabled
+
+                    BX_CPU_THIS_PTR icount++;
+
+                    BX_SYNC_TIME_IF_SINGLE_PROCESSOR(BX_REPEAT_TIME_UPDATE_INTERVAL);
+                }
+            }
+    }
+
+    BX_CPU_THIS_PTR assert_RF();
+
+    RIP = BX_CPU_THIS_PTR prev_rip; // repeat loop not done, restore RIP
+
+    // assert magic async_event to stop trace execution
+    BX_CPU_THIS_PTR async_event |= BX_ASYNC_EVENT_STOP_TRACE;
+}
 
 void BX_CPU_C::prefetch(void)
 {

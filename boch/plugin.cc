@@ -46,6 +46,17 @@ void pluginRegisterDeviceDevmodel(plugin_t* plugin, Bit16u type, bx_devmodel_c* 
     }
 }
 
+bool pluginDevicePresent(const char* name)
+{
+    device_t* device;
+
+    for (device = devices; device; device = device->next)
+    {
+        if (!strcmp(name, device->name)) return 1;
+    }
+
+    return 0;
+}
 
 void bx_init_plugins()
 {

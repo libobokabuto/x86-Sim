@@ -20,7 +20,7 @@ typedef enum {
 	BX_TOOLBAR_USB_DEBUG
 } bx_toolbar_buttons;
 
-#define BX_LOG_OPTS_EXCLUDE(type, choice)  (             \
+//#define BX_LOG_OPTS_EXCLUDE(type, choice)  (             \
    /* can't die, ask or warn, on debug or info events */ \
    (type <= LOGLEV_INFO && (choice >= ACT_WARN))         \
    /* can't ignore panics */                             \
@@ -317,6 +317,188 @@ typedef Bit32s(*addon_option_save_t)(FILE* fp);
 
 enum disp_mode_t { DISP_MODE_CONFIG = 100, DISP_MODE_SIM }; //606
 
+class BOCHSAPI bx_simulator_interface_c {
+public:
+	bx_simulator_interface_c() {}
+	virtual ~bx_simulator_interface_c() {}
+	virtual void set_quit_context(jmp_buf* context) {}
+	virtual bool get_init_done() { return 0; }
+	virtual int set_init_done(bool n) { return 0; }
+	virtual bool get_ci_started() { return 0; }
+	virtual void reset_all_param() {}
+	// new param methods
+	virtual bx_param_c* get_param(const char* pname, bx_param_c* base = NULL) { return NULL; }
+	virtual bx_param_num_c* get_param_num(const char* pname, bx_param_c* base = NULL) { return NULL; }
+	virtual bx_param_string_c* get_param_string(const char* pname, bx_param_c* base = NULL) { return NULL; }
+	virtual bx_param_bool_c* get_param_bool(const char* pname, bx_param_c* base = NULL) { return NULL; }
+	virtual bx_param_enum_c* get_param_enum(const char* pname, bx_param_c* base = NULL) { return NULL; }
+	virtual unsigned gen_param_id() { return 0; }
+	virtual int get_n_log_modules() { return -1; }
+	virtual const char* get_logfn_name(int mod) { return NULL; }
+	virtual int get_logfn_id(const char* name) { return -1; }
+	virtual const char* get_prefix(int mod) { return NULL; }
+	virtual int get_log_action(int mod, int level) { return -1; }
+	virtual void set_log_action(int mod, int level, int action) {}
+	virtual int get_default_log_action(int level) { return -1; }
+	virtual void set_default_log_action(int level, int action) {}
+	virtual const char* get_action_name(int action) { return NULL; }
+	virtual int is_action_name(const char* val) { return -1; }
+	virtual const char* get_log_level_name(int level) { return NULL; }
+	virtual int get_max_log_level() { return -1; }
+
+	// exiting is somewhat complicated!  The preferred way to exit bochs is
+	// to call BX_EXIT(exitcode).  That is defined to call
+	// SIM->quit_sim(exitcode).  The quit_sim function first calls
+	// the cleanup functions in bochs so that it can destroy windows
+	// and free up memory, then sends a notify message to the CI
+	// telling it that bochs has stopped.
+	virtual void quit_sim(int code) {}
+
+	virtual int get_exit_code() { return 0; }
+
+	virtual int get_default_rc(char* path, int len) { return -1; }
+	virtual int read_rc(const char* path) { return -1; }
+	virtual int write_rc(const char* rc, int overwrite) { return -1; }
+	virtual int get_log_file(char* path, int len) { return -1; }
+	virtual int set_log_file(const char* path) { return -1; }
+	virtual int get_log_prefix(char* prefix, int len) { return -1; }
+	virtual int set_log_prefix(const char* prefix) { return -1; }
+	virtual int get_debugger_log_file(char* path, int len) { return -1; }
+	virtual int set_debugger_log_file(const char* path) { return -1; }
+
+	virtual void set_notify_callback(bxevent_handler func, void* arg) {}
+	virtual void get_notify_callback(bxevent_handler* func, void** arg) {}
+
+	// send an event from the simulator to the CI.
+	virtual BxEvent* sim_to_ci_event(BxEvent* event) { return NULL; }
+
+	// called from simulator to display a gui dialog in particular situations.
+	// 1. When it hits serious errors, to ask if the user wants to continue or not.
+	// 2. When it hits errors, to warn the user before continuing simulation
+	// 3. When it hits critical errors, inform the user before terminating simulation.
+	virtual int log_dlg(const char* prefix, int level, const char* msg, int mode) { return -1; }
+	// called from simulator when writing a message to log file
+	virtual void log_msg(const char* prefix, int level, const char* msg) {}
+	// set this to 1 if the gui has a log viewer
+	virtual void set_log_viewer(bool val) {}
+	virtual bool has_log_viewer() const { return 0; }
+
+	// tell the CI to ask the user for the value of a parameter.
+	virtual int ask_param(bx_param_c* param) { return -1; }
+	virtual int ask_param(const char* pname) { return -1; }
+
+	// ask the user for a pathname
+	virtual int ask_filename(const char* filename, int maxlen, const char* prompt, const char* the_default, int flags) { return -1; }
+	// yes/no dialog
+	virtual int ask_yes_no(const char* title, const char* prompt, bool the_default) { return -1; }
+	// simple message box
+	virtual void message_box(const char* title, const char* message) {}
+	// modeless message box
+	virtual void* ml_message_box(const char* title, const char* message) { return NULL; }
+	// kill modeless message box
+	virtual void ml_message_box_kill(void* ptr) {}
+	// called at a regular interval, currently by the bx_devices_c::timer()
+	virtual void periodic() {}
+	virtual int create_disk_image(const char* filename, int sectors, bool overwrite) { return -3; }
+	// Tell the configuration interface (CI) that some parameter values have
+	// changed.  The CI will reread the parameters and change its display if it's
+	// appropriate.  Maybe later: mention which params have changed to save time.
+	virtual void refresh_ci() {}
+	// forces a vga update.  This was added so that a debugger can force
+	// a vga update when single stepping, without having to wait thousands
+	// of cycles for the normal vga refresh triggered by the vga timer handler..
+	virtual void refresh_vga() {}
+	// forces a call to bx_gui.handle_events.  This was added so that a debugger
+	// can force the gui events to be handled, so that interactive things such
+	// as a toolbar click will be processed.
+	virtual void handle_events() {}
+	// return first hard disk in ATA interface
+	virtual bx_param_c* get_first_hd() { return NULL; }
+	// return first cdrom in ATA interface
+	virtual bx_param_c* get_first_cdrom() { return NULL; }
+	// return 1 if device is connected to a PCI slot
+	virtual bool is_pci_device(const char* name) { return 0; }
+	// return 1 if device is connected to the AGP slot
+	virtual bool is_agp_device(const char* name) { return 0; }
+	virtual bool debugger_active() { return false; }
+#if BX_DEBUGGER
+	// for debugger: same behavior as pressing control-C
+	virtual void debug_break() {}
+	virtual void debug_interpret_cmd(char* cmd) {}
+	virtual char* debug_get_next_command() { return NULL; }
+	virtual void debug_puts(const char* text) {}
+#endif
+	virtual void register_configuration_interface(
+		const char* name,
+		config_interface_callback_t callback,
+		void* userdata) {
+	}
+	virtual int configuration_interface(const char* name, ci_command_t command) { return -1; }
+#if BX_USB_DEBUGGER
+	virtual void register_usb_debug_type(int type) {}
+	virtual void usb_debug_trigger(int type, int trigger, Bit64u param0, int param1, int param2) {}
+	virtual int usb_debug_interface(int type, Bit64u param0, int param1, int param2) { return -1; }
+#endif
+	virtual int begin_simulation(int argc, char* argv[]) { return -1; }
+	virtual int register_runtime_config_handler(void* dev, rt_conf_handler_t handler) { return 0; }
+	virtual void unregister_runtime_config_handler(int id) {}
+	virtual void update_runtime_options() {}
+	typedef bool (*is_sim_thread_func_t)();
+	is_sim_thread_func_t is_sim_thread_func;
+	virtual void set_sim_thread_func(is_sim_thread_func_t func) {
+		is_sim_thread_func = func;
+	}
+	virtual bool is_sim_thread() { return 1; }
+	virtual bool is_wx_selected() const { return 0; }
+	virtual void set_debug_gui(bool val) {}
+	virtual bool has_debug_gui() const { return 0; }
+	// provide interface to bx_gui->set_display_mode() method for config
+	// interfaces to use.
+	virtual void set_display_mode(disp_mode_t newmode) {}
+	virtual bool test_for_text_console() { return 1; }
+
+	// add-on config option support
+	virtual bool register_addon_option(const char* keyword, addon_option_parser_t parser, addon_option_save_t save_func) { return 0; }
+	virtual bool unregister_addon_option(const char* keyword) { return 0; }
+	virtual bool is_addon_option(const char* keyword) { return 0; }
+	virtual Bit32s parse_addon_option(const char* context, int num_params, char* params[]) { return -1; }
+	virtual Bit32s save_addon_options(FILE* fp) { return -1; }
+
+	// statistics
+	virtual void init_statistics() {}
+	virtual void cleanup_statistics() {}
+	virtual bx_list_c* get_statistics_root() { return NULL; }
+
+	// save/restore support
+	virtual void init_save_restore() {}
+	virtual void cleanup_save_restore() {}
+	virtual bool save_state(const char* checkpoint_path) { return 0; }
+	virtual bool restore_config() { return 0; }
+	virtual bool restore_logopts() { return 0; }
+	virtual bool restore_hardware() { return 0; }
+	virtual bx_list_c* get_bochs_root() { return NULL; }
+	virtual bool restore_bochs_param(bx_list_c* root, const char* sr_path, const char* restore_name) { return 0; }
+
+	// special config parameter and options functions for plugins
+	virtual bool opt_plugin_ctrl(const char* plugname, bool load) { return 0; }
+	virtual void init_std_nic_options(const char* name, bx_list_c* menu) {}
+	virtual void init_usb_options(const char* usb_name, const char* pname, int maxports, int param0) {}
+	virtual int  parse_param_from_list(const char* context, const char* param, bx_list_c* base) { return 0; }
+	virtual int  parse_nic_params(const char* context, const char* param, bx_list_c* base) { return 0; }
+	virtual int  parse_usb_port_params(const char* context, const char* param,
+		int maxports, bx_list_c* base) {
+		return -1;
+	}
+	virtual int  split_option_list(const char* msg, const char* rawopt, char** argv, int max_argv) { return 0; }
+	virtual int  write_param_list(FILE* fp, bx_list_c* base, const char* optname, bool multiline) { return 0; }
+	virtual int  write_usb_options(FILE* fp, int maxports, bx_list_c* base) { return 0; }
+
+#if BX_USE_GUI_CONSOLE
+	virtual int  bx_printf(const char* fmt, ...) { return 0; }
+	virtual char* bx_gets(char* s, int size, FILE* stream) { return NULL; }
+#endif
+
+};
 #if defined(__WXMSW__) || defined(WIN32)
 // Just to provide HINSTANCE, etc. in files that have not included bochs.h.
 // I don't like this at all, but I don't see a way around it.
