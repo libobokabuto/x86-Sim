@@ -246,6 +246,21 @@
     <ClCompile Include="pci_ide.cc">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="usb_uhci.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="uhci_core.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="usb_common.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="usb_pcap.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="config.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bochs.h">
@@ -459,6 +474,18 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="pci_ide.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="usb_uhci.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="uhci_core.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="usb_common.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="usb_pcap.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

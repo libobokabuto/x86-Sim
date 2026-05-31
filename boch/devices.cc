@@ -168,6 +168,16 @@ void bx_devices_c::init(BX_MEM_C* newmem)
         PLUG_load_plugin(pci_ide, PLUGTYPE_STANDARD);
     }
 #endif
+#if BX_SUPPORT_PCIUSB
+    if ((chipset == BX_PCI_CHIPSET_I440FX) ||
+        (chipset == BX_PCI_CHIPSET_I440BX)) {
+        // UHCI is a part of the PIIX3/PIIX4, so load / enable it
+        if (!PLUG_device_present("usb_uhci")) {
+            PLUG_load_plugin(usb_uhci, PLUGTYPE_OPTIONAL);
+        }
+        
+    }
+#endif
 
     PLUG_load_plugin(parallel, PLUGTYPE_OPTIONAL); //自己加的按 PLUGTYPE_OPTIONAL 加载，不按 CORE
 

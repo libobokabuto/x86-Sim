@@ -15,8 +15,13 @@ typedef enum {
 
 class bx_object_c;
 class bx_param_c;
+class bx_param_num_c;
+class bx_param_enum_c;
+class bx_param_bool_c;
 class bx_param_string_c;
 class bx_param_filename_c;
+class bx_list_c;
+
 class BOCHSAPI bx_object_c {
 	//78
 private:
@@ -65,6 +70,8 @@ public:
     } bx_param_opt_bits;
 
     bx_param_c(Bit32u id, const char* name, const char* description);
+    bx_param_c(Bit32u id, const char* name, const char* label, const char* description);
+
     virtual ~bx_param_c();
 
     virtual void reset() {}
@@ -124,6 +131,7 @@ typedef bool (*param_enable_handler)(class bx_param_c*, bool en);
 
 class BOCHSAPI bx_param_num_c : public bx_param_c {
     BOCHSAPI_CYGONLY static Bit32u default_base;
+    void update_dependents();
 protected:
     Bit64s min, max, initial_val;
     union _uval_ {
@@ -150,6 +158,32 @@ public:
         // whether a spin control should be used instead of a simple text control.
         USE_SPIN_CONTROL = (1 << 0)
     } bx_numopt_bits;
+    bx_param_num_c(bx_param_c* parent,
+        const char* name,
+        const char* label,
+        const char* description,
+        Bit64s min, Bit64s max, Bit64s initial_val,
+        bool is_shadow = 0);
+    virtual void reset() { set(initial_val); }
+    void set_handler(param_event_handler handler);
+    void set_sr_handlers(void* devptr, param_save_handler save, param_restore_handler restore);
+    void set_enable_handler(param_enable_handler handler) { enable_handler = handler; }
+    void set_dependent_list(bx_list_c* l);
+    virtual void set_enabled(bool enabled);
+    virtual Bit32s get() { return (Bit32s)get64(); }
+    virtual Bit64s get64();
+    virtual void set(Bit64s val);
+    void set_base(int _base) { base = _base; }
+    void set_initial_val(Bit64s initial_val);
+    int get_base() const { return base; }
+    void set_range(Bit64u min, Bit64u max);
+    Bit64s get_min() const { return min; }
+    Bit64s get_max() const { return max; }
+    static Bit32u set_default_base(Bit32u val);
+    static Bit32u get_default_base() { return default_base; }
+    virtual int parse_param(const char* value);
+    virtual void dump_param(FILE* fp);
+    virtual int dump_param(char* buf, int buflen, bool dquotes = false);
 };
 
 class BOCHSAPI bx_shadow_num_c : public bx_param_num_c {
@@ -157,20 +191,117 @@ class BOCHSAPI bx_shadow_num_c : public bx_param_num_c {
     Bit8u lowbit;   // range of bits associated with this param
     Bit64u mask;     // mask is ANDed with value before it is returned from get
 public:
+    bx_shadow_num_c(bx_param_c* parent,
+        const char* name,
+        Bit64s* ptr_to_real_val,
+        int base = BASE_DEC,
+        Bit8u highbit = 63,
+        Bit8u lowbit = 0);
+    bx_shadow_num_c(bx_param_c* parent,
+        const char* name,
+        Bit64u* ptr_to_real_val,
+        int base = BASE_DEC,
+        Bit8u highbit = 63,
+        Bit8u lowbit = 0);
+    bx_shadow_num_c(bx_param_c* parent,
+        const char* name,
+        Bit32s* ptr_to_real_val,
+        int base = BASE_DEC,
+        Bit8u highbit = 31,
+        Bit8u lowbit = 0);
+    bx_shadow_num_c(bx_param_c* parent,
+        const char* name,
+        Bit32u* ptr_to_real_val,
+        int base = BASE_DEC,
+        Bit8u highbit = 31,
+        Bit8u lowbit = 0);
+    bx_shadow_num_c(bx_param_c* parent,
+        const char* name,
+        Bit16s* ptr_to_real_val,
+        int base = BASE_DEC,
+        Bit8u highbit = 15,
+        Bit8u lowbit = 0);
+    bx_shadow_num_c(bx_param_c* parent,
+        const char* name,
+        Bit16u* ptr_to_real_val,
+        int base = BASE_DEC,
+        Bit8u highbit = 15,
+        Bit8u lowbit = 0);
+    bx_shadow_num_c(bx_param_c* parent,
+        const char* name,
+        Bit8s* ptr_to_real_val,
+        int base = BASE_DEC,
+        Bit8u highbit = 7,
+        Bit8u lowbit = 0);
+    bx_shadow_num_c(bx_param_c* parent,
+        const char* name,
+        Bit8u* ptr_to_real_val,
+        int base = BASE_DEC,
+        Bit8u highbit = 7,
+        Bit8u lowbit = 0);
+    bx_shadow_num_c(bx_param_c* parent,
+        const char* name,
+        double* ptr_to_real_val);
+    bx_shadow_num_c(bx_param_c* parent,
+        const char* name,
+        float* ptr_to_real_val);
+    virtual Bit64s get64();
+    virtual void set(Bit64s val);
+    virtual void reset();
 };
 
 class BOCHSAPI bx_param_bool_c : public bx_param_num_c {
-
 public:
+    bx_param_bool_c(bx_param_c* parent,
+        const char* name,
+        const char* label,
+        const char* description,
+        Bit64s initial_val,
+        bool is_shadow = 0);
+    virtual int parse_param(const char* value);
+    virtual void dump_param(FILE* fp);
+    virtual int dump_param(char* buf, int buflen, bool dquotes = false);
 };
 
 class BOCHSAPI bx_shadow_bool_c : public bx_param_bool_c {
 public:
+    bx_shadow_bool_c(bx_param_c* parent,
+        const char* name,
+        const char* label,
+        bool* ptr_to_real_val);
+    bx_shadow_bool_c(bx_param_c* parent,
+        const char* name,
+        bool* ptr_to_real_val);
+    virtual Bit64s get64();
+    virtual void set(Bit64s val);
 };
 
 class BOCHSAPI bx_param_enum_c : public bx_param_num_c {
     const char** choices;
     Bit64u* deps_bitmap;
+    void update_dependents();
+public:
+    bx_param_enum_c(bx_param_c* parent,
+        const char* name,
+        const char* label,
+        const char* description,
+        const char** choices,
+        Bit64s initial_val,
+        Bit64s value_base = 0);
+    virtual ~bx_param_enum_c();
+    const char* get_choice(int n) { return choices[n]; }
+    const char** get_choices() { return choices; }
+    const char* get_selected() { return choices[val.number - min]; }
+    int find_by_name(const char* s);
+    virtual void set(Bit64s val);
+    bool set_by_name(const char* s);
+    void set_dependent_list(bx_list_c* l, bool enable_all);
+    void set_dependent_bitmap(Bit64s value, Bit64u bitmap);
+    Bit64u get_dependent_bitmap(Bit64s value);
+    virtual void set_enabled(bool enabled);
+    virtual int parse_param(const char* value);
+    virtual void dump_param(FILE* fp);
+    virtual int dump_param(char* buf, int buflen, bool dquotes = false);
 };
 
 typedef const char* (*param_string_event_handler)(class bx_param_string_c*,
@@ -182,6 +313,7 @@ protected:
 	char* val, * initial_val;
     param_string_event_handler handler;
     param_enable_handler enable_handler;
+    void update_dependents();
 public:
 	enum {
 		IS_FILENAME = 1,       // 1=yes it's a filename, 0=not a filename.
@@ -190,18 +322,70 @@ public:
 		SAVE_FILE_DIALOG = 2,  // Use save dialog opposed to open file dialog
 		SELECT_FOLDER_DLG = 4  // Use folder selection dialog
 	} bx_string_opt_bits;
+    bx_param_string_c(bx_param_c* parent,
+        const char* name,
+        const char* label,
+        const char* description,
+        const char* initial_val,
+        int maxsize = -1);
+    virtual ~bx_param_string_c();
+    virtual void reset();
+    void set_handler(param_string_event_handler handler);
+    void set_enable_handler(param_enable_handler handler);
+    param_enable_handler get_enable_handler() { return enable_handler; }
+    virtual void set_enabled(bool enabled);
+    void set_dependent_list(bx_list_c* l);
+    Bit32s get(char* buf, int len);
 	char* getptr() { return val; }//396
 	const char* getptr() const { return val; }//397
+    void set(const char* buf);
+    bool equals(const char* buf) const;
+    int get_maxsize() const { return maxsize; }
+    void set_initial_val(const char* buf);
 	bool isempty() const;//402
+    virtual int parse_param(const char* value);
+    virtual void dump_param(FILE* fp);
+    virtual int dump_param(char* buf, int buflen, bool dquotes = false);
 
 };
 
 class BOCHSAPI bx_param_bytestring_c : public bx_param_string_c {
     char separator;
+public:
+    bx_param_bytestring_c(bx_param_c* parent,
+        const char* name,
+        const char* label,
+        const char* description,
+        const char* initial_val,
+        int maxsize) : bx_param_string_c(parent, name, label, description, initial_val, maxsize)
+    {
+        set_type(BXT_PARAM_BYTESTRING);
+    }
+
+    void set_separator(char sep) { separator = sep; }
+    char get_separator() const { return separator; }
+
+    Bit32s get(char* buf, int len);
+    void set(const char* buf);
+    bool equals(const char* buf) const;
+    void set_initial_val(const char* buf);
+    bool isempty() const;
+
+    virtual int parse_param(const char* value);
+    virtual int dump_param(char* buf, int buflen, bool dquotes = false);
 };
 
 class BOCHSAPI bx_param_filename_c : public bx_param_string_c {
     const char* ext;
+public:
+    bx_param_filename_c(bx_param_c* parent,
+        const char* name,
+        const char* label,
+        const char* description,
+        const char* initial_val,
+        int maxsize = -1);
+    const char* get_extension() const { return ext; }
+    void set_extension(const char* newext) { ext = newext; }
 };
 
 class BOCHSAPI bx_shadow_data_c : public bx_param_c {
@@ -217,14 +401,18 @@ public:
     const Bit8u* getptr() const { return data_ptr; }
     Bit32u get_size() const { return data_size; }
     bool is_text_format() const { return is_text; }
+    Bit8u get(Bit32u index);
+    void set(Bit32u index, Bit8u value);
 };
 
 
 typedef void (*filedata_save_handler)(void* devptr, FILE* save_fp);//467
-typedef void (*filedata_restore_handler)(void* devptr, FILE* save_fp);//468
+typedef void (*filedata_restore_handler)(void* devptr, FILE* save_fp);//468\
+
 class BOCHSAPI bx_shadow_filedata_c : public bx_param_c {
 	//470
 protected:
+    FILE** scratch_fpp;
 	void* sr_devptr;
 	filedata_save_handler    save_handler;
 	filedata_restore_handler restore_handler;
@@ -232,6 +420,9 @@ public:
 	bx_shadow_filedata_c(bx_param_c* parent,
 		const char* name, FILE** scratch_file_ptr_ptr);
 	void set_sr_handlers(void* devptr, filedata_save_handler save, filedata_restore_handler restore);
+    FILE** get_fpp() { return scratch_fpp; }
+    void save(FILE* save_file);
+    void restore(FILE* save_file);
 };
 
 typedef struct _bx_listitem_t {
@@ -284,9 +475,26 @@ public:
         // can force the CI to limit the dialog height with all items accessible.
         USE_SCROLL_WINDOW = (1 << 5)
     } bx_listopt_bits;
-
+    bx_list_c(bx_param_c* parent);
+    bx_list_c(bx_param_c* parent, const char* name);
+    bx_list_c(bx_param_c* parent, const char* name, const char* title);
+    bx_list_c(bx_param_c* parent, const char* name, const char* title, bx_param_c** init_list);
+    virtual ~bx_list_c();
+    bx_list_c* clone();
     void add(bx_param_c* param);
+    bx_param_c* get(int index);
     bx_param_c* get_by_name(const char* name);
-
+    int get_size() const { return size; }
+    Bit32u get_choice() const { return choice; }
+    void set_choice(Bit32u new_choice) { choice = new_choice; }
+    char* get_title() { return title; }
+    void set_parent(bx_param_c* newparent);
+    bx_param_c* get_parent() { return parent; }
+    virtual void reset();
+    virtual void clear();
+    virtual void remove(const char* name);
+    virtual void set_runtime_param(bool val);
+    void set_restore_handler(void* devptr, list_restore_handler restore);
+    void restore();
 };
 

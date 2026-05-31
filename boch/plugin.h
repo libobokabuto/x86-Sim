@@ -12,6 +12,7 @@
 #define BX_PLUGIN_PCI       "pci"  //57
 #define BX_PLUGIN_PCI2ISA   "pci2isa"//58
 #define BX_PLUGIN_PCI_IDE   "pci_ide"
+#define BX_PLUGIN_USB_UHCI  "usb_uhci"
 #define BX_PLUGIN_SPEAKER   "speaker"//72
 #define BX_PLUGIN_ACPI      "acpi" //73
 
@@ -117,6 +118,8 @@
 #define DEV_mem_set_bios_write(a) bx_devices.mem->set_bios_write(a)
 #define DEV_mem_set_bios_rom_access(a,b) bx_devices.mem->set_bios_rom_access(a,b)
 
+///////// USB device macro
+#define DEV_usb_init_device(a,b,c,d,p) bx_usbdev_ctl.init_device(a,b,(void**)c,d,p)
 ///////// Sound module macros
 #define DEV_sound_get_waveout(a) (bx_soundmod_ctl.get_waveout(a))//258
 
@@ -161,4 +164,5 @@ PLUGIN_ENTRY_FOR_MODULE(parallel);//421
 PLUGIN_ENTRY_FOR_MODULE(pci); //422
 PLUGIN_ENTRY_FOR_MODULE(pci2isa);//423
 PLUGIN_ENTRY_FOR_MODULE(pci_ide);
+PLUGIN_ENTRY_FOR_MODULE(usb_uhci);//426
 PLUGIN_ENTRY_FOR_MODULE(speaker);//438

@@ -135,6 +135,7 @@
     <ClCompile Include="call_far.cc" />
     <ClCompile Include="cet.cc" />
     <ClCompile Include="coms.cc" />
+    <ClCompile Include="config.cc" />
     <ClCompile Include="corei7_haswell_4770.cc" />
     <ClCompile Include="cpu.cc" />
     <ClCompile Include="cpuid.cc" />
@@ -204,7 +205,11 @@
     <ClCompile Include="stack.cc" />
     <ClCompile Include="svm.cc" />
     <ClCompile Include="tasking.cc" />
+    <ClCompile Include="uhci_core.cc" />
     <ClCompile Include="unmapped.cc" />
+    <ClCompile Include="usb_common.cc" />
+    <ClCompile Include="usb_pcap.cc" />
+    <ClCompile Include="usb_uhci.cc" />
     <ClCompile Include="vapic.cc" />
     <ClCompile Include="virt_timer.cc" />
     <ClCompile Include="vm8086.cc" />
@@ -279,7 +284,11 @@
     <ClInclude Include="stack.h" />
     <ClInclude Include="svm.h" />
     <ClInclude Include="tlb.h" />
+    <ClInclude Include="uhci_core.h" />
     <ClInclude Include="unmapped.h" />
+    <ClInclude Include="usb_common.h" />
+    <ClInclude Include="usb_pcap.h" />
+    <ClInclude Include="usb_uhci.h" />
     <ClInclude Include="utctime.h" />
     <ClInclude Include="vcruntime.h" />
     <ClInclude Include="virt_timer.h" />

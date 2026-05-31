@@ -1,3 +1,4 @@
+#define _CRT_SECURE_NO_WARNINGS
 #include "bochs.h"
 #include "param_names.h"
 #include "debug.h"
