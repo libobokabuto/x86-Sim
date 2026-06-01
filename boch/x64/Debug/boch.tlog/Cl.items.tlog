@@ -1,11 +1,13 @@
 E:\Study\codes\bochs\boch\boch\access.cc;E:\Study\codes\bochs\boch\boch\x64\Debug\access.obj
 E:\Study\codes\bochs\boch\boch\access2.cc;E:\Study\codes\bochs\boch\boch\x64\Debug\access2.obj
+E:\Study\codes\bochs\boch\boch\acpi.cc;E:\Study\codes\bochs\boch\boch\x64\Debug\acpi.obj
 E:\Study\codes\bochs\boch\boch\apic.cc;E:\Study\codes\bochs\boch\boch\x64\Debug\apic.obj
 E:\Study\codes\bochs\boch\boch\biosdev.cc;E:\Study\codes\bochs\boch\boch\x64\Debug\biosdev.obj
 E:\Study\codes\bochs\boch\boch\bxthread.cc;E:\Study\codes\bochs\boch\boch\x64\Debug\bxthread.obj
 E:\Study\codes\bochs\boch\boch\call_far.cc;E:\Study\codes\bochs\boch\boch\x64\Debug\call_far.obj
 E:\Study\codes\bochs\boch\boch\cet.cc;E:\Study\codes\bochs\boch\boch\x64\Debug\cet.obj
 E:\Study\codes\bochs\boch\boch\coms.cc;E:\Study\codes\bochs\boch\boch\x64\Debug\coms.obj
+E:\Study\codes\bochs\boch\boch\config.cc;E:\Study\codes\bochs\boch\boch\x64\Debug\config.obj
 E:\Study\codes\bochs\boch\boch\corei7_haswell_4770.cc;E:\Study\codes\bochs\boch\boch\x64\Debug\corei7_haswell_4770.obj
 E:\Study\codes\bochs\boch\boch\cpu.cc;E:\Study\codes\bochs\boch\boch\x64\Debug\cpu.obj
 E:\Study\codes\bochs\boch\boch\cpuid.cc;E:\Study\codes\bochs\boch\boch\x64\Debug\cpuid.obj
@@ -46,6 +48,8 @@ E:\Study\codes\bochs\boch\boch\paging.cc;E:\Study\codes\bochs\boch\boch\x64\Debu
 E:\Study\codes\bochs\boch\boch\parallel.cc;E:\Study\codes\bochs\boch\boch\x64\Debug\parallel.obj
 E:\Study\codes\bochs\boch\boch\paramtree.cc;E:\Study\codes\bochs\boch\boch\x64\Debug\paramtree.obj
 E:\Study\codes\bochs\boch\boch\pci.cc;E:\Study\codes\bochs\boch\boch\x64\Debug\pci.obj
+E:\Study\codes\bochs\boch\boch\pci2isa.cc;E:\Study\codes\bochs\boch\boch\x64\Debug\pci2isa.obj
+E:\Study\codes\bochs\boch\boch\pci_ide.cc;E:\Study\codes\bochs\boch\boch\x64\Debug\pci_ide.obj
 E:\Study\codes\bochs\boch\boch\pc_system.cc;E:\Study\codes\bochs\boch\boch\x64\Debug\pc_system.obj
 E:\Study\codes\bochs\boch\boch\pic.cc;E:\Study\codes\bochs\boch\boch\x64\Debug\pic.obj
 E:\Study\codes\bochs\boch\boch\pit.cc;E:\Study\codes\bochs\boch\boch\x64\Debug\pit.obj
@@ -63,7 +67,11 @@ E:\Study\codes\bochs\boch\boch\speaker.cc;E:\Study\codes\bochs\boch\boch\x64\Deb
 E:\Study\codes\bochs\boch\boch\stack.cc;E:\Study\codes\bochs\boch\boch\x64\Debug\stack.obj
 E:\Study\codes\bochs\boch\boch\svm.cc;E:\Study\codes\bochs\boch\boch\x64\Debug\svm.obj
 E:\Study\codes\bochs\boch\boch\tasking.cc;E:\Study\codes\bochs\boch\boch\x64\Debug\tasking.obj
+E:\Study\codes\bochs\boch\boch\uhci_core.cc;E:\Study\codes\bochs\boch\boch\x64\Debug\uhci_core.obj
 E:\Study\codes\bochs\boch\boch\unmapped.cc;E:\Study\codes\bochs\boch\boch\x64\Debug\unmapped.obj
+E:\Study\codes\bochs\boch\boch\usb_common.cc;E:\Study\codes\bochs\boch\boch\x64\Debug\usb_common.obj
+E:\Study\codes\bochs\boch\boch\usb_pcap.cc;E:\Study\codes\bochs\boch\boch\x64\Debug\usb_pcap.obj
+E:\Study\codes\bochs\boch\boch\usb_uhci.cc;E:\Study\codes\bochs\boch\boch\x64\Debug\usb_uhci.obj
 E:\Study\codes\bochs\boch\boch\vapic.cc;E:\Study\codes\bochs\boch\boch\x64\Debug\vapic.obj
 E:\Study\codes\bochs\boch\boch\virt_timer.cc;E:\Study\codes\bochs\boch\boch\x64\Debug\virt_timer.obj
 E:\Study\codes\bochs\boch\boch\vm8086.cc;E:\Study\codes\bochs\boch\boch\x64\Debug\vm8086.obj

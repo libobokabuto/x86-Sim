@@ -261,6 +261,9 @@
     <ClCompile Include="config.cc">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="acpi.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bochs.h">
@@ -486,6 +489,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="usb_pcap.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="acpi.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

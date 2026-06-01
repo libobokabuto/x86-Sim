@@ -16,7 +16,6 @@ extern bool simulate_xapic;
 #define BX_CPU_APIC(i) (BX_CPU(i)->lapic)
 const unsigned BX_LAPIC_FIRST_VECTOR = 0x10;
 const unsigned BX_LAPIC_LAST_VECTOR = 0xff;
-#endif
 
 bool apic_bus_deliver_interrupt(Bit8u vector, apic_dest_t dest, Bit8u delivery_mode, bool logical_dest, bool level, bool trig_mode)
 {
@@ -127,6 +126,21 @@ static void apic_bus_broadcast_eoi(Bit8u vector)
 { //149
     DEV_ioapic_receive_eoi(vector);
 }
+
+#endif
+
+BOCHSAPI_MSVCONLY void apic_bus_deliver_smi(void)
+{
+    BX_CPU(0)->deliver_SMI();
+}
+
+void apic_bus_broadcast_smi(void)
+{
+    for (unsigned i = 0; i < BX_SMP_PROCESSORS; i++)
+        BX_CPU(i)->deliver_SMI();
+}
+
+#if BX_SUPPORT_APIC
 
 bx_local_apic_c::bx_local_apic_c(BX_CPU_C* mycpu, unsigned id)
     : base_addr(BX_LAPIC_BASE_ADDR), cpu(mycpu)
@@ -1327,4 +1341,6 @@ bool bx_local_apic_c::write_x2apic(unsigned index, Bit32u val32_hi, Bit32u val32
     write_aligned(index, val32_lo);
     return true;
 }
+#endif
+
 #endif

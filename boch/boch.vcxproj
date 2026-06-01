@@ -129,6 +129,7 @@
   <ItemGroup>
     <ClCompile Include="access.cc" />
     <ClCompile Include="access2.cc" />
+    <ClCompile Include="acpi.cc" />
     <ClCompile Include="apic.cc" />
     <ClCompile Include="biosdev.cc" />
     <ClCompile Include="bxthread.cc" />
@@ -221,6 +222,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="access.h" />
+    <ClInclude Include="acpi.h" />
     <ClInclude Include="apic.h" />
     <ClInclude Include="biosdev.h" />
     <ClInclude Include="bochs.h" />

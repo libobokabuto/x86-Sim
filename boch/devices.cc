@@ -152,7 +152,9 @@ void bx_devices_c::init(BX_MEM_C* newmem)
         PLUG_load_plugin(pci2isa, PLUGTYPE_CORE);
     }
 #endif
-
+    if ((pci.advopts & BX_PCI_ADVOPT_NOACPI) == 0) {
+        PLUG_load_plugin(acpi, PLUGTYPE_STANDARD);
+    }
     PLUG_load_plugin(cmos, PLUGTYPE_CORE); //238
 
     PLUG_load_plugin(dma, PLUGTYPE_CORE); //239
