@@ -166,6 +166,17 @@ void BX_CPU_C::init_MSRs()
 #endif
 }
 
+void BX_CPU_C::destroy_MSRs()
+{
+    if (msr_desc) {
+        for (unsigned i = 0; i < BX_MSR_MAX_INDEX; i++)
+            delete msr_desc[i];
+
+        delete[] msr_desc;
+        msr_desc = NULL;
+    }
+}
+
 bool BX_CPP_AttrRegparmN(2) BX_CPU_C::rdmsr(Bit32u index, Bit64u* msr)
 {
     Bit64u val64 = 0;

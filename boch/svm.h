@@ -222,6 +222,32 @@ struct SVM_HOST_STATE
 
 	BxPackedRegister pat_msr;
 };
+
+struct SVM_GUEST_STATE
+{
+	bx_segment_reg_t sregs[4];
+
+	bx_global_segment_reg_t gdtr;
+	bx_global_segment_reg_t idtr;
+
+	bx_efer_t efer;
+	bx_cr0_t cr0;
+	bx_cr4_t cr4;
+	bx_address cr2;
+	Bit32u dr6;
+	Bit32u dr7;
+	bx_phy_address cr3;
+	BxPackedRegister pat_msr;
+	Bit32u eflags;
+	Bit64u rip;
+	Bit64u rsp;
+	Bit64u rax;
+
+	unsigned cpl;
+
+	bool inhibit_interrupts;
+};
+
 struct SVM_CONTROLS
 {
 	//286
@@ -330,15 +356,6 @@ enum {
 	SVM_INTERCEPT1_RDPRU = 46,
 };
 
-#if defined(NEED_CPU_REG_SHORTCUTS)
-#define SVM_V_TPR          (BX_CPU_THIS_PTR vmcb->ctrls.v_tpr)
-#define SVM_V_INTR_PRIO    (BX_CPU_THIS_PTR vmcb->ctrls.v_intr_prio)
-#define SVM_V_IGNORE_TPR   (BX_CPU_THIS_PTR vmcb->ctrls.v_ignore_tpr)
-#define SVM_V_INTR_MASKING (BX_CPU_THIS_PTR vmcb->ctrls.v_intr_masking)
-
-#define SVM_HOST_IF (BX_CPU_THIS_PTR vmcb->host_state.eflags & EFlagsIFMask)
-
-#endif
 
 #define SVM_INTERCEPT(intercept_bitnum) \
   (BX_CPU_THIS_PTR vmcb->ctrls.intercept_vector[intercept_bitnum / 32] & (1 << (intercept_bitnum & 31)))
@@ -351,6 +368,12 @@ enum {
 
 #define SVM_CR_WRITE_INTERCEPTED(reg_num) \
   (BX_CPU_THIS_PTR vmcb->ctrls.cr_wr_ctrl & (1<<(reg_num))) //405
+
+#define SVM_DR_READ_INTERCEPTED(reg_num) \
+  (BX_CPU_THIS_PTR vmcb->ctrls.dr_rd_ctrl & (1<<(reg_num)))
+
+#define SVM_DR_WRITE_INTERCEPTED(reg_num) \
+  (BX_CPU_THIS_PTR vmcb->ctrls.dr_wr_ctrl & (1<<(reg_num)))
 
 #define SVM_NESTED_PAGING_ENABLED (BX_CPU_THIS_PTR vmcb->ctrls.nested_paging)  //414
 

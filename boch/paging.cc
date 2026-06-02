@@ -437,6 +437,21 @@ void BX_CPU_C::update_access_dirty_PAE(bx_phy_address* entry_addr, Bit64u* entry
     }
 }
 
+void BX_CPU_C::TLB_invlpg(bx_address laddr)
+{
+    invalidate_prefetch_q();
+    invalidate_stack_cache();
+
+    BX_CPU_THIS_PTR DTLB.invlpg(laddr);
+    BX_CPU_THIS_PTR ITLB.invlpg(laddr);
+
+#if BX_SUPPORT_MONITOR_MWAIT
+    BX_CPU_THIS_PTR wakeup_monitor();
+#endif
+
+    BX_CPU_THIS_PTR iCache.breakLinks();
+}
+
 #define PAGING_PAE_PDPTE_RESERVED_BITS (BX_PAGING_PHY_ADDRESS_RESERVED_BITS | BX_CONST64(0xFFF00000000001E6)) //954
 
 bool BX_CPP_AttrRegparmN(1) BX_CPU_C::CheckPDPTR(bx_phy_address cr3_val)

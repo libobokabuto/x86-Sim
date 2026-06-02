@@ -24,7 +24,115 @@ extern bool isValidMSR_IA32_SPEC_CTRL(Bit64u val_64);
 extern bool is_invalid_cet_control(bx_address val);
 #endif
 
+extern const char* segname[];
 
+static const char* VMX_vmexit_reason_name[] =
+{
+    /*  0 */  "Exception or NMI",
+    /*  1 */  "External Interrupt",
+    /*  2 */  "Triple Fault",
+    /*  3 */  "INIT",
+    /*  4 */  "SIPI",
+    /*  5 */  "I/O SMI (SMM Vmexit)",
+    /*  6 */  "SMI (SMM Vmexit)",
+    /*  7 */  "Interrupt Window Exiting",
+    /*  8 */  "NMI Window Exiting",
+    /*  9 */  "Task Switch",
+    /* 10 */  "CPUID",
+    /* 11 */  "GETSEC",
+    /* 12 */  "HLT",
+    /* 13 */  "INVD",
+    /* 14 */  "INVLPG",
+    /* 15 */  "RDPMC",
+    /* 16 */  "RDTSC",
+    /* 17 */  "RSM",
+    /* 18 */  "VMCALL",
+    /* 19 */  "VMCLEAR",
+    /* 20 */  "VMLAUNCH",
+    /* 21 */  "VMPTRLD",
+    /* 22 */  "VMPTRST",
+    /* 23 */  "VMREAD",
+    /* 24 */  "VMRESUME",
+    /* 25 */  "VMWRITE",
+    /* 26 */  "VMXOFF",
+    /* 27 */  "VMXON",
+    /* 28 */  "CR Access",
+    /* 29 */  "DR Access",
+    /* 30 */  "I/O Instruction",
+    /* 31 */  "RDMSR",
+    /* 32 */  "WRMSR",
+    /* 33 */  "VMEntry failure due to invalid guest state",
+    /* 34 */  "VMEntry failure due to MSR loading",
+    /* 35 */  "Reserved35",
+    /* 36 */  "MWAIT",
+    /* 37 */  "MTF (Monitor Trap Flag)",
+    /* 38 */  "Reserved38",
+    /* 39 */  "MONITOR",
+    /* 40 */  "PAUSE",
+    /* 41 */  "VMEntry failure due to machine check",
+    /* 42 */  "Reserved42",
+    /* 43 */  "TPR Below Threshold",
+    /* 44 */  "APIC Access",
+    /* 45 */  "Virtualized EOI",
+    /* 46 */  "GDTR/IDTR Access",
+    /* 47 */  "LDTR/TR Access",
+    /* 48 */  "EPT Violation",
+    /* 49 */  "EPT Misconfiguration",
+    /* 50 */  "INVEPT",
+    /* 51 */  "RDTSCP",
+    /* 52 */  "VMX preemption timer expired",
+    /* 53 */  "INVVPID",
+    /* 54 */  "WBINVD",
+    /* 55 */  "XSETBV",
+    /* 56 */  "APIC Write Trap",
+    /* 57 */  "RDRAND",
+    /* 58 */  "INVPCID",
+    /* 59 */  "VMFUNC",
+    /* 60 */  "ENCLS",
+    /* 61 */  "RDSEED",
+    /* 62 */  "PML Log Full",
+    /* 63 */  "XSAVES",
+    /* 64 */  "XRSTORS",
+    /* 65 */  "PCONFIG",
+    /* 66 */  "Sub-Page Protection",
+    /* 67 */  "UMWAIT",
+    /* 68 */  "TPAUSE",
+    /* 69 */  "LOADIWKEY",
+    /* 70 */  "ENCLV",
+    /* 71 */  "Reserved71",
+    /* 72 */  "ENQCMD PASID Translation",
+    /* 73 */  "ENQCMDS PASID Translation",
+    /* 74 */  "Bus Lock",
+    /* 75 */  "Notify Window",
+    /* 76 */  "SEAMCALL",
+    /* 77 */  "TDCALL",
+    /* 78 */  "RDMSRLIST",
+    /* 79 */  "WRMSRLIST",
+    /* 80 */  "URDMSR",
+    /* 81 */  "UWRMSR",
+};
+
+#include "ia_opcodes.h"
+
+void BX_CPU_C::set_VMCSPTR(Bit64u vmxptr)
+{
+    BX_CPU_THIS_PTR vmcsptr = vmxptr;
+
+    if (vmxptr != BX_INVALID_VMCSPTR) {
+        BX_CPU_THIS_PTR vmcshostptr = BX_CPU_THIS_PTR getHostMemAddr(vmxptr, BX_WRITE);
+#if BX_SUPPORT_MEMTYPE
+        // IA32_VMX_BASIC MSR report the memory type that should be used for the VMCS, for data structures referenced by
+        // pointers in the VMCS (I/O bitmaps, virtual-APIC page, MSR areas for VMX transitions), and for the MSEG header
+        BX_CPU_THIS_PTR vmcs_memtype = BX_MEMTYPE_WB;
+#endif
+    }
+    else {
+        BX_CPU_THIS_PTR vmcshostptr = 0;
+#if BX_SUPPORT_MEMTYPE
+        BX_CPU_THIS_PTR vmcs_memtype = BX_MEMTYPE_UC;
+#endif
+    }
+}
 
 Bit16u BX_CPP_AttrRegparmN(1) BX_CPU_C::VMread16(unsigned encoding)
 {

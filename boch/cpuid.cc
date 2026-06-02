@@ -1001,3 +1001,11 @@ void bx_cpuid_t::sanity_checks() const
     if (is_cpu_extension_supported(BX_ISA_VMX) && is_cpu_extension_supported(BX_ISA_SVM)){}
         //BX_FATAL(("PANIC: VMX and SVM cannot be enabled in same model !"));
 }
+
+void bx_cpuid_t::dump_features() const
+{
+    //BX_INFO(("CPU Features supported:"));
+    for (unsigned i = 1; i < BX_ISA_EXTENSION_LAST; i++)
+        if (is_cpu_extension_supported(i)){}
+            //BX_INFO(("\t\t%s", get_cpu_feature_name(i)));
+}

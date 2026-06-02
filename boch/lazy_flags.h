@@ -131,6 +131,19 @@ const Bit32u LF_MASK_PO = (0x01 << LF_BIT_PO);
   SET_FLAGS_OSZAP_64(SUB_COUT_VEC((op1_64), (op2_64), (diff_64)), (diff_64))
 #endif
 
+#define SET_FLAGS_OSZAxC_LOGIC_SIZE(size, lf_result) { \
+  bool saved_PF = getB_PF(); \
+  SET_FLAGS_OSZAPC_SIZE(size, (Bit##size##u)(0), lf_result); \
+  set_PF(saved_PF); \
+}
+
+#define SET_FLAGS_OSZAxC_LOGIC_32(result_32) \
+   SET_FLAGS_OSZAxC_LOGIC_SIZE(32, (result_32))
+#if BX_SUPPORT_X86_64
+#define SET_FLAGS_OSZAxC_LOGIC_64(result_64) \
+   SET_FLAGS_OSZAxC_LOGIC_SIZE(64, (result_64))
+#endif
+
 
 struct bx_lazyflags_entry { //193
     bx_address result;

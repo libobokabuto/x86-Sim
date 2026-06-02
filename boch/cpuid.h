@@ -44,7 +44,7 @@ public:
 	virtual void get_cpuid_leaf(Bit32u function, Bit32u subfunction, cpuid_function_t* leaf) const = 0;
 
 	virtual void dump_cpuid(void) const = 0;
-
+	void dump_features() const;
 	void sanity_checks() const;
 
 #if BX_CPU_LEVEL >= 5
@@ -118,7 +118,7 @@ protected:
 
 	void dump_cpuid_leaf(unsigned function, unsigned subfunction = 0) const;
 	void dump_cpuid(unsigned max_std_leaf, unsigned max_ext_leaf) const;
-
+	
 	void warning_messages(unsigned extension) const;
 
 #if BX_SUPPORT_VMX

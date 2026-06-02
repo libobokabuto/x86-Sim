@@ -149,4 +149,33 @@ struct TLB {
 			split_large = (lpf_mask > 0xfff);
 		}
 #endif
+		BX_CPP_INLINE void invlpg(bx_address laddr)
+		{
+#if BX_CPU_LEVEL >= 5
+			if (split_large) {
+				Bit32u lpf_mask = 0;
+
+				for (unsigned n = 0; n < size; n++) {
+					bx_TLB_entry* tlbEntry = &entry[n];
+					if (tlbEntry->valid()) {
+						bx_address entry_lpf_mask = tlbEntry->lpf_mask;
+						if ((laddr & ~entry_lpf_mask) == (tlbEntry->lpf & ~entry_lpf_mask)) {
+							tlbEntry->invalidate();
+						}
+						else {
+							lpf_mask |= entry_lpf_mask;
+						}
+					}
+				}
+
+				split_large = (lpf_mask > 0xfff);
+			}
+			else
+#endif
+			{
+				bx_TLB_entry* tlbEntry = get_entry_of(laddr);
+				if (LPFOf(tlbEntry->lpf) == LPFOf(laddr))
+					tlbEntry->invalidate();
+			}
+		}
 };

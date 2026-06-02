@@ -585,6 +585,18 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::VMexit_CR8_Write(bxInstruction_c* i)
     }
 }
 
+void BX_CPU_C::VMexit_DR_Access(unsigned read, unsigned dr, unsigned reg)
+{
+    if (BX_CPU_THIS_PTR vmcs.vmexec_ctrls1.DRx_ACCESS_VMEXIT())
+    {
+        Bit64u qualification = dr | (reg << 8);
+        if (read)
+            qualification |= (1 << 4);
+
+        VMexit(VMX_VMEXIT_DR_ACCESS, qualification);
+    }
+}
+
 #if BX_SUPPORT_VMX >= 2  //686
 void BX_CPU_C::Virtualization_Exception(Bit64u qualification, Bit64u guest_physical, Bit64u guest_linear)
 {

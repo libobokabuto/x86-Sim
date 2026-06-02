@@ -1,5 +1,6 @@
 #pragma once
 #include <setjmp.h>
+#include "wide_int.h"
 #include "decoder.h" //27行
 #include "instrument.h" //29行
 const Bit64u BX_PHY_ADDRESS_MASK = ((((Bit64u)(1)) << BX_PHY_ADDRESS_WIDTH) - 1);
@@ -84,6 +85,7 @@ const Bit64u BX_PHY_ADDRESS_RESERVED_BITS = (~BX_PHY_ADDRESS_MASK); //33
   (BX_CPU_THIS_PTR gen_reg[index].word.byte.rl) : \
   (BX_CPU_THIS_PTR gen_reg[(index)-4].word.byte.rh))
 #define BX_READ_64BIT_REG(index) (BX_CPU_THIS_PTR gen_reg[index].rrx)
+#define BX_READ_64BIT_REG_HIGH(index) (BX_CPU_THIS_PTR gen_reg[index].dword.hrx)
 
 #else
 #define BX_READ_8BIT_REGx(index, ext) (((index) & 4) ? \
@@ -96,6 +98,7 @@ const Bit64u BX_PHY_ADDRESS_RESERVED_BITS = (~BX_PHY_ADDRESS_MASK); //33
     BX_CPU_THIS_PTR gen_reg[index].word.byte.rl = val; \
 }
 #endif
+#define BX_READ_8BIT_REGL(index) (BX_CPU_THIS_PTR gen_reg[index].word.byte.rl)
 #define BX_READ_16BIT_REG(index) (BX_CPU_THIS_PTR gen_reg[index].word.rx)
 #if BX_SUPPORT_X86_64
 #define BX_WRITE_8BIT_REGx(index, extended, val) {\
@@ -125,7 +128,15 @@ const Bit64u BX_PHY_ADDRESS_RESERVED_BITS = (~BX_PHY_ADDRESS_MASK); //33
 #else
 #define BX_CPU_ID (0)
 #endif
+#if BX_SUPPORT_AVX
 
+#define BX_WRITE_OPMASK(index, val_64) { \
+  BX_CPU_THIS_PTR opmask[index].rrx = val_64; \
+}
+
+BX_CPP_INLINE Bit64u CUT_OPMASK_TO(unsigned nelements) { return (BX_CONST64(1) << (nelements)) - 1; }
+
+#endif
 enum BX_Instr_TLBControl {
     BX_INSTR_MOV_CR0 = 10,
     BX_INSTR_MOV_CR3 = 11,
@@ -709,6 +720,7 @@ typedef enum dbg_show_flags_t {
     Flag_mode = 0x20,
 } dbg_show_flags_t;
 #endif //882
+struct BX_SMM_State;
 struct bx_cpu_statistics;
 class bx_cpuid_t; //887行
 
@@ -735,8 +747,7 @@ public:
 
 
 
-	BX_CPU_C(unsigned id = 0);
-	~BX_CPU_C();
+	
     
     bx_gen_reg_t gen_reg[BX_GENERAL_REGISTERS + 4]; //930行
 
@@ -806,6 +817,30 @@ public:
 #if BX_CPU_LEVEL >= 6
     xcr0_t xcr0;
     Bit32u xcr0_suppmask, ia32_xss_suppmask;
+#endif
+
+#if BX_SUPPORT_FPU
+    i387_t the_i387;
+#endif
+
+#if BX_CPU_LEVEL >= 6
+
+#if BX_SUPPORT_EVEX
+    bx_zmm_reg_t vmm[BX_XMM_REGISTERS + 1] BX_CPP_AlignN(64);
+#else
+#if BX_SUPPORT_AVX
+    bx_ymm_reg_t vmm[BX_XMM_REGISTERS + 1] BX_CPP_AlignN(32);
+#else
+    bx_xmm_reg_t vmm[BX_XMM_REGISTERS + 1] BX_CPP_AlignN(16);
+#endif
+#endif
+
+    bx_mxcsr_t mxcsr;
+    Bit32u mxcsr_mask;
+#if BX_SUPPORT_EVEX
+    bx_gen_reg_t opmask[8];
+#endif
+
 #endif
 
 #if BX_SUPPORT_MONITOR_MWAIT
@@ -983,7 +1018,13 @@ public:
     bx_cpu_statistics *stats;
 
 #if BX_DEBUGGER
+    bx_phy_address watchpoint;
+    Bit8u break_point;
+    Bit8u magic_break;
     Bit8u stop_reason;
+    bool trace;
+    bool trace_reg;
+    bool trace_mem;
     bool mode_break;
 #if BX_SUPPORT_VMX || BX_SUPPORT_SVM
     bool vmexit_break;//1294
@@ -1089,6 +1130,9 @@ public:
     BX_SMF BX_CPP_INLINE void set_CF(bool val) { BX_CPU_THIS_PTR oszapc.set_CF(val); }
     BX_SMF BX_CPP_INLINE void clear_CF(void) { BX_CPU_THIS_PTR oszapc.clear_CF(); }
     BX_SMF BX_CPP_INLINE void assert_CF(void) { BX_CPU_THIS_PTR oszapc.assert_CF(); }
+
+    BX_CPU_C(unsigned id = 0);
+    ~BX_CPU_C();
 
 	void initialize(void);
 	BX_SMF void cpu_loop(void);
@@ -2316,14 +2360,14 @@ public:
 
 #if BX_SUPPORT_SVM
   /* SVM instructions */
-    BX_SMF void VMRUN(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
-    BX_SMF void VMMCALL(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
-    BX_SMF void VMLOAD(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
-    BX_SMF void VMSAVE(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
-    BX_SMF void SKINIT(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
-    BX_SMF void CLGI(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
-    BX_SMF void STGI(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
-    BX_SMF void INVLPGA(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void VMRUN(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
+    BX_SMF void VMMCALL(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
+    BX_SMF void VMLOAD(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
+    BX_SMF void VMSAVE(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
+    BX_SMF void SKINIT(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
+    BX_SMF void CLGI(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
+    BX_SMF void STGI(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
+    BX_SMF void INVLPGA(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     /* SVM instructions */
 #endif
 
@@ -4054,7 +4098,7 @@ public:
     BX_SMF void RDTSCP(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
 
     BX_SMF void INVLPG(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
-    BX_SMF void RSM(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void RSM(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
 
     BX_SMF void WRMSR(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void RDTSC(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
@@ -4298,6 +4342,9 @@ public:
     
     BX_SMF void branch_near16(Bit16u new_IP) BX_CPP_AttrRegparmN(1);//4672
     BX_SMF void branch_near32(Bit32u new_EIP) BX_CPP_AttrRegparmN(1); //4673
+#if BX_SUPPORT_X86_64
+    BX_SMF void branch_near64(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
+#endif
 
     BX_SMF void branch_far(bx_selector_t* selector,
         bx_descriptor_t* descriptor, bx_address rip, unsigned cpl); //4678
@@ -4364,6 +4411,7 @@ public:
     BX_SMF void TLB_flushNonGlobal(void);
 #endif
     BX_SMF void TLB_flush(void); //4758
+    BX_SMF void TLB_invlpg(bx_address laddr);
     BX_SMF void inhibit_interrupts(unsigned mask); //4760
     BX_SMF bool interrupts_inhibited(unsigned mask); //4761
     BX_SMF void interrupt(Bit8u vector, unsigned type, bool push_error, Bit16u error_code); //4763
@@ -4434,12 +4482,19 @@ public:
 #endif
 
     BX_SMF void load_segw(bxInstruction_c* i, unsigned seg) BX_CPP_AttrRegparmN(2); //4863
+    BX_SMF void load_segd(bxInstruction_c* i, unsigned seg) BX_CPP_AttrRegparmN(2);
+#if BX_SUPPORT_X86_64
+    BX_SMF void load_segq(bxInstruction_c* i, unsigned seg) BX_CPP_AttrRegparmN(2);
+#endif
 
     BX_SMF void task_gate(bxInstruction_c* i, bx_selector_t* selector, bx_descriptor_t* gate_descriptor, unsigned source);//4871
     BX_SMF void jump_protected(bxInstruction_c* i, Bit16u cs, bx_address disp) BX_CPP_AttrRegparmN(3);//4872
     BX_SMF void jmp_call_gate(bx_selector_t* selector, bx_descriptor_t* gate_descriptor) BX_CPP_AttrRegparmN(2);//4873
+    BX_SMF void call_protected(bxInstruction_c* i, Bit16u cs, bx_address disp) BX_CPP_AttrRegparmN(3);
+    BX_SMF void call_gate(bx_descriptor_t* gate_descriptor) BX_CPP_AttrRegparmN(1);
 #if BX_SUPPORT_X86_64
     BX_SMF void jmp_call_gate64(bx_selector_t* selector) BX_CPP_AttrRegparmN(1);
+    BX_SMF void call_gate64(bx_selector_t* gate_selector) BX_CPP_AttrRegparmN(1);
 #endif
     BX_SMF void return_protected(bxInstruction_c* i, Bit16u pop_bytes) BX_CPP_AttrRegparmN(2);//4883
     BX_SMF void iret_protected(bxInstruction_c*) BX_CPP_AttrRegparmN(1);//4884
@@ -4487,6 +4542,8 @@ public:
 #if BX_SUPPORT_X86_64
     BX_SMF void    fetch_raw_descriptor_64(const bx_selector_t* selector,
         Bit32u* dword1, Bit32u* dword2, Bit32u* dword3, unsigned exception_no);
+    BX_SMF bool fetch_raw_descriptor2_64(const bx_selector_t* selector,
+        Bit32u* dword1, Bit32u* dword2, Bit32u* dword3);
 #endif
     BX_SMF void    push_16(Bit16u value16) BX_CPP_AttrRegparmN(1); //4938
     BX_SMF void    push_32(Bit32u value32) BX_CPP_AttrRegparmN(1);
@@ -4506,7 +4563,9 @@ public:
 #endif  //4952
 
     BX_SMF void    enter_system_management_mode(void);
+    BX_SMF bool    resume_from_system_management_mode(BX_SMM_State* smm_state);
     BX_SMF void    smram_save_state(Bit32u* smm_saved_state); //4957
+    BX_SMF bool    smram_restore_state(const Bit32u* smm_saved_state);//4959
     BX_SMF void    raise_INTR(void);
     BX_SMF void    clear_INTR(void);
     BX_SMF void    deliver_INIT(void);//4963
@@ -4687,6 +4746,7 @@ public:
     BX_SMF void VMexitSaveGuestState(Bit32u reason, Bit32u vector); //5255
     BX_SMF void VMexitLoadHostState(void); //5257
     BX_SMF Bit32u VMexitReadEFLAGS(Bit32u reason, Bit32u vector); //5258
+    BX_SMF void set_VMCSPTR(Bit64u vmxptr);
     BX_SMF void init_vmx_capabilities(void);//5260
 
 #if BX_SUPPORT_VMX >= 2
@@ -4749,15 +4809,26 @@ public:
     BX_SMF bx_address VMexit_CR4_Write(bxInstruction_c* i, bx_address) BX_CPP_AttrRegparmN(2);
     BX_SMF void VMexit_CR8_Read(bxInstruction_c* i) BX_CPP_AttrRegparmN(1);//5330
     BX_SMF void VMexit_CR8_Write(bxInstruction_c* i) BX_CPP_AttrRegparmN(1);//5331
+    BX_SMF void VMexit_DR_Access(unsigned read, unsigned dr, unsigned reg);
 #endif //5337
 #if BX_SUPPORT_SVM
+    BX_SMF void set_VMCBPTR(Bit64u vmcbptr);
+    BX_SMF void SvmEnterSaveHostState(SVM_HOST_STATE* host);
+    BX_SMF bool SvmEnterLoadCheckControls(SVM_CONTROLS* ctrls);
+    BX_SMF bool SvmEnterLoadCheckGuestState(void);
+    BX_SMF bool SvmInjectEvents(void);
     BX_SMF void Svm_Vmexit(int reason, Bit64u exitinfo1 = 0, Bit64u exitinfo2 = 0); //5345
     BX_SMF void SvmExitSaveGuestState(void);
     BX_SMF void SvmExitLoadHostState(SVM_HOST_STATE* host); //5346
+    BX_SMF Bit8u vmcb_read8(unsigned offset);
+    BX_SMF Bit16u vmcb_read16(unsigned offset);
+    BX_SMF Bit32u vmcb_read32(unsigned offset);
+    BX_SMF Bit64u vmcb_read64(unsigned offset);
     BX_SMF void vmcb_write8(unsigned offset, Bit8u val_8); //5352
     BX_SMF void vmcb_write16(unsigned offset, Bit16u val_16); //5353
     BX_SMF void vmcb_write32(unsigned offset, Bit32u val_32); //5354
     BX_SMF void vmcb_write64(unsigned offset, Bit64u val_64);//5355
+    BX_SMF void svm_segment_read(bx_segment_reg_t* seg, unsigned offset);
     BX_SMF void svm_segment_write(bx_segment_reg_t* seg, unsigned offset);  //5357
     BX_SMF void SvmInterceptException(unsigned type, unsigned vector,
         Bit16u errcode, bool errcode_valid, Bit64u qualification = 0); //5358
@@ -4766,6 +4837,7 @@ public:
     BX_SMF void SvmInterceptTaskSwitch(Bit16u tss_selector, unsigned source, bool push_error, Bit32u error_code); //5363
     BX_SMF void SvmVirtualInterruptAcknowledge(void); //5364
     BX_SMF void Svm_Update_VM_CR_MSR(Bit64u val);//5365
+    BX_SMF void register_svm_state(bx_param_c* parent);
 #endif //5367
 #if BX_CPU_LEVEL >= 5 //5369
     void init_MSRs();//5370

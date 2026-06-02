@@ -440,8 +440,8 @@ void BX_CPU_C::reset(unsigned source)
         BX_CPU_THIS_PTR msr.pat = (Bit64u)BX_CONST64(0x0007040600070406);
         BX_CPU_THIS_PTR msr.mtrr_deftype = 0;
 #endif
-#if 0   //查错174条
-        // All configurable MSRs do not change on INIT
+        //查错174条
+               // All configurable MSRs do not change on INIT
 #if BX_CONFIGURE_MSRS
         for (n = 0; n < BX_MSR_MAX_INDEX; n++) {
             if (BX_CPU_THIS_PTR msrs[n])
@@ -561,8 +561,8 @@ void BX_CPU_C::reset(unsigned source)
 #endif
 
     BX_INSTR_RESET(BX_CPU_ID, source);
-#endif
-    }
+
+
 }
 
 
@@ -570,4 +570,30 @@ void BX_CPU_C::reset(unsigned source)
 BX_CPU_C::~BX_CPU_C()
 {
 	//826
+#if BX_CPU_LEVEL >= 4
+    delete cpuid;
+#endif
+
+#if BX_SUPPORT_APIC
+    delete lapic;
+#endif
+
+#if BX_SUPPORT_AMX
+    delete amx;
+#endif
+
+#if BX_SUPPORT_SVM
+    delete vmcb;
+#endif
+
+#if InstrumentCPU
+    delete stats;
+#endif
+
+#if BX_CPU_LEVEL >= 5
+    destroy_MSRs();
+#endif
+
+    //BX_INSTR_EXIT(BX_CPU_ID);
+    //BX_DEBUG(("Exit."));
 }

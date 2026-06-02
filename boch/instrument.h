@@ -1,5 +1,5 @@
 #pragma once
-
+#define BX_INSTR_RESET(cpu_id, type)
 #define BX_INSTR_HLT(cpu_id) //148
 
 #define BX_INSTR_CNEAR_BRANCH_TAKEN(cpu_id, branch_eip, new_eip) //156

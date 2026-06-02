@@ -7,10 +7,108 @@
 
 #include "svm.h"
 #include "cpuid.h"
-
+#include "paramtree.h"
 #include "ia_opcodes.h"
 
 #include "debug.h"
+
+extern const char* segname[];
+
+void BX_CPU_C::set_VMCBPTR(Bit64u vmcbptr)
+{
+    BX_CPU_THIS_PTR vmcbptr = vmcbptr;
+
+    if (vmcbptr != 0) {
+        BX_CPU_THIS_PTR vmcbhostptr = BX_CPU_THIS_PTR getHostMemAddr(vmcbptr, BX_WRITE);
+#if BX_SUPPORT_MEMTYPE
+        BX_CPU_THIS_PTR vmcb_memtype = resolve_memtype(BX_CPU_THIS_PTR vmcbptr);
+#endif
+    }
+    else {
+        BX_CPU_THIS_PTR vmcbhostptr = 0;
+#if BX_SUPPORT_MEMTYPE
+        BX_CPU_THIS_PTR vmcb_memtype = BX_MEMTYPE_UC;
+#endif
+    }
+}
+
+BX_CPP_INLINE Bit64u CanonicalizeAddress(Bit64u laddr)
+{
+    if (laddr & BX_CONST64(0x0000800000000000)) {
+        return laddr | BX_CONST64(0xffff000000000000);
+    }
+    else {
+        return laddr & BX_CONST64(0x0000ffffffffffff);
+    }
+}
+
+BX_CPP_INLINE Bit8u BX_CPU_C::vmcb_read8(unsigned offset)
+{
+    Bit8u val_8;
+    bx_phy_address pAddr = BX_CPU_THIS_PTR vmcbptr + offset;
+
+    if (BX_CPU_THIS_PTR vmcbhostptr) {
+        Bit8u* hostAddr = (Bit8u*)(BX_CPU_THIS_PTR vmcbhostptr | offset);
+        val_8 = *hostAddr;
+        BX_NOTIFY_PHY_MEMORY_ACCESS(pAddr, 1, MEMTYPE(BX_CPU_THIS_PTR vmcb_memtype), BX_READ, BX_VMCS_ACCESS, (Bit8u*)(&val_8));
+    }
+    else {
+        val_8 = read_physical_byte(pAddr, MEMTYPE(BX_CPU_THIS_PTR vmcb_memtype), BX_VMCS_ACCESS);
+    }
+
+    return val_8;
+}
+
+BX_CPP_INLINE Bit16u BX_CPU_C::vmcb_read16(unsigned offset)
+{
+    Bit16u val_16;
+    bx_phy_address pAddr = BX_CPU_THIS_PTR vmcbptr + offset;
+
+    if (BX_CPU_THIS_PTR vmcbhostptr) {
+        Bit16u* hostAddr = (Bit16u*)(BX_CPU_THIS_PTR vmcbhostptr | offset);
+        val_16 = ReadHostWordFromLittleEndian(hostAddr);
+        BX_NOTIFY_PHY_MEMORY_ACCESS(pAddr, 2, MEMTYPE(BX_CPU_THIS_PTR vmcb_memtype), BX_READ, BX_VMCS_ACCESS, (Bit8u*)(&val_16));
+    }
+    else {
+        val_16 = read_physical_word(pAddr, MEMTYPE(BX_CPU_THIS_PTR vmcb_memtype), BX_VMCS_ACCESS);
+    }
+
+    return val_16;
+}
+
+BX_CPP_INLINE Bit32u BX_CPU_C::vmcb_read32(unsigned offset)
+{
+    Bit32u val_32;
+    bx_phy_address pAddr = BX_CPU_THIS_PTR vmcbptr + offset;
+
+    if (BX_CPU_THIS_PTR vmcbhostptr) {
+        Bit32u* hostAddr = (Bit32u*)(BX_CPU_THIS_PTR vmcbhostptr | offset);
+        val_32 = ReadHostDWordFromLittleEndian(hostAddr);
+        BX_NOTIFY_PHY_MEMORY_ACCESS(pAddr, 4, MEMTYPE(BX_CPU_THIS_PTR vmcb_memtype), BX_READ, BX_VMCS_ACCESS, (Bit8u*)(&val_32));
+    }
+    else {
+        val_32 = read_physical_dword(pAddr, MEMTYPE(BX_CPU_THIS_PTR vmcb_memtype), BX_VMCS_ACCESS);
+    }
+
+    return val_32;
+}
+
+BX_CPP_INLINE Bit64u BX_CPU_C::vmcb_read64(unsigned offset)
+{
+    Bit64u val_64;
+    bx_phy_address pAddr = BX_CPU_THIS_PTR vmcbptr + offset;
+
+    if (BX_CPU_THIS_PTR vmcbhostptr) {
+        Bit64u* hostAddr = (Bit64u*)(BX_CPU_THIS_PTR vmcbhostptr | offset);
+        val_64 = ReadHostQWordFromLittleEndian(hostAddr);
+        BX_NOTIFY_PHY_MEMORY_ACCESS(pAddr, 8, MEMTYPE(BX_CPU_THIS_PTR vmcb_memtype), BX_READ, BX_VMCS_ACCESS, (Bit8u*)(&val_64));
+    }
+    else {
+        val_64 = read_physical_qword(pAddr, MEMTYPE(BX_CPU_THIS_PTR vmcb_memtype), BX_VMCS_ACCESS);
+    }
+
+    return val_64;
+}
 
 BX_CPP_INLINE void BX_CPU_C::vmcb_write8(unsigned offset, Bit8u val_8)
 {
@@ -72,6 +170,18 @@ BX_CPP_INLINE void BX_CPU_C::vmcb_write64(unsigned offset, Bit64u val_64)
     }
 }
 
+BX_CPP_INLINE void BX_CPU_C::svm_segment_read(bx_segment_reg_t* seg, unsigned offset)
+{
+    Bit16u selector = vmcb_read16(offset);
+    Bit16u attr = vmcb_read16(offset + 2);
+    Bit32u limit = vmcb_read32(offset + 4);
+    bx_address base = CanonicalizeAddress(vmcb_read64(offset + 8));
+    bool valid = (attr >> 7) & 1;
+
+    set_segment_ar_data(seg, valid, selector, base, limit,
+        (attr & 0xff) | ((attr & 0xf00) << 4));
+}
+
 BX_CPP_INLINE void BX_CPU_C::svm_segment_write(bx_segment_reg_t* seg, unsigned offset)
 {
     Bit32u selector = seg->selector.value;
@@ -86,6 +196,25 @@ BX_CPP_INLINE void BX_CPU_C::svm_segment_write(bx_segment_reg_t* seg, unsigned o
     vmcb_write64(offset + 8, base);
 }
 
+void BX_CPU_C::SvmEnterSaveHostState(SVM_HOST_STATE* host)
+{
+    for (int n = 0; n < 4; n++)
+        host->sregs[n] = BX_CPU_THIS_PTR sregs[n];
+
+    host->gdtr = BX_CPU_THIS_PTR gdtr;
+    host->idtr = BX_CPU_THIS_PTR idtr;
+
+    host->efer = BX_CPU_THIS_PTR efer;
+    host->cr0 = BX_CPU_THIS_PTR cr0;
+    host->cr3 = BX_CPU_THIS_PTR cr3;
+    host->cr4 = BX_CPU_THIS_PTR cr4;
+    host->eflags = read_eflags();
+    host->rip = RIP;
+    host->rsp = RSP;
+    host->rax = RAX;
+
+    host->pat_msr = BX_CPU_THIS_PTR msr.pat;
+}
 
 void BX_CPU_C::SvmExitLoadHostState(SVM_HOST_STATE* host)
 { //246
@@ -174,6 +303,285 @@ void BX_CPU_C::SvmExitSaveGuestState(void)
     clear_event(BX_EVENT_SVM_VIRQ_PENDING);
 }
 
+extern bool isValidMSR_PAT(Bit64u pat_msr);
+
+bool BX_CPU_C::SvmEnterLoadCheckControls(SVM_CONTROLS* ctrls)
+{
+    ctrls->cr_rd_ctrl = vmcb_read16(SVM_CONTROL16_INTERCEPT_CR_READ);
+    ctrls->cr_wr_ctrl = vmcb_read16(SVM_CONTROL16_INTERCEPT_CR_WRITE);
+
+    ctrls->dr_rd_ctrl = vmcb_read16(SVM_CONTROL16_INTERCEPT_DR_READ);
+    ctrls->dr_wr_ctrl = vmcb_read16(SVM_CONTROL16_INTERCEPT_DR_WRITE);
+
+    ctrls->intercept_vector[0] = vmcb_read32(SVM_CONTROL32_INTERCEPT1);
+    ctrls->intercept_vector[1] = vmcb_read32(SVM_CONTROL32_INTERCEPT2);
+
+    if (!SVM_INTERCEPT(SVM_INTERCEPT1_VMRUN)) {
+        //BX_ERROR(("VMRUN: VMRUN intercept bit is not set!"));
+        return 0;
+    }
+
+    ctrls->exceptions_intercept = vmcb_read32(SVM_CONTROL32_INTERCEPT_EXCEPTIONS);
+
+    // force 4K page alignment
+    ctrls->iopm_base = PPFOf(vmcb_read64(SVM_CONTROL64_IOPM_BASE_PHY_ADDR));
+    if (!IsValidPhyAddr(ctrls->iopm_base)) {
+        //BX_ERROR(("VMRUN: invalid IOPM Base Address !"));
+        return 0;
+    }
+
+    // force 4K page alignment
+    ctrls->msrpm_base = PPFOf(vmcb_read64(SVM_CONTROL64_MSRPM_BASE_PHY_ADDR));
+    if (!IsValidPhyAddr(ctrls->msrpm_base)) {
+        //BX_ERROR(("VMRUN: invalid MSRPM Base Address !"));
+        return 0;
+    }
+
+    Bit32u guest_asid = vmcb_read32(SVM_CONTROL32_GUEST_ASID);
+    if (guest_asid == 0) {
+        //BX_ERROR(("VMRUN: attempt to run guest with host ASID !"));
+        return 0;
+    }
+
+    ctrls->v_tpr = vmcb_read8(SVM_CONTROL_VTPR);
+    ctrls->v_intr_masking = vmcb_read8(SVM_CONTROL_VINTR_MASKING) & 0x1;
+    ctrls->v_intr_vector = vmcb_read8(SVM_CONTROL_VINTR_VECTOR);
+
+    Bit8u vintr_control = vmcb_read8(SVM_CONTROL_VINTR_PRIO_IGN_TPR);
+    ctrls->v_intr_prio = vintr_control & 0xf;
+    ctrls->v_ignore_tpr = (vintr_control >> 4) & 0x1;
+
+    if (BX_SUPPORT_SVM_EXTENSION(BX_CPUID_SVM_PAUSE_FILTER))
+        ctrls->pause_filter_count = vmcb_read16(SVM_CONTROL16_PAUSE_FILTER_COUNT);
+    else
+        ctrls->pause_filter_count = 0;
+
+    ctrls->nested_paging = vmcb_read8(SVM_CONTROL_NESTED_PAGING_ENABLE);
+    if (!BX_SUPPORT_SVM_EXTENSION(BX_CPUID_SVM_NESTED_PAGING)) {
+        if (ctrls->nested_paging) {
+            //BX_ERROR(("VMRUN: Nesting paging is not supported in this SVM configuration !"));
+            ctrls->nested_paging = 0;
+        }
+    }
+
+    if (ctrls->nested_paging) {
+        if (!BX_CPU_THIS_PTR cr0.get_PG()) {
+            //BX_ERROR(("VMRUN: attempt to enter nested paging mode when host paging is disabled !"));
+            return 0;
+        }
+
+        Bit64u guest_pat = vmcb_read64(SVM_GUEST_PAT);
+        if (!isValidMSR_PAT(guest_pat)) {
+            //BX_ERROR(("VMRUN: invalid memory type in guest PAT_MSR !"));
+            return 0;
+        }
+
+        ctrls->ncr3 = vmcb_read64(SVM_CONTROL64_NESTED_PAGING_HOST_CR3);
+        if (long_mode()) {
+            if (!IsValidPhyAddr(ctrls->ncr3)) {
+                //BX_ERROR(("VMRUN(): NCR3 reserved bits set !"));
+                return 0;
+            }
+        }
+
+        //BX_DEBUG(("VMRUN: Starting Nested Paging Mode !"));
+    }
+
+    return 1;
+}
+
+bool BX_CPU_C::SvmEnterLoadCheckGuestState(void)
+{
+    SVM_GUEST_STATE guest;
+    Bit32u tmp;
+    unsigned n;
+    bool paged_real_mode = false;
+
+    guest.eflags = vmcb_read32(SVM_GUEST_RFLAGS);
+    guest.rip = vmcb_read64(SVM_GUEST_RIP);
+    guest.rsp = vmcb_read64(SVM_GUEST_RSP);
+    guest.rax = vmcb_read64(SVM_GUEST_RAX);
+
+    guest.efer.val32 = vmcb_read32(SVM_GUEST_EFER_MSR);
+    tmp = vmcb_read32(SVM_GUEST_EFER_MSR_HI);
+    if (tmp) {
+        //BX_ERROR(("VMRUN: Guest EFER[63:32] is not zero"));
+        return 0;
+    }
+
+    if (guest.efer.val32 & ~BX_CPU_THIS_PTR efer_suppmask) {
+        //BX_ERROR(("VMRUN: Guest EFER reserved bits set"));
+        return 0;
+    }
+
+    if (!guest.efer.get_SVME()) {
+        //BX_ERROR(("VMRUN: Guest EFER.SVME = 0"));
+        return 0;
+    }
+
+    guest.cr0.val32 = vmcb_read32(SVM_GUEST_CR0);
+    tmp = vmcb_read32(SVM_GUEST_CR0_HI);
+    if (tmp) {
+        //BX_ERROR(("VMRUN: Guest CR0[63:32] is not zero"));
+        return 0;
+    }
+
+    // always assign EFER.LMA := EFER.LME & CR0.PG
+    guest.efer.set_LMA(guest.cr0.get_PG() && guest.efer.get_LME());
+
+    guest.cr2 = vmcb_read64(SVM_GUEST_CR2);
+    guest.cr3 = vmcb_read64(SVM_GUEST_CR3);
+
+    guest.cr4.val32 = vmcb_read32(SVM_GUEST_CR4);
+    tmp = vmcb_read32(SVM_GUEST_CR4_HI);
+    if (tmp) {
+        //BX_ERROR(("VMRUN: Guest CR4[63:32] is not zero"));
+        return 0;
+    }
+
+    if (guest.cr4.val32 & ~BX_CPU_THIS_PTR cr4_suppmask) {
+        //BX_ERROR(("VMRUN: Guest CR4 reserved bits set"));
+        return 0;
+    }
+
+    guest.dr6 = vmcb_read32(SVM_GUEST_DR6);
+    tmp = vmcb_read32(SVM_GUEST_DR6_HI);
+    if (tmp) {
+        //BX_ERROR(("VMRUN: Guest DR6[63:32] is not zero"));
+        return 0;
+    }
+
+    guest.dr7 = vmcb_read32(SVM_GUEST_DR7);
+    tmp = vmcb_read32(SVM_GUEST_DR7_HI);
+    if (tmp) {
+        //BX_ERROR(("VMRUN: Guest DR7[63:32] is not zero"));
+        return 0;
+    }
+
+    guest.pat_msr = vmcb_read64(SVM_GUEST_PAT);
+
+    for (n = 0; n < 4; n++) {
+        svm_segment_read(&guest.sregs[n], SVM_GUEST_ES_SELECTOR + n * 0x10);
+    }
+
+    if (guest.sregs[BX_SEG_REG_CS].cache.u.segment.d_b && guest.sregs[BX_SEG_REG_CS].cache.u.segment.l) {
+        //BX_ERROR(("VMRUN: VMCB CS.D_B/L mismatch"));
+        return 0;
+    }
+
+    if (!guest.cr0.get_PE() || (guest.eflags & EFlagsVMMask) != 0)
+    {
+        // real or vm8086 mode: make all segments valid
+        for (n = 0; n < 4; n++) {
+            guest.sregs[n].cache.valid = SegValidCache;
+        }
+
+        if (!guest.cr0.get_PE() && guest.cr0.get_PG()) {
+            // special case : entering paged real mode
+            //BX_DEBUG(("VMRUN: entering paged real mode"));
+            paged_real_mode = true;
+            guest.cr0.val32 &= ~BX_CR0_PG_MASK;
+        }
+    }
+
+    guest.cpl = vmcb_read8(SVM_GUEST_CPL);
+
+    //
+    // FIXME: patch segment attributes
+    //
+
+    // CS: only D, L, and R are observed
+
+    // DS/ES/FS/GS: only D, P, DPL, E, W, and Code/Data are observed
+
+    // SS: only B, P, E, W, and Code/Data are observed
+    guest.sregs[BX_SEG_REG_SS].cache.dpl = guest.cpl;
+
+    guest.gdtr.base = CanonicalizeAddress(vmcb_read64(SVM_GUEST_GDTR_BASE));
+    guest.gdtr.limit = vmcb_read16(SVM_GUEST_GDTR_LIMIT);
+
+    guest.idtr.base = CanonicalizeAddress(vmcb_read64(SVM_GUEST_IDTR_BASE));
+    guest.idtr.limit = vmcb_read16(SVM_GUEST_IDTR_LIMIT);
+
+    guest.inhibit_interrupts = vmcb_read8(SVM_CONTROL_INTERRUPT_SHADOW) & 0x1;
+
+    //
+    // Load guest state
+    //
+
+    BX_CPU_THIS_PTR tsc_offset = vmcb_read64(SVM_CONTROL64_TSC_OFFSET);
+
+    BX_CPU_THIS_PTR efer.set32(guest.efer.get32());
+
+    if (!check_CR0(guest.cr0.get32())) {
+        //BX_ERROR(("SVM: VMRUN CR0 is broken !"));
+        return 0;
+    }
+    if (!check_CR4(guest.cr4.get32())) {
+        //BX_ERROR(("SVM: VMRUN CR4 is broken !"));
+        return 0;
+    }
+
+    BX_CPU_THIS_PTR cr0.set32(guest.cr0.get32());
+    BX_CPU_THIS_PTR cr4.set32(guest.cr4.get32());
+    BX_CPU_THIS_PTR cr3 = guest.cr3;
+
+    if (paged_real_mode)
+        BX_CPU_THIS_PTR cr0.val32 |= BX_CR0_PG_MASK;
+
+    SVM_CONTROLS* ctrls = &BX_CPU_THIS_PTR vmcb->ctrls;
+    if (!ctrls->nested_paging) {
+        if (BX_CPU_THIS_PTR cr0.get_PG() && BX_CPU_THIS_PTR cr4.get_PAE() && !long_mode()) {
+            if (!CheckPDPTR(BX_CPU_THIS_PTR cr3)) {
+                //BX_ERROR(("SVM: VMRUN PDPTR check failed !"));
+                return 0;
+            }
+        }
+    }
+    else {
+        // load guest PAT when nested paging is enabled
+        BX_CPU_THIS_PTR msr.pat = guest.pat_msr;
+    }
+
+    BX_CPU_THIS_PTR dr6.set32(guest.dr6);
+    BX_CPU_THIS_PTR dr7.set32(guest.dr7 | 0x400);
+
+    for (n = 0; n < 4; n++) {
+        BX_CPU_THIS_PTR sregs[n] = guest.sregs[n];
+    }
+
+    BX_CPU_THIS_PTR gdtr = guest.gdtr;
+    BX_CPU_THIS_PTR idtr = guest.idtr;
+
+    RIP = BX_CPU_THIS_PTR prev_rip = guest.rip;
+    RSP = guest.rsp;
+    RAX = guest.rax;
+
+    CPL = guest.cpl;
+
+    if (guest.inhibit_interrupts) {
+        inhibit_interrupts(BX_INHIBIT_INTERRUPTS);
+    }
+
+    BX_CPU_THIS_PTR async_event = 0;
+
+    setEFlags((Bit32u)guest.eflags);
+
+    // injecting virtual interrupt
+    Bit8u v_irq = vmcb_read8(SVM_CONTROL_VIRQ) & 0x1;
+    if (v_irq)
+        signal_event(BX_EVENT_SVM_VIRQ_PENDING);
+
+    handleCpuContextChange();
+
+#if BX_SUPPORT_MONITOR_MWAIT
+    BX_CPU_THIS_PTR monitor.reset_monitor();
+#endif
+
+    BX_INSTR_TLB_CNTRL(BX_CPU_ID, BX_INSTR_CONTEXT_SWITCH, 0);
+
+    return 1;
+}
 
 void BX_CPU_C::Svm_Vmexit(int reason, Bit64u exitinfo1, Bit64u exitinfo2)
 {  //614
@@ -271,6 +679,69 @@ void BX_CPU_C::Svm_Vmexit(int reason, Bit64u exitinfo1, Bit64u exitinfo2)
 #endif
 
     longjmp(BX_CPU_THIS_PTR jmp_buf_env, 1); // go back to main decode loop
+}
+
+extern int get_exception_type(unsigned vector);
+
+bool BX_CPU_C::SvmInjectEvents(void)
+{
+    SVM_CONTROLS* ctrls = &BX_CPU_THIS_PTR vmcb->ctrls;
+
+    ctrls->eventinj = vmcb_read32(SVM_CONTROL32_EVENT_INJECTION);
+    if ((ctrls->eventinj & 0x80000000) == 0) return true;
+
+    /* the VMENTRY injecting event to the guest */
+    unsigned vector = ctrls->eventinj & 0xff;
+    unsigned type = (ctrls->eventinj >> 8) & 7;
+    unsigned push_error = ctrls->eventinj & (1 << 11);
+    unsigned error_code = push_error ? vmcb_read32(SVM_CONTROL32_EVENT_INJECTION_ERRORCODE) : 0;
+
+    switch (type) {
+    case BX_NMI:
+        mask_event(BX_EVENT_NMI);
+        BX_CPU_THIS_PTR EXT = 1;
+        vector = 2;
+        break;
+
+    case BX_EXTERNAL_INTERRUPT:
+        BX_CPU_THIS_PTR EXT = 1;
+        break;
+
+    case BX_HARDWARE_EXCEPTION:
+        if (vector == 2 || vector > 31) {
+            //BX_ERROR(("SvmInjectEvents: invalid vector %d for HW exception", vector));
+            return false;
+        }
+        if (vector == BX_BP_EXCEPTION || vector == BX_OF_EXCEPTION) {
+            type = BX_SOFTWARE_EXCEPTION;
+        }
+        BX_CPU_THIS_PTR EXT = 1;
+        break;
+
+    case BX_SOFTWARE_INTERRUPT:
+        break;
+
+    default:
+        //BX_ERROR(("SvmInjectEvents: unsupported event injection type %d !", type));
+        return false;
+    }
+
+    //BX_DEBUG(("SvmInjectEvents: Injecting vector 0x%02x (error_code 0x%04x)", vector, error_code));
+
+    if (type == BX_HARDWARE_EXCEPTION) {
+        // record exception the same way as BX_CPU_C::exception does
+        //BX_ASSERT(vector < BX_CPU_HANDLED_EXCEPTIONS);
+        BX_CPU_THIS_PTR last_exception_type = get_exception_type(vector);
+    }
+
+    ctrls->exitintinfo = ctrls->eventinj & ~0x80000000;
+    ctrls->exitintinfo_error_code = error_code;
+
+    interrupt(vector, type, push_error, error_code);
+
+    BX_CPU_THIS_PTR last_exception_type = 0; // error resolved
+
+    return true;
 }
 
 void BX_CPU_C::SvmInterceptException(unsigned type, unsigned vector, Bit16u errcode, bool errcode_valid, Bit64u qualification)
@@ -502,6 +973,87 @@ void BX_CPU_C::Svm_Update_VM_CR_MSR(Bit64u val_64)
     }
 
     BX_CPU_THIS_PTR msr.svm_vm_cr = GET32L(val_64);
+}
+
+void BX_CPU_C::register_svm_state(bx_param_c* parent)
+{
+    if (!is_cpu_extension_supported(BX_ISA_SVM)) return;
+
+    // register SVM state for save/restore param tree
+    bx_list_c* svm = new bx_list_c(parent, "SVM");
+
+    BXRS_HEX_PARAM_FIELD(svm, vmcbptr, BX_CPU_THIS_PTR vmcbptr);
+    BXRS_PARAM_BOOL(svm, in_svm_guest, BX_CPU_THIS_PTR in_svm_guest);
+    BXRS_PARAM_BOOL(svm, gif, BX_CPU_THIS_PTR svm_gif);
+
+    //
+    // VMCB Control Fields
+    //
+
+    bx_list_c* vmcb_ctrls = new bx_list_c(svm, "VMCB_CTRLS");
+
+    BXRS_HEX_PARAM_FIELD(vmcb_ctrls, cr_rd_ctrl, BX_CPU_THIS_PTR vmcb->ctrls.cr_rd_ctrl);
+    BXRS_HEX_PARAM_FIELD(vmcb_ctrls, cr_wr_ctrl, BX_CPU_THIS_PTR vmcb->ctrls.cr_wr_ctrl);
+    BXRS_HEX_PARAM_FIELD(vmcb_ctrls, dr_rd_ctrl, BX_CPU_THIS_PTR vmcb->ctrls.dr_rd_ctrl);
+    BXRS_HEX_PARAM_FIELD(vmcb_ctrls, dr_wr_ctrl, BX_CPU_THIS_PTR vmcb->ctrls.dr_wr_ctrl);
+    BXRS_HEX_PARAM_FIELD(vmcb_ctrls, exceptions_intercept, BX_CPU_THIS_PTR vmcb->ctrls.exceptions_intercept);
+    BXRS_HEX_PARAM_FIELD(vmcb_ctrls, intercept_vector0, BX_CPU_THIS_PTR vmcb->ctrls.intercept_vector[0]);
+    BXRS_HEX_PARAM_FIELD(vmcb_ctrls, intercept_vector1, BX_CPU_THIS_PTR vmcb->ctrls.intercept_vector[1]);
+    BXRS_HEX_PARAM_FIELD(vmcb_ctrls, iopm_base, BX_CPU_THIS_PTR vmcb->ctrls.iopm_base);
+    BXRS_HEX_PARAM_FIELD(vmcb_ctrls, msrpm_base, BX_CPU_THIS_PTR vmcb->ctrls.msrpm_base);
+    BXRS_HEX_PARAM_FIELD(vmcb_ctrls, exitintinfo, BX_CPU_THIS_PTR vmcb->ctrls.exitintinfo);
+    BXRS_HEX_PARAM_FIELD(vmcb_ctrls, exitintinfo_errcode, BX_CPU_THIS_PTR vmcb->ctrls.exitintinfo_error_code);
+    BXRS_HEX_PARAM_FIELD(vmcb_ctrls, eventinj, BX_CPU_THIS_PTR vmcb->ctrls.eventinj);
+
+    BXRS_HEX_PARAM_FIELD(vmcb_ctrls, v_tpr, BX_CPU_THIS_PTR vmcb->ctrls.v_tpr);
+    BXRS_HEX_PARAM_FIELD(vmcb_ctrls, v_intr_prio, BX_CPU_THIS_PTR vmcb->ctrls.v_intr_prio);
+    BXRS_PARAM_BOOL(vmcb_ctrls, v_ignore_tpr, BX_CPU_THIS_PTR vmcb->ctrls.v_ignore_tpr);
+    BXRS_PARAM_BOOL(vmcb_ctrls, v_intr_masking, BX_CPU_THIS_PTR vmcb->ctrls.v_intr_masking);
+    BXRS_HEX_PARAM_FIELD(vmcb_ctrls, v_intr_vector, BX_CPU_THIS_PTR vmcb->ctrls.v_intr_vector);
+    BXRS_PARAM_BOOL(vmcb_ctrls, nested_paging, BX_CPU_THIS_PTR vmcb->ctrls.nested_paging);
+    BXRS_HEX_PARAM_FIELD(vmcb_ctrls, ncr3, BX_CPU_THIS_PTR vmcb->ctrls.ncr3);
+
+    //
+    // VMCB Host State
+    //
+
+    bx_list_c* host = new bx_list_c(svm, "VMCB_HOST_STATE");
+
+    for (unsigned n = 0; n < 4; n++) {
+        bx_segment_reg_t* segment = &BX_CPU_THIS_PTR vmcb->host_state.sregs[n];
+        bx_list_c* sreg = new bx_list_c(host, segname[n]);
+        BXRS_HEX_PARAM_FIELD(sreg, selector, segment->selector.value);
+        BXRS_HEX_PARAM_FIELD(sreg, valid, segment->cache.valid);
+        BXRS_PARAM_BOOL(sreg, p, segment->cache.p);
+        BXRS_HEX_PARAM_FIELD(sreg, dpl, segment->cache.dpl);
+        BXRS_PARAM_BOOL(sreg, segment, segment->cache.segment);
+        BXRS_HEX_PARAM_FIELD(sreg, type, segment->cache.type);
+        BXRS_HEX_PARAM_FIELD(sreg, base, segment->cache.u.segment.base);
+        BXRS_HEX_PARAM_FIELD(sreg, limit_scaled, segment->cache.u.segment.limit_scaled);
+        BXRS_PARAM_BOOL(sreg, granularity, segment->cache.u.segment.g);
+        BXRS_PARAM_BOOL(sreg, d_b, segment->cache.u.segment.d_b);
+#if BX_SUPPORT_X86_64
+        BXRS_PARAM_BOOL(sreg, l, segment->cache.u.segment.l);
+#endif
+        BXRS_PARAM_BOOL(sreg, avl, segment->cache.u.segment.avl);
+    }
+
+    bx_list_c* GDTR = new bx_list_c(host, "GDTR");
+    BXRS_HEX_PARAM_FIELD(GDTR, base, BX_CPU_THIS_PTR vmcb->host_state.gdtr.base);
+    BXRS_HEX_PARAM_FIELD(GDTR, limit, BX_CPU_THIS_PTR vmcb->host_state.gdtr.limit);
+
+    bx_list_c* IDTR = new bx_list_c(host, "IDTR");
+    BXRS_HEX_PARAM_FIELD(IDTR, base, BX_CPU_THIS_PTR vmcb->host_state.idtr.base);
+    BXRS_HEX_PARAM_FIELD(IDTR, limit, BX_CPU_THIS_PTR vmcb->host_state.idtr.limit);
+
+    BXRS_HEX_PARAM_FIELD(host, efer, BX_CPU_THIS_PTR vmcb->host_state.efer.val32);
+    BXRS_HEX_PARAM_FIELD(host, cr0, BX_CPU_THIS_PTR vmcb->host_state.cr0.val32);
+    BXRS_HEX_PARAM_FIELD(host, cr3, BX_CPU_THIS_PTR vmcb->host_state.cr3);
+    BXRS_HEX_PARAM_FIELD(host, cr4, BX_CPU_THIS_PTR vmcb->host_state.cr4.val32);
+    BXRS_HEX_PARAM_FIELD(host, eflags, BX_CPU_THIS_PTR vmcb->host_state.eflags);
+    BXRS_HEX_PARAM_FIELD(host, rip, BX_CPU_THIS_PTR vmcb->host_state.rip);
+    BXRS_HEX_PARAM_FIELD(host, rsp, BX_CPU_THIS_PTR vmcb->host_state.rsp);
+    BXRS_HEX_PARAM_FIELD(host, rax, BX_CPU_THIS_PTR vmcb->host_state.rax);
 }
 
 #endif // BX_SUPPORT_SVM

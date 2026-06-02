@@ -542,6 +542,9 @@
     <ClInclude Include="acpi.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="softfloat_types.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="ia_opcodes.def">

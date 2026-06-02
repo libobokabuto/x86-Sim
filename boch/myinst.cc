@@ -16054,8 +16054,6 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::POPF_Fq(bxInstruction_c *i)
                         | EFlagsNTMask | EFlagsRFMask | EFlagsACMask
                         | EFlagsIDMask;
 
-  BX_ASSERT (protected_mode());
-
   // RF is always zero after the execution of POPF.
   Bit32u eflags32 = (Bit32u) pop_64() & ~EFlagsRFMask;
 
@@ -16493,4 +16491,310 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::JRCXZ_Jb(bxInstruction_c *i)
 
   BX_INSTR_CNEAR_BRANCH_NOT_TAKEN(BX_CPU_ID, PREV_RIP);
   BX_NEXT_TRACE(i);
+}
+#define SMM_SAVE_STATE_MAP_SIZE 128
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::RSM(bxInstruction_c* i)
+{
+    /* If we are not in System Management Mode, then #UD should be generated */
+    if (!BX_CPU_THIS_PTR smm_mode()) {
+        //BX_INFO(("RSM not in System Management Mode !"));
+        exception(BX_UD_EXCEPTION, 0);
+    }
+
+#if BX_SUPPORT_SVM
+    if (BX_CPU_THIS_PTR in_svm_guest) {
+        if (SVM_INTERCEPT(SVM_INTERCEPT0_RSM)) Svm_Vmexit(SVM_VMEXIT_RSM);
+    }
+#endif
+
+#if BX_SUPPORT_VMX
+    if (BX_CPU_THIS_PTR in_vmx) {
+        if (BX_CPU_THIS_PTR in_vmx_guest) {
+            VMexit(VMX_VMEXIT_RSM, 0);
+        }
+        else {
+            //BX_ERROR(("RSM in VMX root operation !"));
+            exception(BX_UD_EXCEPTION, 0);
+        }
+    }
+#endif
+
+    //BX_INFO(("RSM: Resuming from System Management Mode"));
+
+    unmask_event(BX_EVENT_SMI | BX_EVENT_NMI | BX_EVENT_VMX_VIRTUAL_NMI);
+
+    Bit32u saved_state[SMM_SAVE_STATE_MAP_SIZE], n;
+    // reset reserved bits
+    for (n = 0; n < SMM_SAVE_STATE_MAP_SIZE; n++) saved_state[n] = 0;
+
+    bx_phy_address base = BX_CPU_THIS_PTR smbase + 0x10000;
+    // could be optimized with reading of only non-reserved bytes
+    for (n = 0; n < SMM_SAVE_STATE_MAP_SIZE; n++) {
+        base -= 4;
+        access_read_physical(base, 4, &saved_state[n]);
+        BX_NOTIFY_PHY_MEMORY_ACCESS(base, 4, BX_MEMTYPE_WB, BX_READ, BX_SMRAM_ACCESS, (Bit8u*)(&saved_state[n]));
+    }
+    BX_CPU_THIS_PTR in_smm = false;
+
+    // restore the CPU state from SMRAM
+    if (!smram_restore_state(saved_state)) {
+        //BX_PANIC(("RSM: Incorrect state when restoring CPU state - shutdown !"));
+        shutdown();
+    }
+
+    // debug(RIP);
+
+    BX_NEXT_TRACE(i);
+}
+
+BX_CPP_INLINE Bit64u CanonicalizeAddress(Bit64u laddr)
+{
+    if (laddr & BX_CONST64(0x0000800000000000)) {
+        return laddr | BX_CONST64(0xffff000000000000);
+    }
+    else {
+        return laddr & BX_CONST64(0x0000ffffffffffff);
+    }
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::VMRUN(bxInstruction_c* i)
+{
+    if (!protected_mode() || !BX_CPU_THIS_PTR efer.get_SVME())
+        exception(BX_UD_EXCEPTION, 0);
+
+    if (CPL != 0) {
+        //BX_ERROR(("%s: with CPL!=0 cause #GP(0)", i->getIaOpcodeNameShort()));
+        exception(BX_GP_EXCEPTION, 0);
+    }
+
+    if (BX_CPU_THIS_PTR in_svm_guest) {
+        if (SVM_INTERCEPT(SVM_INTERCEPT1_VMRUN))
+            Svm_Vmexit(SVM_VMEXIT_VMRUN);
+    }
+
+    bx_address pAddr = RAX & i->asize_mask();
+    if (!IsValidPageAlignedPhyAddr(pAddr)) {
+        //BX_ERROR(("VMRUN: invalid or not page aligned VMCB physical address !"));
+        exception(BX_GP_EXCEPTION, 0);
+    }
+    set_VMCBPTR(pAddr);
+
+    //BX_DEBUG(("VMRUN VMCB ptr: 0x" FMT_ADDRX64, BX_CPU_THIS_PTR vmcbptr));
+
+    //
+    // Step 1: Save host state to physical memory indicated in SVM_HSAVE_PHY_ADDR_MSR
+    //
+    SvmEnterSaveHostState(&BX_CPU_THIS_PTR vmcb->host_state);
+
+    //
+    // Step 2: Load control information from the VMCB
+    //
+    if (!SvmEnterLoadCheckControls(&BX_CPU_THIS_PTR vmcb->ctrls))
+        Svm_Vmexit(SVM_VMEXIT_INVALID);
+
+    //
+    // Step 3: Load guest state from the VMCB and enter SVM
+    //
+    if (!SvmEnterLoadCheckGuestState())
+        Svm_Vmexit(SVM_VMEXIT_INVALID);
+
+    BX_CPU_THIS_PTR in_svm_guest = true;
+    BX_CPU_THIS_PTR svm_gif = true;
+    BX_CPU_THIS_PTR async_event = 1;
+
+    //
+    // Step 4: Inject events to the guest
+    //
+    if (!SvmInjectEvents())
+        Svm_Vmexit(SVM_VMEXIT_INVALID);
+
+    BX_NEXT_TRACE(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::VMMCALL(bxInstruction_c* i)
+{
+    if (BX_CPU_THIS_PTR efer.get_SVME()) {
+        if (BX_CPU_THIS_PTR in_svm_guest) {
+            if (SVM_INTERCEPT(SVM_INTERCEPT1_VMMCALL)) Svm_Vmexit(SVM_VMEXIT_VMMCALL);
+        }
+    }
+
+    exception(BX_UD_EXCEPTION, 0);
+
+    BX_NEXT_TRACE(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::VMLOAD(bxInstruction_c* i)
+{
+    if (!protected_mode() || !BX_CPU_THIS_PTR efer.get_SVME())
+        exception(BX_UD_EXCEPTION, 0);
+
+    if (CPL != 0) {
+        //BX_ERROR(("%s: with CPL!=0 cause #GP(0)", i->getIaOpcodeNameShort()));
+        exception(BX_GP_EXCEPTION, 0);
+    }
+
+    if (BX_CPU_THIS_PTR in_svm_guest) {
+        if (SVM_INTERCEPT(SVM_INTERCEPT1_VMLOAD)) Svm_Vmexit(SVM_VMEXIT_VMLOAD);
+    }
+
+    bx_address pAddr = RAX & i->asize_mask();
+    if (!IsValidPageAlignedPhyAddr(pAddr)) {
+        //BX_ERROR(("VMLOAD: invalid or not page aligned VMCB physical address !"));
+        exception(BX_GP_EXCEPTION, 0);
+    }
+    bx_phy_address vmcbPtr = BX_CPU_THIS_PTR vmcbptr;
+    set_VMCBPTR(pAddr);
+
+    //BX_DEBUG(("VMLOAD VMCB ptr: 0x" FMT_ADDRX64, BX_CPU_THIS_PTR vmcbptr));
+
+    bx_segment_reg_t fs, gs, guest_tr, guest_ldtr;
+
+    svm_segment_read(&fs, SVM_GUEST_FS_SELECTOR);
+    svm_segment_read(&gs, SVM_GUEST_GS_SELECTOR);
+    svm_segment_read(&guest_tr, SVM_GUEST_TR_SELECTOR);
+    svm_segment_read(&guest_ldtr, SVM_GUEST_LDTR_SELECTOR);
+
+    BX_CPU_THIS_PTR sregs[BX_SEG_REG_FS] = fs;
+    BX_CPU_THIS_PTR sregs[BX_SEG_REG_GS] = gs;
+    BX_CPU_THIS_PTR tr = guest_tr;
+    BX_CPU_THIS_PTR ldtr = guest_ldtr;
+
+    BX_CPU_THIS_PTR msr.kernelgsbase = CanonicalizeAddress(vmcb_read64(SVM_GUEST_KERNEL_GSBASE_MSR));
+    BX_CPU_THIS_PTR msr.star = vmcb_read64(SVM_GUEST_STAR_MSR);
+    BX_CPU_THIS_PTR msr.lstar = CanonicalizeAddress(vmcb_read64(SVM_GUEST_LSTAR_MSR));
+    BX_CPU_THIS_PTR msr.cstar = CanonicalizeAddress(vmcb_read64(SVM_GUEST_CSTAR_MSR));
+    BX_CPU_THIS_PTR msr.fmask = vmcb_read64(SVM_GUEST_FMASK_MSR);
+
+    BX_CPU_THIS_PTR msr.sysenter_cs_msr = vmcb_read64(SVM_GUEST_SYSENTER_CS_MSR);
+    BX_CPU_THIS_PTR msr.sysenter_eip_msr = CanonicalizeAddress(vmcb_read64(SVM_GUEST_SYSENTER_EIP_MSR));
+    BX_CPU_THIS_PTR msr.sysenter_esp_msr = CanonicalizeAddress(vmcb_read64(SVM_GUEST_SYSENTER_ESP_MSR));
+
+    set_VMCBPTR(vmcbPtr);
+
+    BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::VMSAVE(bxInstruction_c* i)
+{
+    if (!protected_mode() || !BX_CPU_THIS_PTR efer.get_SVME())
+        exception(BX_UD_EXCEPTION, 0);
+
+    if (CPL != 0) {
+        //BX_ERROR(("%s: with CPL!=0 cause #GP(0)", i->getIaOpcodeNameShort()));
+        exception(BX_GP_EXCEPTION, 0);
+    }
+
+    if (BX_CPU_THIS_PTR in_svm_guest) {
+        if (SVM_INTERCEPT(SVM_INTERCEPT1_VMSAVE)) Svm_Vmexit(SVM_VMEXIT_VMSAVE);
+    }
+
+    bx_address pAddr = RAX & i->asize_mask();
+    if (!IsValidPageAlignedPhyAddr(pAddr)) {
+        //BX_ERROR(("VMSAVE: invalid or not page aligned VMCB physical address !"));
+        exception(BX_GP_EXCEPTION, 0);
+    }
+    bx_phy_address vmcbPtr = BX_CPU_THIS_PTR vmcbptr;
+    set_VMCBPTR(pAddr);
+
+    //BX_DEBUG(("VMSAVE VMCB ptr: 0x" FMT_ADDRX64, BX_CPU_THIS_PTR vmcbptr));
+
+    svm_segment_write(&BX_CPU_THIS_PTR sregs[BX_SEG_REG_FS], SVM_GUEST_FS_SELECTOR);
+    svm_segment_write(&BX_CPU_THIS_PTR sregs[BX_SEG_REG_GS], SVM_GUEST_GS_SELECTOR);
+    svm_segment_write(&BX_CPU_THIS_PTR tr, SVM_GUEST_TR_SELECTOR);
+    svm_segment_write(&BX_CPU_THIS_PTR ldtr, SVM_GUEST_LDTR_SELECTOR);
+
+    vmcb_write64(SVM_GUEST_KERNEL_GSBASE_MSR, BX_CPU_THIS_PTR msr.kernelgsbase);
+    vmcb_write64(SVM_GUEST_STAR_MSR, BX_CPU_THIS_PTR msr.star);
+    vmcb_write64(SVM_GUEST_LSTAR_MSR, BX_CPU_THIS_PTR msr.lstar);
+    vmcb_write64(SVM_GUEST_CSTAR_MSR, BX_CPU_THIS_PTR msr.cstar);
+    vmcb_write64(SVM_GUEST_FMASK_MSR, BX_CPU_THIS_PTR msr.fmask);
+
+    vmcb_write64(SVM_GUEST_SYSENTER_CS_MSR, BX_CPU_THIS_PTR msr.sysenter_cs_msr);
+    vmcb_write64(SVM_GUEST_SYSENTER_ESP_MSR, BX_CPU_THIS_PTR msr.sysenter_esp_msr);
+    vmcb_write64(SVM_GUEST_SYSENTER_EIP_MSR, BX_CPU_THIS_PTR msr.sysenter_eip_msr);
+
+    set_VMCBPTR(vmcbPtr);
+
+    BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::SKINIT(bxInstruction_c* i)
+{
+    if (!protected_mode() || !BX_CPU_THIS_PTR efer.get_SVME())
+        exception(BX_UD_EXCEPTION, 0);
+
+    if (CPL != 0) {
+        //BX_ERROR(("%s: with CPL!=0 cause #GP(0)", i->getIaOpcodeNameShort()));
+        exception(BX_GP_EXCEPTION, 0);
+    }
+
+    if (BX_CPU_THIS_PTR in_svm_guest) {
+        if (SVM_INTERCEPT(SVM_INTERCEPT1_SKINIT)) Svm_Vmexit(SVM_VMEXIT_SKINIT);
+    }
+
+    //BX_PANIC(("SVM: SKINIT is not implemented yet"));
+
+    BX_NEXT_TRACE(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::CLGI(bxInstruction_c* i)
+{
+    if (!protected_mode() || !BX_CPU_THIS_PTR efer.get_SVME())
+        exception(BX_UD_EXCEPTION, 0);
+
+    if (CPL != 0) {
+        //BX_ERROR(("%s: with CPL!=0 cause #GP(0)", i->getIaOpcodeNameShort()));
+        exception(BX_GP_EXCEPTION, 0);
+    }
+
+    if (BX_CPU_THIS_PTR in_svm_guest) {
+        if (SVM_INTERCEPT(SVM_INTERCEPT1_CLGI)) Svm_Vmexit(SVM_VMEXIT_CLGI);
+    }
+
+    BX_CPU_THIS_PTR svm_gif = false;
+
+    BX_NEXT_TRACE(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::STGI(bxInstruction_c* i)
+{
+    if (!protected_mode() || !BX_CPU_THIS_PTR efer.get_SVME())
+        exception(BX_UD_EXCEPTION, 0);
+
+    if (CPL != 0) {
+        //BX_ERROR(("%s: with CPL!=0 cause #GP(0)", i->getIaOpcodeNameShort()));
+        exception(BX_GP_EXCEPTION, 0);
+    }
+
+    if (BX_CPU_THIS_PTR in_svm_guest) {
+        if (SVM_INTERCEPT(SVM_INTERCEPT1_STGI)) Svm_Vmexit(SVM_VMEXIT_STGI);
+    }
+
+    BX_CPU_THIS_PTR svm_gif = true;
+    BX_CPU_THIS_PTR async_event = 1;
+
+    BX_NEXT_TRACE(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::INVLPGA(bxInstruction_c* i)
+{
+    if (!protected_mode() || !BX_CPU_THIS_PTR efer.get_SVME())
+        exception(BX_UD_EXCEPTION, 0);
+
+    if (CPL != 0) {
+        //BX_ERROR(("%s: with CPL!=0 cause #GP(0)", i->getIaOpcodeNameShort()));
+        exception(BX_GP_EXCEPTION, 0);
+    }
+
+    bx_address laddr = RAX & i->asize_mask();
+
+    if (BX_CPU_THIS_PTR in_svm_guest) {
+        if (SVM_INTERCEPT(SVM_INTERCEPT0_INVLPGA))
+            Svm_Vmexit(SVM_VMEXIT_INVLPGA, BX_SUPPORT_SVM_EXTENSION(BX_CPUID_SVM_DECODE_ASSIST) ? laddr : 0);
+    }
+
+    TLB_invlpg(laddr); // FIXME: flush all ASID entries for now
+
+    BX_NEXT_TRACE(i);
 }

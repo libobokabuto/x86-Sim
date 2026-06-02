@@ -17,6 +17,32 @@ void BX_CPP_AttrRegparmN(2) BX_CPU_C::load_segw(bxInstruction_c* i, unsigned seg
     BX_WRITE_16BIT_REG(i->dst(), reg_16);
 }
 
+void BX_CPP_AttrRegparmN(2) BX_CPU_C::load_segd(bxInstruction_c* i, unsigned seg)
+{
+    bx_address eaddr = BX_CPU_RESOLVE_ADDR(i);
+
+    Bit16u segsel = read_virtual_word(i->seg(), (eaddr + 4) & i->asize_mask());
+    Bit32u reg_32 = read_virtual_dword(i->seg(), eaddr);
+
+    load_seg_reg(&BX_CPU_THIS_PTR sregs[seg], segsel);
+
+    BX_WRITE_32BIT_REGZ(i->dst(), reg_32);
+}
+
+#if BX_SUPPORT_X86_64
+void BX_CPP_AttrRegparmN(2) BX_CPU_C::load_segq(bxInstruction_c* i, unsigned seg)
+{
+    bx_address eaddr = BX_CPU_RESOLVE_ADDR_64(i);
+
+    Bit16u segsel = read_linear_word(i->seg(), get_laddr64(i->seg(), (eaddr + 8) & i->asize_mask()));
+    Bit64u reg_64 = read_linear_qword(i->seg(), get_laddr64(i->seg(), eaddr));
+
+    load_seg_reg(&BX_CPU_THIS_PTR sregs[seg], segsel);
+
+    BX_WRITE_64BIT_REG(i->dst(), reg_64);
+}
+#endif
+
 void BX_CPP_AttrRegparmN(2)
 BX_CPU_C::load_seg_reg(bx_segment_reg_t* seg, Bit16u new_value)
 {
@@ -604,5 +630,40 @@ void BX_CPU_C::fetch_raw_descriptor_64(const bx_selector_t* selector,
     *dword1 = GET32L(raw_descriptor1);
     *dword2 = GET32H(raw_descriptor1);
     *dword3 = GET32L(raw_descriptor2);
+}
+
+bool BX_CPU_C::fetch_raw_descriptor2_64(const bx_selector_t* selector, Bit32u* dword1, Bit32u* dword2, Bit32u* dword3)
+{
+    Bit32u index = selector->index;
+    bx_address offset;
+
+    if (selector->ti == 0) {
+        if ((index * 8 + 15) > BX_CPU_THIS_PTR gdtr.limit) {
+            return false;
+        }
+        offset = BX_CPU_THIS_PTR gdtr.base + index * 8;
+    }
+    else {
+        if (BX_CPU_THIS_PTR ldtr.cache.valid == 0) {
+            return false;
+        }
+        if ((index * 8 + 15) > BX_CPU_THIS_PTR ldtr.cache.u.segment.limit_scaled) {
+            return false;
+        }
+        offset = BX_CPU_THIS_PTR ldtr.cache.u.segment.base + index * 8;
+    }
+
+    Bit64u raw_descriptor1 = system_read_qword(offset);
+    Bit64u raw_descriptor2 = system_read_qword(offset + 8);
+
+    if (raw_descriptor2 & BX_CONST64(0x00001F0000000000)) {
+        return false;
+    }
+
+    *dword1 = GET32L(raw_descriptor1);
+    *dword2 = GET32H(raw_descriptor1);
+    *dword3 = GET32L(raw_descriptor2);
+
+    return true;
 }
 #endif

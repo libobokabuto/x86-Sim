@@ -24,6 +24,23 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::branch_near32(Bit32u new_EIP)
 #endif
 }
 
+#if BX_SUPPORT_X86_64
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::branch_near64(bxInstruction_c* i)
+{
+    Bit64u new_RIP = RIP + (Bit32s) i->Id();
+
+    if (!IsCanonical(new_RIP)) {
+        exception(BX_GP_EXCEPTION, 0);
+    }
+
+    RIP = new_RIP;
+
+#if BX_SUPPORT_HANDLERS_CHAINING_SPEEDUPS == 0
+    BX_CPU_THIS_PTR async_event |= BX_ASYNC_EVENT_STOP_TRACE;
+#endif
+}
+#endif
+
 void BX_CPU_C::jmp_far32(bxInstruction_c* i, Bit16u cs_raw, Bit32u disp32)
 {
     BX_INSTR_FAR_BRANCH_ORIGIN();
