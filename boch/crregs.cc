@@ -36,6 +36,22 @@ bx_address BX_CPU_C::read_CR0(void)
     return cr0_val;
 }
 
+#if BX_CPU_LEVEL >= 5
+bx_address BX_CPU_C::read_CR4(void)
+{
+    bx_address cr4_val = BX_CPU_THIS_PTR cr4.get32();
+
+#if BX_SUPPORT_VMX
+    if (BX_CPU_THIS_PTR in_vmx_guest) {
+        VMCS_CACHE* vm = &BX_CPU_THIS_PTR vmcs;
+        cr4_val = (cr4_val & ~vm->vm_cr4_mask) | (vm->vm_cr4_read_shadow & vm->vm_cr4_mask);
+    }
+#endif
+
+    return cr4_val;
+}
+#endif
+
 bool BX_CPP_AttrRegparmN(1) BX_CPU_C::check_CR0(bx_address cr0_val)
 {  //990
     bx_cr0_t temp_cr0;
@@ -350,7 +366,6 @@ Bit32u BX_CPU_C::get_cr4_allow_mask(void)
     return allowMask;
 }
 
-
 bool BX_CPP_AttrRegparmN(1) BX_CPU_C::check_CR4(bx_address cr4_val)
 {
     //1304
@@ -396,6 +411,75 @@ bool BX_CPP_AttrRegparmN(1) BX_CPU_C::check_CR4(bx_address cr4_val)
             return false;
         }
     }
+#endif
+
+    return true;
+}
+
+bool BX_CPU_C::SetCR4(bxInstruction_c* i, bx_address val)
+{
+    if (!check_CR4(val)) return false;
+
+#if BX_SUPPORT_CET
+    if ((val & BX_CR4_CET_MASK) && !BX_CPU_THIS_PTR cr0.get_WP()) {
+        //BX_ERROR(("check_CR4(): attempt to set CR4.CET when CR0.WP=0"));
+        return false;
+    }
+#endif
+
+#if BX_CPU_LEVEL >= 6
+    // Modification of PGE,PAE,PSE,PCIDE,SMEP flushes TLB cache according to docs.
+    if ((val & BX_CR4_FLUSH_TLB_MASK) != (BX_CPU_THIS_PTR cr4.val32 & BX_CR4_FLUSH_TLB_MASK)) {
+        // reload PDPTR if needed
+        if (BX_CPU_THIS_PTR cr0.get_PG() && (val & BX_CR4_PAE_MASK) != 0 && !long_mode()) {
+            if (!CheckPDPTR(BX_CPU_THIS_PTR cr3)) {
+                //BX_ERROR(("SetCR4(): PDPTR check failed !"));
+                return false;
+            }
+        }
+#if BX_SUPPORT_X86_64
+        else {
+            // if trying to enable CR4.PCIDE
+            if (!BX_CPU_THIS_PTR cr4.get_PCIDE() && (val & BX_CR4_PCIDE_MASK)) {
+                if (BX_CPU_THIS_PTR cr3 & 0xfff) {
+                    //BX_ERROR(("SetCR4(): Attempt to enable CR4.PCIDE with non-zero PCID !"));
+                    return false;
+                }
+            }
+        }
+#endif
+        TLB_flush(); // Flush Global entries also.
+    }
+#endif
+
+#if BX_SUPPORT_SVM
+    if (BX_CPU_THIS_PTR in_svm_guest) {
+        if (SVM_CR_WRITE_INTERCEPTED(4)) {
+            if (BX_SUPPORT_SVM_EXTENSION(BX_CPUID_SVM_DECODE_ASSIST))
+                Svm_Vmexit(SVM_VMEXIT_CR4_WRITE, BX_SVM_CR_WRITE_MASK | i->src());
+            else
+                Svm_Vmexit(SVM_VMEXIT_CR4_WRITE);
+        }
+    }
+#endif
+
+    BX_CPU_THIS_PTR cr4.set32((Bit32u)val);
+
+    handleFpuMmxModeChange();
+#if BX_CPU_LEVEL >= 6
+    handleSseModeChange();
+#if BX_SUPPORT_AVX
+    handleAvxModeChange();
+#endif
+#endif
+
+    // re-calculate protection keys if CR4.PKE/CR4.PKS was set
+#if BX_SUPPORT_PKEYS
+    set_PKeys(BX_CPU_THIS_PTR pkru, BX_CPU_THIS_PTR pkrs);
+#endif
+
+#if BX_SUPPORT_X86_64
+    BX_CPU_THIS_PTR linaddr_width = BX_CPU_THIS_PTR cr4.get_LA57() ? 57 : 48;
 #endif
 
     return true;

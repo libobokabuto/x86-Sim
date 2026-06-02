@@ -65,6 +65,24 @@ BX_CPU_C::writeEFlags(Bit32u flags, Bit32u changeMask)
     setEFlags(newEFlags);
 }
 
+void BX_CPP_AttrRegparmN(3)
+BX_CPU_C::write_flags(Bit16u flags, bool change_IOPL, bool change_IF)
+{
+    // Build a mask of the following bits:
+    // x,NT,IOPL,OF,DF,IF,TF,SF,ZF,x,AF,x,PF,x,CF
+    Bit32u changeMask = 0x0dd5;
+
+#if BX_CPU_LEVEL >= 3
+    changeMask |= EFlagsNTMask;     // NT is modified as requested.
+    if (change_IOPL)
+        changeMask |= EFlagsIOPLMask; // IOPL is modified as requested.
+#endif
+    if (change_IF)
+        changeMask |= EFlagsIFMask;
+
+    writeEFlags(Bit32u(flags), changeMask);
+}
+
 Bit32u BX_CPU_C::force_flags(void)
 { //107
     Bit32u newflags = getB_CF();

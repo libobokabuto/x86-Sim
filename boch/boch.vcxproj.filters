@@ -264,6 +264,12 @@
     <ClCompile Include="acpi.cc">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="iret.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ret_far.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bochs.h">

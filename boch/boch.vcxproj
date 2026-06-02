@@ -172,6 +172,7 @@
     <ClCompile Include="icache.cc" />
     <ClCompile Include="init.cc" />
     <ClCompile Include="io.cc" />
+    <ClCompile Include="iret.cc" />
     <ClCompile Include="jmp_far.cc" />
     <ClCompile Include="keyboard.cc" />
     <ClCompile Include="main.cpp" />
@@ -195,6 +196,7 @@
     <ClCompile Include="pit82c54.cc" />
     <ClCompile Include="plugin.cc" />
     <ClCompile Include="proc_ctrl.cc" />
+    <ClCompile Include="ret_far.cc" />
     <ClCompile Include="scancodes.cc" />
     <ClCompile Include="segment_ctrl_pro.cc" />
     <ClCompile Include="serial.cc" />

@@ -2678,10 +2678,2664 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::AND_GdEdR(bxInstruction_c* i)
     BX_NEXT_INSTR(i);
 }
 
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::REP_INSB_YbDX(bxInstruction_c *i)
+{
+  if (! allow_io(i, DX, 1)) {
+    //BX_DEBUG(("INSB_YbDX: I/O access not allowed !"));
+    exception(BX_GP_EXCEPTION, 0);
+  }
 
+#if BX_SUPPORT_X86_64
+  if (i->as64L()) {
+    BX_CPU_THIS_PTR repeat(i, &BX_CPU_C::INSB64_YbDX);
+  }
+  else
+#endif
+  if (i->as32L()) {
+    BX_CPU_THIS_PTR repeat(i, &BX_CPU_C::INSB32_YbDX);
+    BX_CLEAR_64BIT_HIGH(BX_64BIT_REG_RDI); // always clear upper part of RDI
+  }
+  else {
+    BX_CPU_THIS_PTR repeat(i, &BX_CPU_C::INSB16_YbDX);
+  }
 
+  BX_NEXT_TRACE(i);
+}
 
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::INSB16_YbDX(bxInstruction_c *i)
+{
+  // trigger any segment or page faults before reading from IO port
+  Bit8u value8 = read_RMW_virtual_byte_32(BX_SEG_REG_ES, DI); // no lock
 
+  value8 = BX_INP(DX, 1);
 
+  write_RMW_linear_byte(value8);
 
+  if (BX_CPU_THIS_PTR get_DF())
+    DI--;
+  else
+    DI++;
+}
 
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::INSB32_YbDX(bxInstruction_c *i)
+{
+  // trigger any segment or page faults before reading from IO port
+  Bit8u value8 = read_RMW_virtual_byte(BX_SEG_REG_ES, EDI); // no lock
+
+  value8 = BX_INP(DX, 1);
+
+  /* no seg override possible */
+  write_RMW_linear_byte(value8);
+
+  if (BX_CPU_THIS_PTR get_DF()) {
+    RDI = EDI - 1;
+  }
+  else {
+    RDI = EDI + 1;
+  }
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::INSB64_YbDX(bxInstruction_c *i)
+{
+  // trigger any segment or page faults before reading from IO port
+  Bit8u value8 = read_RMW_linear_byte(BX_SEG_REG_ES, RDI); // no lock
+
+  value8 = BX_INP(DX, 1);
+
+  write_RMW_linear_byte(value8);
+
+  if (BX_CPU_THIS_PTR get_DF())
+    RDI--;
+  else
+    RDI++;
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::REP_INSW_YwDX(bxInstruction_c *i)
+{
+  if (! allow_io(i, DX, 2)) {
+    //BX_DEBUG(("INSW_YwDX: I/O access not allowed !"));
+    exception(BX_GP_EXCEPTION, 0);
+  }
+
+#if BX_SUPPORT_X86_64
+  if (i->as64L()) {
+    BX_CPU_THIS_PTR repeat(i, &BX_CPU_C::INSW64_YwDX);
+  }
+  else
+#endif
+  if (i->as32L()) {
+    BX_CPU_THIS_PTR repeat(i, &BX_CPU_C::INSW32_YwDX);
+    BX_CLEAR_64BIT_HIGH(BX_64BIT_REG_RDI); // always clear upper part of RDI
+  }
+  else {
+    BX_CPU_THIS_PTR repeat(i, &BX_CPU_C::INSW16_YwDX);
+  }
+
+  BX_NEXT_TRACE(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::INSW16_YwDX(bxInstruction_c *i)
+{
+  // trigger any segment or page faults before reading from IO port
+  Bit16u value16 = read_RMW_virtual_word_32(BX_SEG_REG_ES, DI); // no lock
+
+  value16 = BX_INP(DX, 2);
+
+  write_RMW_linear_word(value16);
+
+  if (BX_CPU_THIS_PTR get_DF())
+    DI -= 2;
+  else
+    DI += 2;
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::INSW32_YwDX(bxInstruction_c *i)
+{
+  Bit16u value16=0;
+  Bit32u edi = EDI;
+  unsigned increment = 2;
+
+#if BX_SUPPORT_REPEAT_SPEEDUPS
+  /* If conditions are right, we can transfer IO to physical memory
+   * in a batch, rather than one instruction at a time.
+   */
+  if (i->repUsedL() && !BX_CPU_THIS_PTR async_event)
+  {
+    Bit32u wordCount = ECX;
+    BX_ASSERT(wordCount > 0);
+    wordCount = FastRepINSW(edi, DX, wordCount);
+    if (wordCount) {
+      // Decrement the ticks count by the number of iterations, minus
+      // one, since the main cpu loop will decrement one.  Also,
+      // the count is predecremented before examined, so defintely
+      // don't roll it under zero.
+      BX_TICKN(wordCount-1);
+      RCX = ECX - (wordCount-1);
+      increment = wordCount << 1; // count * 2.
+    }
+    else {
+      // trigger any segment or page faults before reading from IO port
+      value16 = read_RMW_virtual_word(BX_SEG_REG_ES, edi); // no lock
+
+      value16 = BX_INP(DX, 2);
+
+      write_RMW_linear_word(value16);
+    }
+  }
+  else
+#endif
+  {
+    // trigger any segment or page faults before reading from IO port
+    value16 = read_RMW_virtual_word_32(BX_SEG_REG_ES, edi); // no lock
+
+    value16 = BX_INP(DX, 2);
+
+    write_RMW_linear_word(value16);
+  }
+
+  if (BX_CPU_THIS_PTR get_DF())
+    RDI = EDI - increment;
+  else
+    RDI = EDI + increment;
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::INSW64_YwDX(bxInstruction_c *i)
+{
+  // trigger any segment or page faults before reading from IO port
+  Bit16u value16 = read_RMW_linear_word(BX_SEG_REG_ES, RDI); // no lock
+
+  value16 = BX_INP(DX, 2);
+
+  write_RMW_linear_word(value16);
+
+  if (BX_CPU_THIS_PTR get_DF())
+    RDI -= 2;
+  else
+    RDI += 2;
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::REP_INSD_YdDX(bxInstruction_c *i)
+{
+  if (! allow_io(i, DX, 4)) {
+    //BX_DEBUG(("INSD_YdDX: I/O access not allowed !"));
+    exception(BX_GP_EXCEPTION, 0);
+  }
+
+#if BX_SUPPORT_X86_64
+  if (i->as64L()) {
+    BX_CPU_THIS_PTR repeat(i, &BX_CPU_C::INSD64_YdDX);
+  }
+  else
+#endif
+  if (i->as32L()) {
+    BX_CPU_THIS_PTR repeat(i, &BX_CPU_C::INSD32_YdDX);
+    BX_CLEAR_64BIT_HIGH(BX_64BIT_REG_RDI); // always clear upper part of RDI
+  }
+  else {
+    BX_CPU_THIS_PTR repeat(i, &BX_CPU_C::INSD16_YdDX);
+  }
+
+  BX_NEXT_TRACE(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::INSD16_YdDX(bxInstruction_c *i)
+{
+  // trigger any segment or page faults before reading from IO port
+  Bit32u value32 = read_RMW_virtual_dword_32(BX_SEG_REG_ES, DI); // no lock
+
+  value32 = BX_INP(DX, 4);
+
+  write_RMW_linear_dword(value32);
+
+  if (BX_CPU_THIS_PTR get_DF())
+    DI -= 4;
+  else
+    DI += 4;
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::INSD32_YdDX(bxInstruction_c *i)
+{
+  // trigger any segment or page faults before reading from IO port
+  Bit32u value32 = read_RMW_virtual_dword(BX_SEG_REG_ES, EDI); // no lock
+
+  value32 = BX_INP(DX, 4);
+
+  write_RMW_linear_dword(value32);
+
+  if (BX_CPU_THIS_PTR get_DF())
+    RDI = EDI - 4;
+  else
+    RDI = EDI + 4;
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::INSD64_YdDX(bxInstruction_c *i)
+{
+  // trigger any segment or page faults before reading from IO port
+  Bit32u value32 = read_RMW_linear_dword(BX_SEG_REG_ES, RDI); // no lock
+
+  value32 = BX_INP(DX, 4);
+
+  write_RMW_linear_dword(value32);
+
+  if (BX_CPU_THIS_PTR get_DF())
+    RDI -= 4;
+  else
+    RDI += 4;
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::REP_OUTSB_DXXb(bxInstruction_c *i)
+{
+  if (! allow_io(i, DX, 1)) {
+    //BX_DEBUG(("OUTSB_DXXb: I/O access not allowed !"));
+    exception(BX_GP_EXCEPTION, 0);
+  }
+
+#if BX_SUPPORT_X86_64
+  if (i->as64L()) {
+    BX_CPU_THIS_PTR repeat(i, &BX_CPU_C::OUTSB64_DXXb);
+  }
+  else
+#endif
+  if (i->as32L()) {
+    BX_CPU_THIS_PTR repeat(i, &BX_CPU_C::OUTSB32_DXXb);
+    BX_CLEAR_64BIT_HIGH(BX_64BIT_REG_RSI); // always clear upper part of RSI
+  }
+  else {
+    BX_CPU_THIS_PTR repeat(i, &BX_CPU_C::OUTSB16_DXXb);
+  }
+
+  BX_NEXT_TRACE(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::OUTSB16_DXXb(bxInstruction_c *i)
+{
+  Bit8u value8 = read_virtual_byte_32(i->seg(), SI);
+  BX_OUTP(DX, value8, 1);
+
+  if (BX_CPU_THIS_PTR get_DF())
+    SI--;
+  else
+    SI++;
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::OUTSB32_DXXb(bxInstruction_c *i)
+{
+  Bit8u value8 = read_virtual_byte(i->seg(), ESI);
+  BX_OUTP(DX, value8, 1);
+
+  if (BX_CPU_THIS_PTR get_DF())
+    RSI = ESI - 1;
+  else
+    RSI = ESI + 1;
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::OUTSB64_DXXb(bxInstruction_c *i)
+{
+  Bit8u value8 = read_linear_byte(i->seg(), get_laddr64(i->seg(), RSI));
+  BX_OUTP(DX, value8, 1);
+
+  if (BX_CPU_THIS_PTR get_DF())
+    RSI--;
+  else
+    RSI++;
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::REP_OUTSW_DXXw(bxInstruction_c *i)
+{
+  if (! allow_io(i, DX, 2)) {
+    //BX_DEBUG(("OUTSW_DXXw: I/O access not allowed !"));
+    exception(BX_GP_EXCEPTION, 0);
+  }
+
+#if BX_SUPPORT_X86_64
+  if (i->as64L()) {
+    BX_CPU_THIS_PTR repeat(i, &BX_CPU_C::OUTSW64_DXXw);
+  }
+  else
+#endif
+  if (i->as32L()) {
+    BX_CPU_THIS_PTR repeat(i, &BX_CPU_C::OUTSW32_DXXw);
+    BX_CLEAR_64BIT_HIGH(BX_64BIT_REG_RSI); // always clear upper part of RSI
+  }
+  else {
+    BX_CPU_THIS_PTR repeat(i, &BX_CPU_C::OUTSW16_DXXw);
+  }
+
+  BX_NEXT_TRACE(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::OUTSW16_DXXw(bxInstruction_c *i)
+{
+  Bit16u value16 = read_virtual_word_32(i->seg(), SI);
+  BX_OUTP(DX, value16, 2);
+
+  if (BX_CPU_THIS_PTR get_DF())
+    SI -= 2;
+  else
+    SI += 2;
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::OUTSW32_DXXw(bxInstruction_c *i)
+{
+  Bit16u value16;
+  Bit32u esi = ESI;
+  unsigned increment = 2;
+
+#if BX_SUPPORT_REPEAT_SPEEDUPS
+  /* If conditions are right, we can transfer IO to physical memory
+   * in a batch, rather than one instruction at a time.
+   */
+  if (i->repUsedL() && !BX_CPU_THIS_PTR async_event) {
+    Bit32u wordCount = ECX;
+    wordCount = FastRepOUTSW(i->seg(), esi, DX, wordCount);
+    if (wordCount) {
+      // Decrement eCX.  Note, the main loop will decrement 1 also, so
+      // decrement by one less than expected, like the case above.
+      BX_TICKN(wordCount-1); // Main cpu loop also decrements one more.
+      RCX = ECX - (wordCount-1);
+      increment = wordCount << 1; // count * 2.
+    }
+    else {
+      value16 = read_virtual_word(i->seg(), esi);
+      BX_OUTP(DX, value16, 2);
+    }
+  }
+  else
+#endif
+  {
+    value16 = read_virtual_word(i->seg(), esi);
+    BX_OUTP(DX, value16, 2);
+  }
+
+  if (BX_CPU_THIS_PTR get_DF())
+    RSI = ESI - increment;
+  else
+    RSI = ESI + increment;
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::OUTSW64_DXXw(bxInstruction_c *i)
+{
+  Bit16u value16 = read_linear_word(i->seg(), get_laddr64(i->seg(), RSI));
+  BX_OUTP(DX, value16, 2);
+
+  if (BX_CPU_THIS_PTR get_DF())
+    RSI -= 2;
+  else
+    RSI += 2;
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::REP_OUTSD_DXXd(bxInstruction_c *i)
+{
+  if (! allow_io(i, DX, 4)) {
+    //BX_DEBUG(("OUTSD_DXXd: I/O access not allowed !"));
+    exception(BX_GP_EXCEPTION, 0);
+  }
+
+#if BX_SUPPORT_X86_64
+  if (i->as64L()) {
+    BX_CPU_THIS_PTR repeat(i, &BX_CPU_C::OUTSD64_DXXd);
+  }
+  else
+#endif
+  if (i->as32L()) {
+    BX_CPU_THIS_PTR repeat(i, &BX_CPU_C::OUTSD32_DXXd);
+    BX_CLEAR_64BIT_HIGH(BX_64BIT_REG_RSI); // always clear upper part of RSI
+  }
+  else {
+    BX_CPU_THIS_PTR repeat(i, &BX_CPU_C::OUTSD16_DXXd);
+  }
+
+  BX_NEXT_TRACE(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::OUTSD16_DXXd(bxInstruction_c *i)
+{
+  Bit32u value32 = read_virtual_dword_32(i->seg(), SI);
+  BX_OUTP(DX, value32, 4);
+
+  if (BX_CPU_THIS_PTR get_DF())
+    SI -= 4;
+  else
+    SI += 4;
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::OUTSD32_DXXd(bxInstruction_c *i)
+{
+  Bit32u value32 = read_virtual_dword(i->seg(), ESI);
+  BX_OUTP(DX, value32, 4);
+
+  if (BX_CPU_THIS_PTR get_DF())
+    RSI = ESI - 4;
+  else
+    RSI = ESI + 4;
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::OUTSD64_DXXd(bxInstruction_c *i)
+{
+  Bit32u value32 = read_linear_dword(i->seg(), get_laddr64(i->seg(), RSI));
+  BX_OUTP(DX, value32, 4);
+
+  if (BX_CPU_THIS_PTR get_DF())
+    RSI -= 4;
+  else
+    RSI += 4;
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::IN_AXIb(bxInstruction_c *i)
+{
+  unsigned port = i->Ib();
+
+  if (! allow_io(i, port, 2)) {
+    //BX_DEBUG(("IN_AXIb: I/O access not allowed !"));
+    exception(BX_GP_EXCEPTION, 0);
+  }
+
+  AX = BX_INP(port, 2);
+
+  BX_NEXT_TRACE(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::IN_EAXIb(bxInstruction_c *i)
+{
+  unsigned port = i->Ib();
+
+  if (! allow_io(i, port, 4)) {
+    //BX_DEBUG(("IN_EAXIb: I/O access not allowed !"));
+    exception(BX_GP_EXCEPTION, 0);
+  }
+
+  RAX = BX_INP(port, 4);
+
+  BX_NEXT_TRACE(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::OUT_IbAX(bxInstruction_c *i)
+{
+  unsigned port = i->Ib();
+
+  if (! allow_io(i, port, 2)) {
+    //BX_DEBUG(("OUT_IbAX: I/O access not allowed !"));
+    exception(BX_GP_EXCEPTION, 0);
+  }
+
+  BX_OUTP(port, AX, 2);
+
+  BX_NEXT_TRACE(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::OUT_IbEAX(bxInstruction_c *i)
+{
+  unsigned port = i->Ib();
+
+  if (! allow_io(i, port, 4)) {
+    //BX_DEBUG(("OUT_IbEAX: I/O access not allowed !"));
+    exception(BX_GP_EXCEPTION, 0);
+  }
+
+  BX_OUTP(port, EAX, 4);
+
+  BX_NEXT_TRACE(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::OUT_DXAX(bxInstruction_c *i)
+{
+  unsigned port = DX;
+
+  if (! allow_io(i, port, 2)) {
+    //BX_DEBUG(("OUT_DXAX: I/O access not allowed !"));
+    exception(BX_GP_EXCEPTION, 0);
+  }
+
+  BX_OUTP(port, AX, 2);
+
+  BX_NEXT_TRACE(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::REP_MOVSW_YwXw(bxInstruction_c *i)
+{
+#if BX_SUPPORT_X86_64
+  if (i->as64L())
+    BX_CPU_THIS_PTR repeat(i, &BX_CPU_C::MOVSW64_YwXw);
+  else
+#endif
+  if (i->as32L()) {
+    BX_CPU_THIS_PTR repeat(i, &BX_CPU_C::MOVSW32_YwXw);
+    BX_CLEAR_64BIT_HIGH(BX_64BIT_REG_RSI); // always clear upper part of RSI/RDI
+    BX_CLEAR_64BIT_HIGH(BX_64BIT_REG_RDI);
+  }
+  else {
+    BX_CPU_THIS_PTR repeat(i, &BX_CPU_C::MOVSW16_YwXw);
+  }
+
+  BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::MOVSW16_YwXw(bxInstruction_c *i)
+{
+  Bit16u si = SI;
+  Bit16u di = DI;
+
+  Bit16u temp16 = read_virtual_word_32(i->seg(), si);
+  write_virtual_word_32(BX_SEG_REG_ES, di, temp16);
+
+  if (BX_CPU_THIS_PTR get_DF()) {
+    si -= 2;
+    di -= 2;
+  }
+  else {
+    si += 2;
+    di += 2;
+  }
+
+  SI = si;
+  DI = di;
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::MOVSW32_YwXw(bxInstruction_c *i)
+{
+  Bit32u esi = ESI;
+  Bit32u edi = EDI;
+
+  Bit16u temp16 = read_virtual_word(i->seg(), esi);
+  write_virtual_word(BX_SEG_REG_ES, edi, temp16);
+
+  if (BX_CPU_THIS_PTR get_DF()) {
+    esi -= 2;
+    edi -= 2;
+  }
+  else {
+    esi += 2;
+    edi += 2;
+  }
+
+  // zero extension of RSI/RDI
+  RSI = esi;
+  RDI = edi;
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::MOVSW64_YwXw(bxInstruction_c *i)
+{
+  Bit64u rsi = RSI;
+  Bit64u rdi = RDI;
+
+  Bit16u temp16 = read_linear_word(i->seg(), get_laddr64(i->seg(), rsi));
+  write_linear_word(BX_SEG_REG_ES, rdi, temp16);
+
+  if (BX_CPU_THIS_PTR get_DF()) {
+    rsi -= 2;
+    rdi -= 2;
+  }
+  else {
+    rsi += 2;
+    rdi += 2;
+  }
+
+  RSI = rsi;
+  RDI = rdi;
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::REP_MOVSD_YdXd(bxInstruction_c *i)
+{
+#if BX_SUPPORT_X86_64
+  if (i->as64L())
+    BX_CPU_THIS_PTR repeat(i, &BX_CPU_C::MOVSD64_YdXd);
+  else
+#endif
+  if (i->as32L()) {
+    BX_CPU_THIS_PTR repeat(i, &BX_CPU_C::MOVSD32_YdXd);
+    BX_CLEAR_64BIT_HIGH(BX_64BIT_REG_RSI); // always clear upper part of RSI/RDI
+    BX_CLEAR_64BIT_HIGH(BX_64BIT_REG_RDI);
+  }
+  else {
+    BX_CPU_THIS_PTR repeat(i, &BX_CPU_C::MOVSD16_YdXd);
+  }
+
+  BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::MOVSD16_YdXd(bxInstruction_c *i)
+{
+  Bit16u si = SI;
+  Bit16u di = DI;
+
+  Bit32u temp32 = read_virtual_dword_32(i->seg(), si);
+  write_virtual_dword_32(BX_SEG_REG_ES, di, temp32);
+
+  if (BX_CPU_THIS_PTR get_DF()) {
+    si -= 4;
+    di -= 4;
+  }
+  else {
+    si += 4;
+    di += 4;
+  }
+
+  SI = si;
+  DI = di;
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::MOVSD32_YdXd(bxInstruction_c *i)
+{
+  Bit32s increment = 0;
+
+  Bit32u esi = ESI;
+  Bit32u edi = EDI;
+
+#if BX_SUPPORT_REPEAT_SPEEDUPS
+  /* If conditions are right, we can transfer IO to physical memory
+   * in a batch, rather than one instruction at a time.
+   */
+  if (i->repUsedL() && !BX_CPU_THIS_PTR get_DF() && !BX_CPU_THIS_PTR async_event)
+  {
+    Bit32u byteCount = FastRepMOVSB(i->seg(), esi, BX_SEG_REG_ES, edi, ECX*4, 4);
+    if (byteCount) {
+      Bit32u dwordCount = byteCount >> 2;
+
+      // Decrement the ticks count by the number of iterations, minus
+      // one, since the main cpu loop will decrement one.  Also,
+      // the count is predecremented before examined, so definitely
+      // don't roll it under zero.
+      BX_TICKN(dwordCount-1);
+
+      // Decrement eCX. Note, the main loop will decrement 1 also, so
+      // decrement by one less than expected, like the case above.
+      RCX = ECX - (dwordCount-1);
+
+      increment = byteCount;
+    }
+  }
+
+  if (increment == 0)
+#endif
+  {
+    Bit32u temp32 = read_virtual_dword(i->seg(), esi);
+    write_virtual_dword(BX_SEG_REG_ES, edi, temp32);
+
+    increment = BX_CPU_THIS_PTR get_DF() ? -4 : 4;
+  }
+
+  // zero extension of RSI/RDI
+  RSI = esi + increment;
+  RDI = edi + increment;
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::MOVSD64_YdXd(bxInstruction_c *i)
+{
+  Bit32s increment = 0;
+
+  Bit64u rsi = RSI;
+  Bit64u rdi = RDI;
+
+#if BX_SUPPORT_REPEAT_SPEEDUPS
+  /* If conditions are right, we can transfer IO to physical memory
+   * in a batch, rather than one instruction at a time.
+   */
+  if (i->repUsedL() && !BX_CPU_THIS_PTR get_DF() && !BX_CPU_THIS_PTR async_event)
+  {
+    Bit32u byteCount = FastRepMOVSB(get_laddr64(i->seg(), rsi), rdi, ECX*4, 4);
+    if (byteCount) {
+      Bit32u dwordCount = byteCount >> 2;
+
+      // Decrement the ticks count by the number of iterations, minus
+      // one, since the main cpu loop will decrement one.  Also,
+      // the count is predecremented before examined, so definitely
+      // don't roll it under zero.
+      BX_TICKN(dwordCount-1);
+
+      // Decrement RCX. Note, the main loop will decrement 1 also, so
+      // decrement by one less than expected, like the case above.
+      RCX -= (dwordCount-1);
+
+      increment = byteCount;
+    }
+  }
+
+  if (increment == 0)
+#endif
+  {
+    Bit32u temp32 = read_linear_dword(i->seg(), get_laddr64(i->seg(), rsi));
+    write_linear_dword(BX_SEG_REG_ES, rdi, temp32);
+
+    increment = BX_CPU_THIS_PTR get_DF() ? -4 : 4;
+  }
+
+  RSI = rsi + increment;
+  RDI = rdi + increment;
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::REP_CMPSW_XwYw(bxInstruction_c *i)
+{
+#if BX_SUPPORT_X86_64
+  if (i->as64L()) {
+    BX_CPU_THIS_PTR repeat_ZF(i, &BX_CPU_C::CMPSW64_XwYw);
+  }
+  else
+#endif
+  if (i->as32L()) {
+    BX_CPU_THIS_PTR repeat_ZF(i, &BX_CPU_C::CMPSW32_XwYw);
+    BX_CLEAR_64BIT_HIGH(BX_64BIT_REG_RSI); // always clear upper part of RSI/RDI
+    BX_CLEAR_64BIT_HIGH(BX_64BIT_REG_RDI);
+  }
+  else {
+    BX_CPU_THIS_PTR repeat_ZF(i, &BX_CPU_C::CMPSW16_XwYw);
+  }
+
+  BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::CMPSW16_XwYw(bxInstruction_c *i)
+{
+  Bit16u op1_16, op2_16, diff_16;
+
+  Bit16u si = SI;
+  Bit16u di = DI;
+
+  op1_16 = read_virtual_word_32(i->seg(), si);
+  op2_16 = read_virtual_word_32(BX_SEG_REG_ES, di);
+
+  diff_16 = op1_16 - op2_16;
+
+  SET_FLAGS_OSZAPC_SUB_16(op1_16, op2_16, diff_16);
+
+  if (BX_CPU_THIS_PTR get_DF()) {
+    si -= 2;
+    di -= 2;
+  }
+  else {
+    si += 2;
+    di += 2;
+  }
+
+  DI = di;
+  SI = si;
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::CMPSW32_XwYw(bxInstruction_c *i)
+{
+  Bit16u op1_16, op2_16, diff_16;
+
+  Bit32u esi = ESI;
+  Bit32u edi = EDI;
+
+  op1_16 = read_virtual_word(i->seg(), esi);
+  op2_16 = read_virtual_word(BX_SEG_REG_ES, edi);
+
+  diff_16 = op1_16 - op2_16;
+
+  SET_FLAGS_OSZAPC_SUB_16(op1_16, op2_16, diff_16);
+
+  if (BX_CPU_THIS_PTR get_DF()) {
+    esi -= 2;
+    edi -= 2;
+  }
+  else {
+    esi += 2;
+    edi += 2;
+  }
+
+  // zero extension of RSI/RDI
+  RDI = edi;
+  RSI = esi;
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::CMPSW64_XwYw(bxInstruction_c *i)
+{
+  Bit16u op1_16, op2_16, diff_16;
+
+  Bit64u rsi = RSI;
+  Bit64u rdi = RDI;
+
+  op1_16 = read_linear_word(i->seg(), get_laddr64(i->seg(), rsi));
+  op2_16 = read_linear_word(BX_SEG_REG_ES, rdi);
+
+  diff_16 = op1_16 - op2_16;
+
+  SET_FLAGS_OSZAPC_SUB_16(op1_16, op2_16, diff_16);
+
+  if (BX_CPU_THIS_PTR get_DF()) {
+    rsi -= 2;
+    rdi -= 2;
+  }
+  else {
+    rsi += 2;
+    rdi += 2;
+  }
+
+  RDI = rdi;
+  RSI = rsi;
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::REP_CMPSD_XdYd(bxInstruction_c *i)
+{
+#if BX_SUPPORT_X86_64
+  if (i->as64L()) {
+    BX_CPU_THIS_PTR repeat_ZF(i, &BX_CPU_C::CMPSD64_XdYd);
+  }
+  else
+#endif
+  if (i->as32L()) {
+    BX_CPU_THIS_PTR repeat_ZF(i, &BX_CPU_C::CMPSD32_XdYd);
+    BX_CLEAR_64BIT_HIGH(BX_64BIT_REG_RSI); // always clear upper part of RSI/RDI
+    BX_CLEAR_64BIT_HIGH(BX_64BIT_REG_RDI);
+  }
+  else {
+    BX_CPU_THIS_PTR repeat_ZF(i, &BX_CPU_C::CMPSD16_XdYd);
+  }
+
+  BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::CMPSD16_XdYd(bxInstruction_c *i)
+{
+  Bit32u op1_32, op2_32, diff_32;
+
+  Bit16u si = SI;
+  Bit16u di = DI;
+
+  op1_32 = read_virtual_dword_32(i->seg(), si);
+  op2_32 = read_virtual_dword_32(BX_SEG_REG_ES, di);
+
+  diff_32 = op1_32 - op2_32;
+
+  SET_FLAGS_OSZAPC_SUB_32(op1_32, op2_32, diff_32);
+
+  if (BX_CPU_THIS_PTR get_DF()) {
+    si -= 4;
+    di -= 4;
+  }
+  else {
+    si += 4;
+    di += 4;
+  }
+
+  DI = di;
+  SI = si;
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::CMPSD32_XdYd(bxInstruction_c *i)
+{
+  Bit32u op1_32, op2_32, diff_32;
+
+  Bit32u esi = ESI;
+  Bit32u edi = EDI;
+
+  op1_32 = read_virtual_dword(i->seg(), esi);
+  op2_32 = read_virtual_dword(BX_SEG_REG_ES, edi);
+
+  diff_32 = op1_32 - op2_32;
+
+  SET_FLAGS_OSZAPC_SUB_32(op1_32, op2_32, diff_32);
+
+  if (BX_CPU_THIS_PTR get_DF()) {
+    esi -= 4;
+    edi -= 4;
+  }
+  else {
+    esi += 4;
+    edi += 4;
+  }
+
+  // zero extension of RSI/RDI
+  RDI = edi;
+  RSI = esi;
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::CMPSD64_XdYd(bxInstruction_c *i)
+{
+  Bit32u op1_32, op2_32, diff_32;
+
+  Bit64u rsi = RSI;
+  Bit64u rdi = RDI;
+
+  op1_32 = read_linear_dword(i->seg(), get_laddr64(i->seg(), rsi));
+  op2_32 = read_linear_dword(BX_SEG_REG_ES, rdi);
+
+  diff_32 = op1_32 - op2_32;
+
+  SET_FLAGS_OSZAPC_SUB_32(op1_32, op2_32, diff_32);
+
+  if (BX_CPU_THIS_PTR get_DF()) {
+    rsi -= 4;
+    rdi -= 4;
+  }
+  else {
+    rsi += 4;
+    rdi += 4;
+  }
+
+  RDI = rdi;
+  RSI = rsi;
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::REP_SCASB_ALYb(bxInstruction_c *i)
+{
+#if BX_SUPPORT_X86_64
+  if (i->as64L()) {
+    BX_CPU_THIS_PTR repeat_ZF(i, &BX_CPU_C::SCASB64_ALYb);
+  }
+  else
+#endif
+  if (i->as32L()) {
+    BX_CPU_THIS_PTR repeat_ZF(i, &BX_CPU_C::SCASB32_ALYb);
+    BX_CLEAR_64BIT_HIGH(BX_64BIT_REG_RDI); // always clear upper part of RDI
+  }
+  else {
+    BX_CPU_THIS_PTR repeat_ZF(i, &BX_CPU_C::SCASB16_ALYb);
+  }
+
+  BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::SCASB16_ALYb(bxInstruction_c *i)
+{
+  Bit8u op1_8 = AL, op2_8, diff_8;
+
+  Bit16u di = DI;
+
+  op2_8 = read_virtual_byte_32(BX_SEG_REG_ES, di);
+
+  diff_8 = op1_8 - op2_8;
+
+  SET_FLAGS_OSZAPC_SUB_8(op1_8, op2_8, diff_8);
+
+  if (BX_CPU_THIS_PTR get_DF()) {
+    di--;
+  }
+  else {
+    di++;
+  }
+
+  DI = di;
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::SCASB32_ALYb(bxInstruction_c *i)
+{
+  Bit8u op1_8 = AL, op2_8, diff_8;
+
+  Bit32u edi = EDI;
+
+  op2_8 = read_virtual_byte(BX_SEG_REG_ES, edi);
+  diff_8 = op1_8 - op2_8;
+
+  SET_FLAGS_OSZAPC_SUB_8(op1_8, op2_8, diff_8);
+
+  if (BX_CPU_THIS_PTR get_DF()) {
+    edi--;
+  }
+  else {
+    edi++;
+  }
+
+  // zero extension of RDI
+  RDI = edi;
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::SCASB64_ALYb(bxInstruction_c *i)
+{
+  Bit8u op1_8 = AL, op2_8, diff_8;
+
+  Bit64u rdi = RDI;
+
+  op2_8 = read_virtual_byte(BX_SEG_REG_ES, rdi);
+
+  diff_8 = op1_8 - op2_8;
+
+  SET_FLAGS_OSZAPC_SUB_8(op1_8, op2_8, diff_8);
+
+  if (BX_CPU_THIS_PTR get_DF()) {
+    rdi--;
+  }
+  else {
+    rdi++;
+  }
+
+  RDI = rdi;
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::REP_SCASW_AXYw(bxInstruction_c *i)
+{
+#if BX_SUPPORT_X86_64
+  if (i->as64L()) {
+    BX_CPU_THIS_PTR repeat_ZF(i, &BX_CPU_C::SCASW64_AXYw);
+  }
+  else
+#endif
+  if (i->as32L()) {
+    BX_CPU_THIS_PTR repeat_ZF(i, &BX_CPU_C::SCASW32_AXYw);
+    BX_CLEAR_64BIT_HIGH(BX_64BIT_REG_RDI); // always clear upper part of RDI
+  }
+  else {
+    BX_CPU_THIS_PTR repeat_ZF(i, &BX_CPU_C::SCASW16_AXYw);
+  }
+
+  BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::SCASW16_AXYw(bxInstruction_c *i)
+{
+  Bit16u op1_16 = AX, op2_16, diff_16;
+
+  Bit16u di = DI;
+
+  op2_16 = read_virtual_word_32(BX_SEG_REG_ES, di);
+  diff_16 = op1_16 - op2_16;
+
+  SET_FLAGS_OSZAPC_SUB_16(op1_16, op2_16, diff_16);
+
+  if (BX_CPU_THIS_PTR get_DF()) {
+    di -= 2;
+  }
+  else {
+    di += 2;
+  }
+
+  DI = di;
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::SCASW32_AXYw(bxInstruction_c *i)
+{
+  Bit16u op1_16 = AX, op2_16, diff_16;
+
+  Bit32u edi = EDI;
+
+  op2_16 = read_virtual_word(BX_SEG_REG_ES, edi);
+  diff_16 = op1_16 - op2_16;
+
+  SET_FLAGS_OSZAPC_SUB_16(op1_16, op2_16, diff_16);
+
+  if (BX_CPU_THIS_PTR get_DF()) {
+    edi -= 2;
+  }
+  else {
+    edi += 2;
+  }
+
+  // zero extension of RDI
+  RDI = edi;
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::SCASW64_AXYw(bxInstruction_c *i)
+{
+  Bit16u op1_16 = AX, op2_16, diff_16;
+
+  Bit64u rdi = RDI;
+
+  op2_16 = read_virtual_word(BX_SEG_REG_ES, rdi);
+
+  diff_16 = op1_16 - op2_16;
+
+  SET_FLAGS_OSZAPC_SUB_16(op1_16, op2_16, diff_16);
+
+  if (BX_CPU_THIS_PTR get_DF()) {
+    rdi -= 2;
+  }
+  else {
+    rdi += 2;
+  }
+
+  RDI = rdi;
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::REP_SCASD_EAXYd(bxInstruction_c *i)
+{
+#if BX_SUPPORT_X86_64
+  if (i->as64L()) {
+    BX_CPU_THIS_PTR repeat_ZF(i, &BX_CPU_C::SCASD64_EAXYd);
+  }
+  else
+#endif
+  if (i->as32L()) {
+    BX_CPU_THIS_PTR repeat_ZF(i, &BX_CPU_C::SCASD32_EAXYd);
+    BX_CLEAR_64BIT_HIGH(BX_64BIT_REG_RDI); // always clear upper part of RDI
+  }
+  else {
+    BX_CPU_THIS_PTR repeat_ZF(i, &BX_CPU_C::SCASD16_EAXYd);
+  }
+
+  BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::SCASD16_EAXYd(bxInstruction_c *i)
+{
+  Bit32u op1_32 = EAX, op2_32, diff_32;
+
+  Bit16u di = DI;
+
+  op2_32 = read_virtual_dword_32(BX_SEG_REG_ES, di);
+  diff_32 = op1_32 - op2_32;
+
+  SET_FLAGS_OSZAPC_SUB_32(op1_32, op2_32, diff_32);
+
+  if (BX_CPU_THIS_PTR get_DF()) {
+    di -= 4;
+  }
+  else {
+    di += 4;
+  }
+
+  DI = di;
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::SCASD32_EAXYd(bxInstruction_c *i)
+{
+  Bit32u op1_32 = EAX, op2_32, diff_32;
+
+  Bit32u edi = EDI;
+
+  op2_32 = read_virtual_dword(BX_SEG_REG_ES, edi);
+  diff_32 = op1_32 - op2_32;
+
+  SET_FLAGS_OSZAPC_SUB_32(op1_32, op2_32, diff_32);
+
+  if (BX_CPU_THIS_PTR get_DF()) {
+    edi -= 4;
+  }
+  else {
+    edi += 4;
+  }
+
+  // zero extension of RDI
+  RDI = edi;
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::SCASD64_EAXYd(bxInstruction_c *i)
+{
+  Bit32u op1_32 = EAX, op2_32, diff_32;
+
+  Bit64u rdi = RDI;
+
+  op2_32 = read_virtual_dword(BX_SEG_REG_ES, rdi);
+
+  diff_32 = op1_32 - op2_32;
+
+  SET_FLAGS_OSZAPC_SUB_32(op1_32, op2_32, diff_32);
+
+  if (BX_CPU_THIS_PTR get_DF()) {
+    rdi -= 4;
+  }
+  else {
+    rdi += 4;
+  }
+
+  RDI = rdi;
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::REP_LODSB_ALXb(bxInstruction_c *i)
+{
+#if BX_SUPPORT_X86_64
+  if (i->as64L())
+    BX_CPU_THIS_PTR repeat(i, &BX_CPU_C::LODSB64_ALXb);
+  else
+#endif
+  if (i->as32L()) {
+    BX_CPU_THIS_PTR repeat(i, &BX_CPU_C::LODSB32_ALXb);
+    BX_CLEAR_64BIT_HIGH(BX_64BIT_REG_RSI); // always clear upper part of RSI
+  }
+  else {
+    BX_CPU_THIS_PTR repeat(i, &BX_CPU_C::LODSB16_ALXb);
+  }
+
+  BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::LODSB16_ALXb(bxInstruction_c *i)
+{
+  Bit16u si = SI;
+
+  AL = read_virtual_byte_32(i->seg(), si);
+
+  if (BX_CPU_THIS_PTR get_DF()) {
+    si--;
+  }
+  else {
+    si++;
+  }
+
+  SI = si;
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::LODSB32_ALXb(bxInstruction_c *i)
+{
+  Bit32u esi = ESI;
+
+  AL = read_virtual_byte(i->seg(), esi);
+
+  if (BX_CPU_THIS_PTR get_DF()) {
+    esi--;
+  }
+  else {
+    esi++;
+  }
+
+  // zero extension of RSI
+  RSI = esi;
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::LODSB64_ALXb(bxInstruction_c *i)
+{
+  Bit64u rsi = RSI;
+
+  AL = read_linear_byte(i->seg(), get_laddr64(i->seg(), rsi));
+
+  if (BX_CPU_THIS_PTR get_DF()) {
+    rsi--;
+  }
+  else {
+    rsi++;
+  }
+
+  RSI = rsi;
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::REP_LODSW_AXXw(bxInstruction_c *i)
+{
+#if BX_SUPPORT_X86_64
+  if (i->as64L())
+    BX_CPU_THIS_PTR repeat(i, &BX_CPU_C::LODSW64_AXXw);
+  else
+#endif
+  if (i->as32L()) {
+    BX_CPU_THIS_PTR repeat(i, &BX_CPU_C::LODSW32_AXXw);
+    BX_CLEAR_64BIT_HIGH(BX_64BIT_REG_RSI); // always clear upper part of RSI
+  }
+  else {
+    BX_CPU_THIS_PTR repeat(i, &BX_CPU_C::LODSW16_AXXw);
+  }
+
+  BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::LODSW16_AXXw(bxInstruction_c *i)
+{
+  Bit16u si = SI;
+
+  AX = read_virtual_word_32(i->seg(), si);
+
+  if (BX_CPU_THIS_PTR get_DF()) {
+    si -= 2;
+  }
+  else {
+    si += 2;
+  }
+
+  SI = si;
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::LODSW32_AXXw(bxInstruction_c *i)
+{
+  Bit32u esi = ESI;
+
+  AX = read_virtual_word(i->seg(), esi);
+
+  if (BX_CPU_THIS_PTR get_DF()) {
+    esi -= 2;
+  }
+  else {
+    esi += 2;
+  }
+
+  // zero extension of RSI
+  RSI = esi;
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::LODSW64_AXXw(bxInstruction_c *i)
+{
+  Bit64u rsi = RSI;
+
+  AX = read_linear_word(i->seg(), get_laddr64(i->seg(), rsi));
+
+  if (BX_CPU_THIS_PTR get_DF()) {
+    rsi -= 2;
+  }
+  else {
+    rsi += 2;
+  }
+
+  RSI = rsi;
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::REP_LODSD_EAXXd(bxInstruction_c *i)
+{
+#if BX_SUPPORT_X86_64
+  if (i->as64L())
+    BX_CPU_THIS_PTR repeat(i, &BX_CPU_C::LODSD64_EAXXd);
+  else
+#endif
+  if (i->as32L()) {
+    BX_CPU_THIS_PTR repeat(i, &BX_CPU_C::LODSD32_EAXXd);
+    BX_CLEAR_64BIT_HIGH(BX_64BIT_REG_RSI); // always clear upper part of RSI
+  }
+  else {
+    BX_CPU_THIS_PTR repeat(i, &BX_CPU_C::LODSD16_EAXXd);
+  }
+
+  BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::LODSD16_EAXXd(bxInstruction_c *i)
+{
+  Bit16u si = SI;
+
+  RAX = read_virtual_dword_32(i->seg(), si);
+
+  if (BX_CPU_THIS_PTR get_DF()) {
+    si -= 4;
+  }
+  else {
+    si += 4;
+  }
+
+  SI = si;
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::LODSD32_EAXXd(bxInstruction_c *i)
+{
+  Bit32u esi = ESI;
+
+  RAX = read_virtual_dword(i->seg(), esi);
+
+  if (BX_CPU_THIS_PTR get_DF()) {
+    esi -= 4;
+  }
+  else {
+    esi += 4;
+  }
+
+  // zero extension of RSI
+  RSI = esi;
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::LODSD64_EAXXd(bxInstruction_c *i)
+{
+  Bit64u rsi = RSI;
+
+  RAX = read_linear_dword(i->seg(), get_laddr64(i->seg(), rsi));
+
+  if (BX_CPU_THIS_PTR get_DF()) {
+    rsi -= 4;
+  }
+  else {
+    rsi += 4;
+  }
+
+  RSI = rsi;
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::JO_Jw(bxInstruction_c *i)
+{
+  if (get_OF()) {
+    Bit16u new_IP = IP + i->Iw();
+    branch_near16(new_IP);
+    BX_INSTR_CNEAR_BRANCH_TAKEN(BX_CPU_ID, PREV_RIP, new_IP);
+    BX_LINK_TRACE(i);
+  }
+
+  BX_INSTR_CNEAR_BRANCH_NOT_TAKEN(BX_CPU_ID, PREV_RIP);
+  BX_NEXT_INSTR(i); // trace can continue over non-taken branch
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::JNO_Jw(bxInstruction_c *i)
+{
+  if (! get_OF()) {
+    Bit16u new_IP = IP + i->Iw();
+    branch_near16(new_IP);
+    BX_INSTR_CNEAR_BRANCH_TAKEN(BX_CPU_ID, PREV_RIP, new_IP);
+    BX_LINK_TRACE(i);
+  }
+
+  BX_INSTR_CNEAR_BRANCH_NOT_TAKEN(BX_CPU_ID, PREV_RIP);
+  BX_NEXT_INSTR(i); // trace can continue over non-taken branch
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::JB_Jw(bxInstruction_c *i)
+{
+  if (get_CF()) {
+    Bit16u new_IP = IP + i->Iw();
+    branch_near16(new_IP);
+    BX_INSTR_CNEAR_BRANCH_TAKEN(BX_CPU_ID, PREV_RIP, new_IP);
+    BX_LINK_TRACE(i);
+  }
+
+  BX_INSTR_CNEAR_BRANCH_NOT_TAKEN(BX_CPU_ID, PREV_RIP);
+  BX_NEXT_INSTR(i); // trace can continue over non-taken branch
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::JNB_Jw(bxInstruction_c *i)
+{
+  if (! get_CF()) {
+    Bit16u new_IP = IP + i->Iw();
+    branch_near16(new_IP);
+    BX_INSTR_CNEAR_BRANCH_TAKEN(BX_CPU_ID, PREV_RIP, new_IP);
+    BX_LINK_TRACE(i);
+  }
+
+  BX_INSTR_CNEAR_BRANCH_NOT_TAKEN(BX_CPU_ID, PREV_RIP);
+  BX_NEXT_INSTR(i); // trace can continue over non-taken branch
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::JBE_Jw(bxInstruction_c *i)
+{
+  if (get_CF() || get_ZF()) {
+    Bit16u new_IP = IP + i->Iw();
+    branch_near16(new_IP);
+    BX_INSTR_CNEAR_BRANCH_TAKEN(BX_CPU_ID, PREV_RIP, new_IP);
+    BX_LINK_TRACE(i);
+  }
+
+  BX_INSTR_CNEAR_BRANCH_NOT_TAKEN(BX_CPU_ID, PREV_RIP);
+  BX_NEXT_INSTR(i); // trace can continue over non-taken branch
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::JS_Jw(bxInstruction_c *i)
+{
+  if (get_SF()) {
+    Bit16u new_IP = IP + i->Iw();
+    branch_near16(new_IP);
+    BX_INSTR_CNEAR_BRANCH_TAKEN(BX_CPU_ID, PREV_RIP, new_IP);
+    BX_LINK_TRACE(i);
+  }
+
+  BX_INSTR_CNEAR_BRANCH_NOT_TAKEN(BX_CPU_ID, PREV_RIP);
+  BX_NEXT_INSTR(i); // trace can continue over non-taken branch
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::JNS_Jw(bxInstruction_c *i)
+{
+  if (! get_SF()) {
+    Bit16u new_IP = IP + i->Iw();
+    branch_near16(new_IP);
+    BX_INSTR_CNEAR_BRANCH_TAKEN(BX_CPU_ID, PREV_RIP, new_IP);
+    BX_LINK_TRACE(i);
+  }
+
+  BX_INSTR_CNEAR_BRANCH_NOT_TAKEN(BX_CPU_ID, PREV_RIP);
+  BX_NEXT_INSTR(i); // trace can continue over non-taken branch
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::JP_Jw(bxInstruction_c *i)
+{
+  if (get_PF()) {
+    Bit16u new_IP = IP + i->Iw();
+    branch_near16(new_IP);
+    BX_INSTR_CNEAR_BRANCH_TAKEN(BX_CPU_ID, PREV_RIP, new_IP);
+    BX_LINK_TRACE(i);
+  }
+
+  BX_INSTR_CNEAR_BRANCH_NOT_TAKEN(BX_CPU_ID, PREV_RIP);
+  BX_NEXT_INSTR(i); // trace can continue over non-taken branch
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::JNP_Jw(bxInstruction_c *i)
+{
+  if (! get_PF()) {
+    Bit16u new_IP = IP + i->Iw();
+    branch_near16(new_IP);
+    BX_INSTR_CNEAR_BRANCH_TAKEN(BX_CPU_ID, PREV_RIP, new_IP);
+    BX_LINK_TRACE(i);
+  }
+
+  BX_INSTR_CNEAR_BRANCH_NOT_TAKEN(BX_CPU_ID, PREV_RIP);
+  BX_NEXT_INSTR(i); // trace can continue over non-taken branch
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::JL_Jw(bxInstruction_c *i)
+{
+  if (getB_SF() != getB_OF()) {
+    Bit16u new_IP = IP + i->Iw();
+    branch_near16(new_IP);
+    BX_INSTR_CNEAR_BRANCH_TAKEN(BX_CPU_ID, PREV_RIP, new_IP);
+    BX_LINK_TRACE(i);
+  }
+
+  BX_INSTR_CNEAR_BRANCH_NOT_TAKEN(BX_CPU_ID, PREV_RIP);
+  BX_NEXT_INSTR(i); // trace can continue over non-taken branch
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::JNL_Jw(bxInstruction_c *i)
+{
+  if (getB_SF() == getB_OF()) {
+    Bit16u new_IP = IP + i->Iw();
+    branch_near16(new_IP);
+    BX_INSTR_CNEAR_BRANCH_TAKEN(BX_CPU_ID, PREV_RIP, new_IP);
+    BX_LINK_TRACE(i);
+  }
+
+  BX_INSTR_CNEAR_BRANCH_NOT_TAKEN(BX_CPU_ID, PREV_RIP);
+  BX_NEXT_INSTR(i); // trace can continue over non-taken branch
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::JLE_Jw(bxInstruction_c *i)
+{
+  if (get_ZF() || (getB_SF() != getB_OF())) {
+    Bit16u new_IP = IP + i->Iw();
+    branch_near16(new_IP);
+    BX_INSTR_CNEAR_BRANCH_TAKEN(BX_CPU_ID, PREV_RIP, new_IP);
+    BX_LINK_TRACE(i);
+  }
+
+  BX_INSTR_CNEAR_BRANCH_NOT_TAKEN(BX_CPU_ID, PREV_RIP);
+  BX_NEXT_INSTR(i); // trace can continue over non-taken branch
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::JNLE_Jw(bxInstruction_c *i)
+{
+  if (! get_ZF() && (getB_SF() == getB_OF())) {
+    Bit16u new_IP = IP + i->Iw();
+    branch_near16(new_IP);
+    BX_INSTR_CNEAR_BRANCH_TAKEN(BX_CPU_ID, PREV_RIP, new_IP);
+    BX_LINK_TRACE(i);
+  }
+
+  BX_INSTR_CNEAR_BRANCH_NOT_TAKEN(BX_CPU_ID, PREV_RIP);
+  BX_NEXT_INSTR(i); // trace can continue over non-taken branch
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::JO_Jd(bxInstruction_c *i)
+{
+  if (get_OF()) {
+    Bit32u new_EIP = EIP + (Bit32s) i->Id();
+    branch_near32(new_EIP);
+    BX_INSTR_CNEAR_BRANCH_TAKEN(BX_CPU_ID, PREV_RIP, new_EIP);
+    BX_LINK_TRACE(i);
+  }
+
+  BX_INSTR_CNEAR_BRANCH_NOT_TAKEN(BX_CPU_ID, PREV_RIP);
+  BX_NEXT_INSTR(i); // trace can continue over non-taken branch
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::JNO_Jd(bxInstruction_c *i)
+{
+  if (! get_OF()) {
+    Bit32u new_EIP = EIP + (Bit32s) i->Id();
+    branch_near32(new_EIP);
+    BX_INSTR_CNEAR_BRANCH_TAKEN(BX_CPU_ID, PREV_RIP, new_EIP);
+    BX_LINK_TRACE(i);
+  }
+
+  BX_INSTR_CNEAR_BRANCH_NOT_TAKEN(BX_CPU_ID, PREV_RIP);
+  BX_NEXT_INSTR(i); // trace can continue over non-taken branch
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::JNB_Jd(bxInstruction_c *i)
+{
+  if (! get_CF()) {
+    Bit32u new_EIP = EIP + (Bit32s) i->Id();
+    branch_near32(new_EIP);
+    BX_INSTR_CNEAR_BRANCH_TAKEN(BX_CPU_ID, PREV_RIP, new_EIP);
+    BX_LINK_TRACE(i);
+  }
+
+  BX_INSTR_CNEAR_BRANCH_NOT_TAKEN(BX_CPU_ID, PREV_RIP);
+  BX_NEXT_INSTR(i); // trace can continue over non-taken branch
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::JNS_Jd(bxInstruction_c *i)
+{
+  if (! get_SF()) {
+    Bit32u new_EIP = EIP + (Bit32s) i->Id();
+    branch_near32(new_EIP);
+    BX_INSTR_CNEAR_BRANCH_TAKEN(BX_CPU_ID, PREV_RIP, new_EIP);
+    BX_LINK_TRACE(i);
+  }
+
+  BX_INSTR_CNEAR_BRANCH_NOT_TAKEN(BX_CPU_ID, PREV_RIP);
+  BX_NEXT_INSTR(i); // trace can continue over non-taken branch
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::JP_Jd(bxInstruction_c *i)
+{
+  if (get_PF()) {
+    Bit32u new_EIP = EIP + (Bit32s) i->Id();
+    branch_near32(new_EIP);
+    BX_INSTR_CNEAR_BRANCH_TAKEN(BX_CPU_ID, PREV_RIP, new_EIP);
+    BX_LINK_TRACE(i);
+  }
+
+  BX_INSTR_CNEAR_BRANCH_NOT_TAKEN(BX_CPU_ID, PREV_RIP);
+  BX_NEXT_INSTR(i); // trace can continue over non-taken branch
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::JNP_Jd(bxInstruction_c *i)
+{
+  if (! get_PF()) {
+    Bit32u new_EIP = EIP + (Bit32s) i->Id();
+    branch_near32(new_EIP);
+    BX_INSTR_CNEAR_BRANCH_TAKEN(BX_CPU_ID, PREV_RIP, new_EIP);
+    BX_LINK_TRACE(i);
+  }
+
+  BX_INSTR_CNEAR_BRANCH_NOT_TAKEN(BX_CPU_ID, PREV_RIP);
+  BX_NEXT_INSTR(i); // trace can continue over non-taken branch
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::JCXZ_Jb(bxInstruction_c *i)
+{
+  // it is impossible to get this instruction in long mode
+  //BX_ASSERT(i->as64L() == 0);
+
+  Bit32u temp_ECX;
+
+  if (i->as32L())
+    temp_ECX = ECX;
+  else
+    temp_ECX = CX;
+
+  if (temp_ECX == 0) {
+    Bit16u new_IP = IP + i->Iw();
+    branch_near16(new_IP);
+    BX_INSTR_CNEAR_BRANCH_TAKEN(BX_CPU_ID, PREV_RIP, new_IP);
+    BX_LINK_TRACE(i);
+  }
+
+  BX_INSTR_CNEAR_BRANCH_NOT_TAKEN(BX_CPU_ID, PREV_RIP);
+  BX_NEXT_TRACE(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::JECXZ_Jb(bxInstruction_c *i)
+{
+  // it is impossible to get this instruction in long mode
+  //BX_ASSERT(i->as64L() == 0);
+
+  Bit32u temp_ECX;
+
+  if (i->as32L())
+    temp_ECX = ECX;
+  else
+    temp_ECX = CX;
+
+  if (temp_ECX == 0) {
+    Bit32u new_EIP = EIP + (Bit32s) i->Id();
+    branch_near32(new_EIP);
+    BX_INSTR_CNEAR_BRANCH_TAKEN(BX_CPU_ID, PREV_RIP, new_EIP);
+    BX_LINK_TRACE(i);
+  }
+
+  BX_INSTR_CNEAR_BRANCH_NOT_TAKEN(BX_CPU_ID, PREV_RIP);
+  BX_NEXT_TRACE(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::LOOPE16_Jb(bxInstruction_c *i)
+{
+  // it is impossible to get this instruction in long mode
+  //BX_ASSERT(i->as64L() == 0);
+
+  if (i->as32L()) {
+    Bit32u count = ECX;
+
+    count--;
+    if (count != 0 && get_ZF()) {
+      Bit16u new_IP = IP + i->Iw();
+      branch_near16(new_IP);
+      BX_INSTR_CNEAR_BRANCH_TAKEN(BX_CPU_ID, PREV_RIP, new_IP);
+    }
+#if BX_INSTRUMENTATION
+    else {
+      BX_INSTR_CNEAR_BRANCH_NOT_TAKEN(BX_CPU_ID, PREV_RIP);
+    }
+#endif
+
+    ECX = count;
+  }
+  else {
+    Bit16u count = CX;
+
+    count--;
+    if (count != 0 && get_ZF()) {
+      Bit16u new_IP = IP + i->Iw();
+      branch_near16(new_IP);
+      BX_INSTR_CNEAR_BRANCH_TAKEN(BX_CPU_ID, PREV_RIP, new_IP);
+    }
+#if BX_INSTRUMENTATION
+    else {
+      BX_INSTR_CNEAR_BRANCH_NOT_TAKEN(BX_CPU_ID, PREV_RIP);
+    }
+#endif
+
+    CX = count;
+  }
+
+  BX_NEXT_TRACE(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::LOOPNE16_Jb(bxInstruction_c *i)
+{
+  // it is impossible to get this instruction in long mode
+  //BX_ASSERT(i->as64L() == 0);
+
+  if (i->as32L()) {
+    Bit32u count = ECX;
+
+    count--;
+    if (count != 0 && (get_ZF()==0)) {
+      Bit16u new_IP = IP + i->Iw();
+      branch_near16(new_IP);
+      BX_INSTR_CNEAR_BRANCH_TAKEN(BX_CPU_ID, PREV_RIP, new_IP);
+    }
+#if BX_INSTRUMENTATION
+    else {
+      BX_INSTR_CNEAR_BRANCH_NOT_TAKEN(BX_CPU_ID, PREV_RIP);
+    }
+#endif
+
+    ECX = count;
+  }
+  else {
+    Bit16u count = CX;
+
+    count--;
+    if (count != 0 && (get_ZF()==0)) {
+      Bit16u new_IP = IP + i->Iw();
+      branch_near16(new_IP);
+      BX_INSTR_CNEAR_BRANCH_TAKEN(BX_CPU_ID, PREV_RIP, new_IP);
+    }
+#if BX_INSTRUMENTATION
+    else {
+      BX_INSTR_CNEAR_BRANCH_NOT_TAKEN(BX_CPU_ID, PREV_RIP);
+    }
+#endif
+
+    CX = count;
+  }
+
+  BX_NEXT_TRACE(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::LOOP32_Jb(bxInstruction_c *i)
+{
+  // it is impossible to get this instruction in long mode
+  //BX_ASSERT(i->as64L() == 0);
+
+  if (i->as32L()) {
+    Bit32u count = ECX;
+
+    count--;
+    if (count != 0) {
+      Bit32u new_EIP = EIP + (Bit32s) i->Id();
+      branch_near32(new_EIP);
+      BX_INSTR_CNEAR_BRANCH_TAKEN(BX_CPU_ID, PREV_RIP, new_EIP);
+    }
+#if BX_INSTRUMENTATION
+    else {
+      BX_INSTR_CNEAR_BRANCH_NOT_TAKEN(BX_CPU_ID, PREV_RIP);
+    }
+#endif
+
+    ECX = count;
+  }
+  else {
+    Bit16u count = CX;
+
+    count--;
+    if (count != 0) {
+      Bit32u new_EIP = EIP + (Bit32s) i->Id();
+      branch_near32(new_EIP);
+      BX_INSTR_CNEAR_BRANCH_TAKEN(BX_CPU_ID, PREV_RIP, new_EIP);
+    }
+#if BX_INSTRUMENTATION
+    else {
+      BX_INSTR_CNEAR_BRANCH_NOT_TAKEN(BX_CPU_ID, PREV_RIP);
+    }
+#endif
+
+    CX = count;
+  }
+
+  BX_NEXT_TRACE(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::LOOPE32_Jb(bxInstruction_c *i)
+{
+  // it is impossible to get this instruction in long mode
+  //BX_ASSERT(i->as64L() == 0);
+
+  if (i->as32L()) {
+    Bit32u count = ECX;
+
+    count--;
+    if (count != 0 && get_ZF()) {
+      Bit32u new_EIP = EIP + (Bit32s) i->Id();
+      branch_near32(new_EIP);
+      BX_INSTR_CNEAR_BRANCH_TAKEN(BX_CPU_ID, PREV_RIP, new_EIP);
+    }
+#if BX_INSTRUMENTATION
+    else {
+      BX_INSTR_CNEAR_BRANCH_NOT_TAKEN(BX_CPU_ID, PREV_RIP);
+    }
+#endif
+
+    ECX = count;
+  }
+  else {
+    Bit16u count = CX;
+
+    count--;
+    if (count != 0 && get_ZF()) {
+      Bit32u new_EIP = EIP + (Bit32s) i->Id();
+      branch_near32(new_EIP);
+      BX_INSTR_CNEAR_BRANCH_TAKEN(BX_CPU_ID, PREV_RIP, new_EIP);
+    }
+#if BX_INSTRUMENTATION
+    else {
+      BX_INSTR_CNEAR_BRANCH_NOT_TAKEN(BX_CPU_ID, PREV_RIP);
+    }
+#endif
+
+    CX = count;
+  }
+
+  BX_NEXT_TRACE(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::LOOPNE32_Jb(bxInstruction_c *i)
+{
+  // it is impossible to get this instruction in long mode
+  //BX_ASSERT(i->as64L() == 0);
+
+  if (i->as32L()) {
+    Bit32u count = ECX;
+
+    count--;
+    if (count != 0 && (get_ZF()==0)) {
+      Bit32u new_EIP = EIP + (Bit32s) i->Id();
+      branch_near32(new_EIP);
+      BX_INSTR_CNEAR_BRANCH_TAKEN(BX_CPU_ID, PREV_RIP, new_EIP);
+    }
+#if BX_INSTRUMENTATION
+    else {
+      BX_INSTR_CNEAR_BRANCH_NOT_TAKEN(BX_CPU_ID, PREV_RIP);
+    }
+#endif
+
+    ECX = count;
+  }
+  else {
+    Bit16u count = CX;
+
+    count--;
+    if (count != 0 && (get_ZF()==0)) {
+      Bit32u new_EIP = EIP + (Bit32s) i->Id();
+      branch_near32(new_EIP);
+      BX_INSTR_CNEAR_BRANCH_TAKEN(BX_CPU_ID, PREV_RIP, new_EIP);
+    }
+#if BX_INSTRUMENTATION
+    else {
+      BX_INSTR_CNEAR_BRANCH_NOT_TAKEN(BX_CPU_ID, PREV_RIP);
+    }
+#endif
+
+    CX = count;
+  }
+
+  BX_NEXT_TRACE(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::INT3(bxInstruction_c *i)
+{
+  BX_INSTR_FAR_BRANCH_ORIGIN();
+
+  // INT 3 is not IOPL sensitive
+
+#if BX_SUPPORT_VMX
+  VMexit_Event(BX_SOFTWARE_EXCEPTION, 3, 0, 0);
+#endif
+
+#if BX_SUPPORT_SVM
+  SvmInterceptException(BX_SOFTWARE_EXCEPTION, 3, 0, 0);
+#endif
+
+#if BX_DEBUGGER
+  BX_CPU_THIS_PTR show_flag |= Flag_softint;
+#endif
+
+  // interrupt is not RSP safe
+  interrupt(3, BX_SOFTWARE_EXCEPTION, 0, 0);
+
+  BX_INSTR_FAR_BRANCH(BX_CPU_ID, BX_INSTR_IS_INT,
+                      FAR_BRANCH_PREV_CS, FAR_BRANCH_PREV_RIP,
+                      BX_CPU_THIS_PTR sregs[BX_SEG_REG_CS].selector.value, RIP);
+
+  BX_NEXT_TRACE(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::INT_Ib(bxInstruction_c *i)
+{
+  Bit8u vector = i->Ib();
+
+  BX_INSTR_FAR_BRANCH_ORIGIN();
+
+#if BX_SUPPORT_VMX
+  VMexit_Event(BX_SOFTWARE_INTERRUPT, vector, 0, 0);
+#endif
+
+#if BX_SUPPORT_SVM
+  if (BX_CPU_THIS_PTR in_svm_guest) {
+    if (SVM_INTERCEPT(SVM_INTERCEPT0_SOFTINT))
+      Svm_Vmexit(SVM_VMEXIT_SOFTWARE_INTERRUPT, BX_SUPPORT_SVM_EXTENSION(BX_CPUID_SVM_DECODE_ASSIST) ? vector : 0);
+  }
+#endif
+
+#ifdef SHOW_EXIT_STATUS
+  if ((vector == 0x21) && (AH == 0x4c)) {
+    BX_INFO(("INT 21/4C called AL=0x%02x, BX=0x%04x", (unsigned) AL, (unsigned) BX));
+  }
+#endif
+
+#if BX_DEBUGGER
+  BX_CPU_THIS_PTR show_flag |= Flag_softint;
+#endif
+
+  interrupt(vector, BX_SOFTWARE_INTERRUPT, 0, 0);
+
+  BX_INSTR_FAR_BRANCH(BX_CPU_ID, BX_INSTR_IS_INT,
+                      FAR_BRANCH_PREV_CS, FAR_BRANCH_PREV_RIP,
+                      BX_CPU_THIS_PTR sregs[BX_SEG_REG_CS].selector.value, RIP);
+
+  BX_NEXT_TRACE(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::INTO(bxInstruction_c *i)
+{
+  if (get_OF()) {
+    BX_INSTR_FAR_BRANCH_ORIGIN();
+
+#if BX_SUPPORT_VMX
+    VMexit_Event(BX_SOFTWARE_EXCEPTION, 4, 0, 0);
+#endif
+
+#if BX_SUPPORT_SVM
+    SvmInterceptException(BX_SOFTWARE_EXCEPTION, 4, 0, 0);
+#endif
+
+#if BX_DEBUGGER
+    BX_CPU_THIS_PTR show_flag |= Flag_softint;
+#endif
+
+    // interrupt is not RSP safe
+    interrupt(4, BX_SOFTWARE_EXCEPTION, 0, 0);
+
+    BX_INSTR_FAR_BRANCH(BX_CPU_ID, BX_INSTR_IS_INT,
+                        FAR_BRANCH_PREV_CS, FAR_BRANCH_PREV_RIP,
+                        BX_CPU_THIS_PTR sregs[BX_SEG_REG_CS].selector.value, RIP);
+  }
+
+  BX_NEXT_TRACE(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::IRET16(bxInstruction_c *i)
+{
+  BX_INSTR_FAR_BRANCH_ORIGIN();
+
+  invalidate_prefetch_q();
+
+#if BX_SUPPORT_SVM
+  if (BX_CPU_THIS_PTR in_svm_guest) {
+    if (SVM_INTERCEPT(SVM_INTERCEPT0_IRET)) Svm_Vmexit(SVM_VMEXIT_IRET);
+  }
+#endif
+
+#if BX_SUPPORT_VMX
+  if (BX_CPU_THIS_PTR in_vmx_guest)
+    if (is_masked_event(BX_CPU_THIS_PTR vmcs.pin_vmexec_ctrls.VIRTUAL_NMI() ? BX_EVENT_VMX_VIRTUAL_NMI : BX_EVENT_NMI))
+      BX_CPU_THIS_PTR nmi_unblocking_iret = true;
+
+  if (BX_CPU_THIS_PTR in_vmx_guest && BX_CPU_THIS_PTR vmcs.pin_vmexec_ctrls.NMI_EXITING()) {
+    if (BX_CPU_THIS_PTR vmcs.pin_vmexec_ctrls.VIRTUAL_NMI()) unmask_event(BX_EVENT_VMX_VIRTUAL_NMI);
+  }
+  else
+#endif
+    unmask_event(BX_EVENT_NMI);
+
+#if BX_DEBUGGER
+  BX_CPU_THIS_PTR show_flag |= Flag_iret;
+#endif
+
+#if BX_SUPPORT_MONITOR_MWAIT
+  BX_CPU_THIS_PTR monitor.reset_umonitor();
+#endif
+
+  RSP_SPECULATIVE;
+
+  if (protected_mode()) {
+    iret_protected(i);
+  }
+  else {
+    if (v8086_mode()) {
+      // IOPL check in stack_return_from_v86()
+      iret16_stack_return_from_v86(i);
+    }
+    else {
+      Bit16u ip     = pop_16();
+      Bit16u cs_raw = pop_16(); // #SS has higher priority
+      Bit16u flags  = pop_16();
+
+      // CS.LIMIT can't change when in real/v8086 mode
+      if(ip > BX_CPU_THIS_PTR sregs[BX_SEG_REG_CS].cache.u.segment.limit_scaled) {
+        //BX_ERROR(("%s: instruction pointer not within code segment limits", i->getIaOpcodeNameShort()));
+        exception(BX_GP_EXCEPTION, 0);
+      }
+
+      load_seg_reg(&BX_CPU_THIS_PTR sregs[BX_SEG_REG_CS], cs_raw);
+      EIP = (Bit32u) ip;
+      write_flags(flags, /* change IOPL? */ 1, /* change IF? */ 1);
+    }
+  }
+
+  RSP_COMMIT;
+
+#if BX_SUPPORT_VMX
+  BX_CPU_THIS_PTR nmi_unblocking_iret = false;
+#endif
+
+  BX_INSTR_FAR_BRANCH(BX_CPU_ID, BX_INSTR_IS_IRET,
+                      FAR_BRANCH_PREV_CS, FAR_BRANCH_PREV_RIP,
+                      BX_CPU_THIS_PTR sregs[BX_SEG_REG_CS].selector.value, EIP);
+
+  BX_NEXT_TRACE(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::IRET32(bxInstruction_c *i)
+{
+  //BX_ASSERT(BX_CPU_THIS_PTR cpu_mode != BX_MODE_LONG_64);
+
+  invalidate_prefetch_q();
+
+  BX_INSTR_FAR_BRANCH_ORIGIN();
+
+#if BX_SUPPORT_SVM
+  if (BX_CPU_THIS_PTR in_svm_guest) {
+    if (SVM_INTERCEPT(SVM_INTERCEPT0_IRET)) Svm_Vmexit(SVM_VMEXIT_IRET);
+  }
+#endif
+
+#if BX_SUPPORT_VMX
+  if (BX_CPU_THIS_PTR in_vmx_guest)
+    if (is_masked_event(BX_CPU_THIS_PTR vmcs.pin_vmexec_ctrls.VIRTUAL_NMI() ? BX_EVENT_VMX_VIRTUAL_NMI : BX_EVENT_NMI))
+      BX_CPU_THIS_PTR nmi_unblocking_iret = true;
+
+  if (BX_CPU_THIS_PTR in_vmx_guest && BX_CPU_THIS_PTR vmcs.pin_vmexec_ctrls.NMI_EXITING()) {
+    if (BX_CPU_THIS_PTR vmcs.pin_vmexec_ctrls.VIRTUAL_NMI()) unmask_event(BX_EVENT_VMX_VIRTUAL_NMI);
+  }
+  else
+#endif
+    unmask_event(BX_EVENT_NMI);
+
+#if BX_DEBUGGER
+  BX_CPU_THIS_PTR show_flag |= Flag_iret;
+#endif
+
+#if BX_SUPPORT_MONITOR_MWAIT
+  BX_CPU_THIS_PTR monitor.reset_umonitor();
+#endif
+
+  RSP_SPECULATIVE;
+
+  if (protected_mode()) {
+    iret_protected(i);
+  }
+  else {
+    if (v8086_mode()) {
+      // IOPL check in stack_return_from_v86()
+      iret32_stack_return_from_v86(i);
+    }
+    else {
+      Bit32u eip      =          pop_32();
+      Bit16u cs_raw   = (Bit16u) pop_32(); // #SS has higher priority
+      Bit32u eflags32 =          pop_32();
+
+      // CS.LIMIT can't change when in real/v8086 mode
+      if (eip > BX_CPU_THIS_PTR sregs[BX_SEG_REG_CS].cache.u.segment.limit_scaled) {
+        //BX_ERROR(("%s: instruction pointer not within code segment limits", i->getIaOpcodeNameShort()));
+        exception(BX_GP_EXCEPTION, 0);
+      }
+
+      load_seg_reg(&BX_CPU_THIS_PTR sregs[BX_SEG_REG_CS], cs_raw);
+      EIP = eip;
+      writeEFlags(eflags32, 0x00257fd5); // VIF, VIP, VM unchanged
+    }
+  }
+
+  RSP_COMMIT;
+
+#if BX_SUPPORT_VMX
+  BX_CPU_THIS_PTR nmi_unblocking_iret = false;
+#endif
+
+  BX_INSTR_FAR_BRANCH(BX_CPU_ID, BX_INSTR_IS_IRET,
+                      FAR_BRANCH_PREV_CS, FAR_BRANCH_PREV_RIP,
+                      BX_CPU_THIS_PTR sregs[BX_SEG_REG_CS].selector.value, EIP);
+
+  BX_NEXT_TRACE(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::RETfar16_Iw(bxInstruction_c *i)
+{
+  BX_INSTR_FAR_BRANCH_ORIGIN();
+
+  invalidate_prefetch_q();
+
+#if BX_DEBUGGER
+  BX_CPU_THIS_PTR show_flag |= Flag_ret;
+#endif
+
+  Bit16s imm16 = (Bit16s) i->Iw();
+
+  RSP_SPECULATIVE;
+
+  if (protected_mode()) {
+    return_protected(i, imm16);
+  }
+  else {
+    Bit16u ip     = pop_16();
+    Bit16u cs_raw = pop_16();
+
+    // CS.LIMIT can't change when in real/v8086 mode
+    if (ip > BX_CPU_THIS_PTR sregs[BX_SEG_REG_CS].cache.u.segment.limit_scaled) {
+      //BX_ERROR(("%s: instruction pointer not within code segment limits", i->getIaOpcodeNameShort()));
+      exception(BX_GP_EXCEPTION, 0);
+    }
+
+    load_seg_reg(&BX_CPU_THIS_PTR sregs[BX_SEG_REG_CS], cs_raw);
+    EIP = (Bit32u) ip;
+
+    if (BX_CPU_THIS_PTR sregs[BX_SEG_REG_SS].cache.u.segment.d_b)
+      ESP += imm16;
+    else
+       SP += imm16;
+  }
+
+  RSP_COMMIT;
+
+  BX_INSTR_FAR_BRANCH(BX_CPU_ID, BX_INSTR_IS_RET,
+                      FAR_BRANCH_PREV_CS, FAR_BRANCH_PREV_RIP,
+                      BX_CPU_THIS_PTR sregs[BX_SEG_REG_CS].selector.value, RIP);
+
+  BX_NEXT_TRACE(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::RETfar32_Iw(bxInstruction_c *i)
+{
+  invalidate_prefetch_q();
+
+  BX_INSTR_FAR_BRANCH_ORIGIN();
+
+#if BX_DEBUGGER
+  BX_CPU_THIS_PTR show_flag |= Flag_ret;
+#endif
+
+  Bit16u imm16 = i->Iw();
+
+  RSP_SPECULATIVE;
+
+  if (protected_mode()) {
+    return_protected(i, imm16);
+  }
+  else {
+    Bit32u eip    =          pop_32();
+    Bit16u cs_raw = (Bit16u) pop_32(); /* 32bit pop, MSW discarded */
+
+    // CS.LIMIT can't change when in real/v8086 mode
+    if (eip > BX_CPU_THIS_PTR sregs[BX_SEG_REG_CS].cache.u.segment.limit_scaled) {
+      //BX_ERROR(("%s: instruction pointer not within code segment limits", i->getIaOpcodeNameShort()));
+      exception(BX_GP_EXCEPTION, 0);
+    }
+
+    load_seg_reg(&BX_CPU_THIS_PTR sregs[BX_SEG_REG_CS], cs_raw);
+    EIP = eip;
+
+    if (BX_CPU_THIS_PTR sregs[BX_SEG_REG_SS].cache.u.segment.d_b)
+      ESP += imm16;
+    else
+       SP += imm16;
+  }
+
+  RSP_COMMIT;
+
+  BX_INSTR_FAR_BRANCH(BX_CPU_ID, BX_INSTR_IS_RET,
+                      FAR_BRANCH_PREV_CS, FAR_BRANCH_PREV_RIP,
+                      BX_CPU_THIS_PTR sregs[BX_SEG_REG_CS].selector.value, RIP);
+
+  BX_NEXT_TRACE(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::CLC(bxInstruction_c *i)
+{
+  clear_CF();
+
+  BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::STC(bxInstruction_c *i)
+{
+  assert_CF();
+
+  BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::CMC(bxInstruction_c *i)
+{
+  set_CF(! get_CF());
+
+  BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::STD(bxInstruction_c *i)
+{
+  BX_CPU_THIS_PTR assert_DF();
+
+  BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::STI(bxInstruction_c *i)
+{
+  Bit32u IOPL = BX_CPU_THIS_PTR get_IOPL();
+
+  if (protected_mode())
+  {
+#if BX_CPU_LEVEL >= 5
+    if (BX_CPU_THIS_PTR cr4.get_PVI())
+    {
+      if (CPL == 3 && IOPL < 3) {
+        if (! BX_CPU_THIS_PTR get_VIP())
+        {
+          BX_CPU_THIS_PTR assert_VIF();
+          BX_NEXT_INSTR(i);
+        }
+
+        //BX_DEBUG(("STI: #GP(0) in VME mode"));
+        exception(BX_GP_EXCEPTION, 0);
+      }
+    }
+#endif
+    if (CPL > IOPL) {
+      //BX_DEBUG(("STI: CPL > IOPL in protected mode"));
+      exception(BX_GP_EXCEPTION, 0);
+    }
+  }
+  else if (v8086_mode())
+  {
+    if (IOPL != 3) {
+#if BX_CPU_LEVEL >= 5
+      if (BX_CPU_THIS_PTR cr4.get_VME() && BX_CPU_THIS_PTR get_VIP() == 0)
+      {
+        BX_CPU_THIS_PTR assert_VIF();
+        BX_NEXT_INSTR(i);
+      }
+#endif
+      //BX_DEBUG(("STI: IOPL != 3 in v8086 mode"));
+      exception(BX_GP_EXCEPTION, 0);
+    }
+  }
+
+  if (! BX_CPU_THIS_PTR get_IF()) {
+    BX_CPU_THIS_PTR assert_IF();
+    inhibit_interrupts(BX_INHIBIT_INTERRUPTS);
+  }
+
+  BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::LAHF(bxInstruction_c *i)
+{
+  AH = read_eflags() & 0xFF;
+
+  BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::SAHF(bxInstruction_c *i)
+{
+  set_SF((AH & 0x80) >> 7);
+  set_ZF((AH & 0x40) >> 6);
+  set_AF((AH & 0x10) >> 4);
+  set_CF (AH & 0x01);
+  set_PF((AH & 0x04) >> 2);
+
+  BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::HLT(bxInstruction_c *i)
+{
+  // CPL is always 0 in real mode
+  if (/* !real_mode() && */ CPL!=0) {
+    //BX_DEBUG(("HLT: %s priveledge check failed, CPL=%d, generate #GP(0)",
+        //cpu_mode_string(BX_CPU_THIS_PTR cpu_mode), CPL));
+    exception(BX_GP_EXCEPTION, 0);
+  }
+
+  if (! BX_CPU_THIS_PTR get_IF()) {
+    //BX_INFO(("WARNING: HLT instruction with IF=0!"));
+  }
+
+#if BX_SUPPORT_VMX
+  if (BX_CPU_THIS_PTR in_vmx_guest) {
+    if (BX_CPU_THIS_PTR vmcs.vmexec_ctrls1.HLT_VMEXIT()) {
+      VMexit(VMX_VMEXIT_HLT, 0);
+    }
+  }
+#endif
+
+#if BX_SUPPORT_SVM
+  if (BX_CPU_THIS_PTR in_svm_guest) {
+    if (SVM_INTERCEPT(SVM_INTERCEPT0_HLT)) Svm_Vmexit(SVM_VMEXIT_HLT);
+  }
+#endif
+
+  // stops instruction execution and places the processor in a
+  // HALT state. An enabled interrupt, NMI, or reset will resume
+  // execution. If interrupt (including NMI) is used to resume
+  // execution after HLT, the saved CS:eIP points to instruction
+  // following HLT.
+  enter_sleep_state(BX_ACTIVITY_STATE_HLT);
+
+  BX_NEXT_TRACE(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::CLTS(bxInstruction_c *i)
+{
+  // CPL is always 0 in real mode
+  if (/* !real_mode() && */ CPL!=0) {
+    //BX_ERROR(("%s: priveledge check failed, generate #GP(0)", i->getIaOpcodeNameShort()));
+    exception(BX_GP_EXCEPTION, 0);
+  }
+
+#if BX_SUPPORT_VMX
+  if (BX_CPU_THIS_PTR in_vmx_guest) {
+    if(VMexit_CLTS()) {
+      BX_NEXT_TRACE(i);
+    }
+  }
+#endif
+
+#if BX_SUPPORT_SVM
+  if (BX_CPU_THIS_PTR in_svm_guest) {
+    if(SVM_CR_WRITE_INTERCEPTED(0)) Svm_Vmexit(SVM_VMEXIT_CR0_WRITE);
+  }
+#endif
+
+  BX_CPU_THIS_PTR cr0.set_TS(0);
+
+  handleFpuMmxModeChange();
+#if BX_CPU_LEVEL >= 6
+  handleSseModeChange();
+#if BX_SUPPORT_AVX
+  handleAvxModeChange();
+#endif
+#endif
+
+  BX_NEXT_TRACE(i);
+}
+
+#if BX_SUPPORT_SVM
+const Bit64u BX_SVM_CR_WRITE_MASK = (BX_CONST64(1) << 63);
+#endif
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::MOV_CR3Rd(bxInstruction_c *i)
+{
+  // CPL is always 0 in real mode
+  if (/* !real_mode() && */ CPL!=0) {
+    //BX_ERROR(("%s: CPL!=0 not in real mode", i->getIaOpcodeNameShort()));
+    exception(BX_GP_EXCEPTION, 0);
+  }
+
+  invalidate_prefetch_q();
+
+  Bit32u val_32 = BX_READ_32BIT_REG(i->src());
+
+#if BX_SUPPORT_VMX
+  if (BX_CPU_THIS_PTR in_vmx_guest)
+    VMexit_CR3_Write(i, val_32);
+#endif
+
+#if BX_SUPPORT_SVM
+  if (BX_CPU_THIS_PTR in_svm_guest) {
+    if(SVM_CR_WRITE_INTERCEPTED(3)) {
+      if (BX_SUPPORT_SVM_EXTENSION(BX_CPUID_SVM_DECODE_ASSIST))
+        Svm_Vmexit(SVM_VMEXIT_CR3_WRITE, BX_SVM_CR_WRITE_MASK | i->src());
+      else
+        Svm_Vmexit(SVM_VMEXIT_CR3_WRITE);
+    }
+  }
+#endif
+
+#if BX_CPU_LEVEL >= 6
+  if (BX_CPU_THIS_PTR cr0.get_PG() && BX_CPU_THIS_PTR cr4.get_PAE() && !long_mode()) {
+    if (! CheckPDPTR(val_32)) {
+      //BX_ERROR(("%s: PDPTR check failed !", i->getIaOpcodeNameShort()));
+      exception(BX_GP_EXCEPTION, 0);
+    }
+  }
+#endif
+
+  if (! SetCR3(val_32))
+    exception(BX_GP_EXCEPTION, 0);
+
+  BX_INSTR_TLB_CNTRL(BX_CPU_ID, BX_INSTR_MOV_CR3, val_32);
+
+  BX_NEXT_TRACE(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::MOV_RdCR3(bxInstruction_c *i)
+{
+  // CPL is always 0 in real mode
+  if (/* !real_mode() && */ CPL!=0) {
+    //BX_ERROR(("%s: CPL!=0 not in real mode", i->getIaOpcodeNameShort()));
+    exception(BX_GP_EXCEPTION, 0);
+  }
+
+#if BX_SUPPORT_SVM
+  if (BX_CPU_THIS_PTR in_svm_guest) {
+    if(SVM_CR_READ_INTERCEPTED(3))
+      Svm_Vmexit(SVM_VMEXIT_CR3_READ, BX_SUPPORT_SVM_EXTENSION(BX_CPUID_SVM_DECODE_ASSIST) ? i->dst() : 0);
+  }
+#endif
+
+#if BX_SUPPORT_VMX
+  if (BX_CPU_THIS_PTR in_vmx_guest)
+    VMexit_CR3_Read(i);
+#endif
+
+  Bit32u val_32 = (Bit32u) BX_CPU_THIS_PTR cr3;
+
+  BX_WRITE_32BIT_REGZ(i->dst(), val_32);
+
+  BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::MOV_CR4Rd(bxInstruction_c *i)
+{
+#if BX_CPU_LEVEL >= 5
+  // CPL is always 0 in real mode
+  if (/* !real_mode() && */ CPL!=0) {
+    //BX_ERROR(("%s: CPL!=0 not in real mode", i->getIaOpcodeNameShort()));
+    exception(BX_GP_EXCEPTION, 0);
+  }
+
+  invalidate_prefetch_q();
+
+  Bit32u val_32 = BX_READ_32BIT_REG(i->src());
+#if BX_SUPPORT_VMX
+  if (BX_CPU_THIS_PTR in_vmx_guest)
+    val_32 = (Bit32u) VMexit_CR4_Write(i, val_32);
+#endif
+  if (! SetCR4(i, val_32))
+    exception(BX_GP_EXCEPTION, 0);
+
+  BX_INSTR_TLB_CNTRL(BX_CPU_ID, BX_INSTR_MOV_CR4, val_32);
+#endif
+
+  BX_NEXT_TRACE(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::MOV_RdCR4(bxInstruction_c *i)
+{
+#if BX_CPU_LEVEL >= 5
+  // CPL is always 0 in real mode
+  if (/* !real_mode() && */ CPL!=0) {
+    //BX_ERROR(("%s: CPL!=0 not in real mode", i->getIaOpcodeNameShort()));
+    exception(BX_GP_EXCEPTION, 0);
+  }
+
+#if BX_SUPPORT_SVM
+  if (BX_CPU_THIS_PTR in_svm_guest) {
+    if(SVM_CR_READ_INTERCEPTED(4))
+      Svm_Vmexit(SVM_VMEXIT_CR4_READ, BX_SUPPORT_SVM_EXTENSION(BX_CPUID_SVM_DECODE_ASSIST) ? i->dst() : 0);
+  }
+#endif
+
+  Bit32u val_32 = (Bit32u) read_CR4(); /* correctly handle VMX */
+
+  BX_WRITE_32BIT_REGZ(i->dst(), val_32);
+#endif
+
+  BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::SGDT_Ms(bxInstruction_c *i)
+{
+  //BX_ASSERT(BX_CPU_THIS_PTR cpu_mode != BX_MODE_LONG_64);
+
+#if BX_CPU_LEVEL >= 5
+  if (CPL!=0 && BX_CPU_THIS_PTR cr4.get_UMIP()) {
+    //BX_ERROR(("SGDT: CPL != 0 causes #GP when CR4.UMIP set"));
+    exception(BX_GP_EXCEPTION, 0);
+  }
+#endif
+
+#if BX_SUPPORT_VMX >= 2
+  if (BX_CPU_THIS_PTR in_vmx_guest)
+    if (BX_CPU_THIS_PTR vmcs.vmexec_ctrls2.DESCRIPTOR_TABLE_VMEXIT())
+      VMexit_Instruction(i, VMX_VMEXIT_GDTR_IDTR_ACCESS, BX_READ);
+#endif
+
+#if BX_SUPPORT_SVM
+  if (BX_CPU_THIS_PTR in_svm_guest) {
+    if (SVM_INTERCEPT(SVM_INTERCEPT0_GDTR_READ)) Svm_Vmexit(SVM_VMEXIT_GDTR_READ);
+  }
+#endif
+
+  Bit16u limit_16 = BX_CPU_THIS_PTR gdtr.limit;
+  Bit32u base_32  = (Bit32u) BX_CPU_THIS_PTR gdtr.base;
+
+  Bit32u eaddr = (Bit32u) BX_CPU_RESOLVE_ADDR_32(i);
+
+  write_virtual_word_32(i->seg(), eaddr, limit_16);
+  write_virtual_dword_32(i->seg(), (eaddr+2) & i->asize_mask(), base_32);
+
+  BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::SIDT_Ms(bxInstruction_c *i)
+{
+#if BX_CPU_LEVEL >= 5
+  if (CPL!=0 && BX_CPU_THIS_PTR cr4.get_UMIP()) {
+    //BX_ERROR(("SIDT: CPL != 0 causes #GP when CR4.UMIP set"));
+    exception(BX_GP_EXCEPTION, 0);
+  }
+#endif
+
+ // BX_ASSERT(BX_CPU_THIS_PTR cpu_mode != BX_MODE_LONG_64);
+
+#if BX_SUPPORT_VMX >= 2
+  if (BX_CPU_THIS_PTR in_vmx_guest)
+    if (BX_CPU_THIS_PTR vmcs.vmexec_ctrls2.DESCRIPTOR_TABLE_VMEXIT())
+      VMexit_Instruction(i, VMX_VMEXIT_GDTR_IDTR_ACCESS, BX_READ);
+#endif
+
+#if BX_SUPPORT_SVM
+  if (BX_CPU_THIS_PTR in_svm_guest) {
+    if (SVM_INTERCEPT(SVM_INTERCEPT0_IDTR_READ)) Svm_Vmexit(SVM_VMEXIT_IDTR_READ);
+  }
+#endif
+
+  Bit16u limit_16 = BX_CPU_THIS_PTR idtr.limit;
+  Bit32u base_32  = (Bit32u) BX_CPU_THIS_PTR idtr.base;
+
+  Bit32u eaddr = (Bit32u) BX_CPU_RESOLVE_ADDR_32(i);
+
+  write_virtual_word_32(i->seg(), eaddr, limit_16);
+  write_virtual_dword_32(i->seg(), (eaddr+2) & i->asize_mask(), base_32);
+
+  BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::LMSW_Ew(bxInstruction_c *i)
+{
+  Bit16u msw;
+
+  // CPL is always 0 in real mode
+  if (/* !real_mode() && */ CPL!=0) {
+    //BX_ERROR(("%s: CPL!=0 not in real mode", i->getIaOpcodeNameShort()));
+    exception(BX_GP_EXCEPTION, 0);
+  }
+
+#if BX_SUPPORT_SVM
+  if (BX_CPU_THIS_PTR in_svm_guest) {
+    if(SVM_CR_WRITE_INTERCEPTED(0)) Svm_Vmexit(SVM_VMEXIT_CR0_WRITE);
+  }
+#endif
+
+  if (i->modC0()) {
+    msw = BX_READ_16BIT_REG(i->src());
+  }
+  else {
+    /* use RMAddr(i) to save address for VMexit */
+    RMAddr(i) = BX_CPU_RESOLVE_ADDR(i);
+    /* pointer, segment address pair */
+    msw = read_virtual_word(i->seg(), RMAddr(i));
+  }
+
+  // LMSW does not affect PG,CD,NW,AM,WP,NE,ET bits, and cannot clear PE
+
+#if BX_SUPPORT_VMX
+  if (BX_CPU_THIS_PTR in_vmx_guest)
+    msw = VMexit_LMSW(i, msw);
+#endif
+
+  // LMSW cannot clear PE
+  if (BX_CPU_THIS_PTR cr0.get_PE())
+    msw |= BX_CR0_PE_MASK; // adjust PE bit to current value of 1
+
+  msw &= 0xf; // LMSW only affects last 4 flags
+
+  Bit32u cr0 = (BX_CPU_THIS_PTR cr0.get32() & 0xfffffff0) | msw;
+  if (! SetCR0(i, cr0))
+    exception(BX_GP_EXCEPTION, 0);
+
+  BX_NEXT_TRACE(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::SMSW_EwR(bxInstruction_c *i)
+{
+#if BX_CPU_LEVEL >= 5
+  if (CPL!=0 && BX_CPU_THIS_PTR cr4.get_UMIP()) {
+    //BX_ERROR(("SMSW: CPL != 0 causes #GP when CR4.UMIP set"));
+    exception(BX_GP_EXCEPTION, 0);
+  }
+#endif
+
+  Bit32u msw = (Bit32u) read_CR0();  // handle CR0 shadow in VMX
+
+  if (i->os32L()) {
+    BX_WRITE_32BIT_REGZ(i->dst(), msw);
+  }
+  else {
+    BX_WRITE_16BIT_REG(i->dst(), msw & 0xffff);
+  }
+
+  BX_NEXT_INSTR(i);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::SMSW_EwM(bxInstruction_c *i)
+{
+#if BX_CPU_LEVEL >= 5
+  if (CPL!=0 && BX_CPU_THIS_PTR cr4.get_UMIP()) {
+    //BX_ERROR(("SMSW: CPL != 0 causes #GP when CR4.UMIP set"));
+    exception(BX_GP_EXCEPTION, 0);
+  }
+#endif
+
+  Bit16u msw = read_CR0() & 0xffff;   // handle CR0 shadow in VMX
+  bx_address eaddr = BX_CPU_RESOLVE_ADDR(i);
+  write_virtual_word(i->seg(), eaddr, msw);
+
+  BX_NEXT_INSTR(i);
+}

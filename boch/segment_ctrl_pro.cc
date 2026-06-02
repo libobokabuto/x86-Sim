@@ -228,6 +228,42 @@ BX_CPU_C::load_null_selector(bx_segment_reg_t* seg, unsigned value)
     invalidate_stack_cache();
 }
 
+BX_CPP_INLINE void BX_CPU_C::validate_seg_reg(unsigned seg)
+{
+    /*
+       FOR (seg = ES, DS, FS, GS)
+       DO
+         IF ((seg.attr.dpl < CPL) && ((seg.attr.type = 'data')
+                  || (seg.attr.type = 'non-conforming-code')))
+         {
+            seg = NULL // can't use lower dpl data segment at higher cpl
+         }
+       END
+    */
+
+    bx_segment_reg_t* segment = &BX_CPU_THIS_PTR sregs[seg];
+
+    if (segment->cache.dpl < CPL)
+    {
+        // invalidate if data or non-conforming code segment
+        if (segment->cache.valid == 0 || segment->cache.segment == 0 ||
+            IS_DATA_SEGMENT(segment->cache.type) ||
+            IS_CODE_SEGMENT_NON_CONFORMING(segment->cache.type))
+        {
+            segment->selector.value = 0;
+            segment->cache.valid = 0;
+        }
+    }
+}
+
+void BX_CPU_C::validate_seg_regs(void)
+{
+    validate_seg_reg(BX_SEG_REG_ES);
+    validate_seg_reg(BX_SEG_REG_DS);
+    validate_seg_reg(BX_SEG_REG_FS);
+    validate_seg_reg(BX_SEG_REG_GS);
+}
+
 void parse_selector(Bit16u raw_selector, bx_selector_t* selector)
 {
     //275

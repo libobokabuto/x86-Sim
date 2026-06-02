@@ -450,6 +450,57 @@ void BX_CPP_AttrRegparmN(3) BX_CPU_C::VMexit_IO(bxInstruction_c* i, unsigned por
     }
 }
 
+bool BX_CPU_C::VMexit_CLTS(void)
+{
+    //BX_ASSERT(BX_CPU_THIS_PTR in_vmx_guest);
+
+    VMCS_CACHE* vm = &BX_CPU_THIS_PTR vmcs;
+
+    if (vm->vm_cr0_mask & vm->vm_cr0_read_shadow & 0x8)
+    {
+        // all rest of the fields cleared to zero
+        Bit64u qualification = VMX_VMEXIT_CR_ACCESS_CLTS << 4;
+
+        VMexit(VMX_VMEXIT_CR_ACCESS, qualification);
+    }
+
+    if ((vm->vm_cr0_mask & 0x8) != 0 && (vm->vm_cr0_read_shadow & 0x8) == 0)
+        return true; /* do not clear CR0.TS */
+    else
+        return false;
+}
+
+Bit32u BX_CPP_AttrRegparmN(2) BX_CPU_C::VMexit_LMSW(bxInstruction_c* i, Bit32u msw)
+{
+    //BX_ASSERT(BX_CPU_THIS_PTR in_vmx_guest);
+
+    VMCS_CACHE* vm = &BX_CPU_THIS_PTR vmcs;
+    Bit32u mask = vm->vm_cr0_mask & 0xF; /* LMSW affects only low 4 bits */
+    bool vmexit = false;
+
+    if ((mask & msw & 0x1) != 0 && (vm->vm_cr0_read_shadow & 0x1) == 0)
+        vmexit = true;
+
+    if ((mask & vm->vm_cr0_read_shadow & 0xE) != (mask & msw & 0xE))
+        vmexit = true;
+
+    if (vmexit) {
+        //BX_DEBUG(("VMEXIT: CR0 write by LMSW of value 0x%04x", msw));
+
+        Bit64u qualification = VMX_VMEXIT_CR_ACCESS_LMSW << 4;
+        qualification |= msw << 16;
+        if (!i->modC0()) {
+            qualification |= (1 << 6); // memory operand
+            VMwrite_natural(VMCS_GUEST_LINEAR_ADDR, get_laddr(i->seg(), RMAddr(i)));
+        }
+
+        VMexit(VMX_VMEXIT_CR_ACCESS, qualification);
+    }
+
+    // keep untouched all the bits set in CR0 mask
+    return (BX_CPU_THIS_PTR cr0.get32() & mask) | (msw & ~mask);
+}
+
 bx_address BX_CPP_AttrRegparmN(2) BX_CPU_C::VMexit_CR0_Write(bxInstruction_c* i, bx_address val)
 {//565
     //BX_ASSERT(BX_CPU_THIS_PTR in_vmx_guest);
@@ -465,6 +516,51 @@ bx_address BX_CPP_AttrRegparmN(2) BX_CPU_C::VMexit_CR0_Write(bxInstruction_c* i,
 
     // keep untouched all the bits set in CR0 mask
     return (BX_CPU_THIS_PTR cr0.get32() & vm->vm_cr0_mask) | (val & ~vm->vm_cr0_mask);
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::VMexit_CR3_Read(bxInstruction_c* i)
+{
+    //BX_ASSERT(BX_CPU_THIS_PTR in_vmx_guest);
+
+    if (BX_CPU_THIS_PTR vmcs.vmexec_ctrls1.CR3_READ_VMEXIT()) {
+        //BX_DEBUG(("VMEXIT: CR3 read"));
+        Bit64u qualification = 3 | (VMX_VMEXIT_CR_ACCESS_CR_READ << 4) | (i->dst() << 8);
+        VMexit(VMX_VMEXIT_CR_ACCESS, qualification);
+    }
+}
+
+void BX_CPP_AttrRegparmN(2) BX_CPU_C::VMexit_CR3_Write(bxInstruction_c* i, bx_address val)
+{
+    //BX_ASSERT(BX_CPU_THIS_PTR in_vmx_guest);
+
+    VMCS_CACHE* vm = &BX_CPU_THIS_PTR vmcs;
+
+    if (vm->vmexec_ctrls1.CR3_WRITE_VMEXIT()) {
+        for (unsigned n = 0; n < vm->vm_cr3_target_cnt; n++) {
+            if (vm->vm_cr3_target_value[n] == val) return;
+        }
+
+        //BX_DEBUG(("VMEXIT: CR3 write"));
+        Bit64u qualification = 3 | (i->src() << 8);
+        VMexit(VMX_VMEXIT_CR_ACCESS, qualification);
+    }
+}
+
+bx_address BX_CPP_AttrRegparmN(2) BX_CPU_C::VMexit_CR4_Write(bxInstruction_c* i, bx_address val)
+{
+    //BX_ASSERT(BX_CPU_THIS_PTR in_vmx_guest);
+
+    VMCS_CACHE* vm = &BX_CPU_THIS_PTR vmcs;
+
+    if ((vm->vm_cr4_mask & vm->vm_cr4_read_shadow) != (vm->vm_cr4_mask & val))
+    {
+        //BX_DEBUG(("VMEXIT: CR4 write"));
+        Bit64u qualification = 4 | (i->src() << 8);
+        VMexit(VMX_VMEXIT_CR_ACCESS, qualification);
+    }
+
+    // keep untouched all the bits set in CR4 mask
+    return (BX_CPU_THIS_PTR cr4.get32() & vm->vm_cr4_mask) | (val & ~vm->vm_cr4_mask);
 }
 
 void BX_CPP_AttrRegparmN(1) BX_CPU_C::VMexit_CR8_Read(bxInstruction_c* i)

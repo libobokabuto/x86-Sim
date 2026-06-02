@@ -109,6 +109,9 @@ struct bx_cr4_t {
     BX_CPP_INLINE void set32(Bit32u val) { val32 = val; }
 };//156
 #endif  // #if BX_CPU_LEVEL >= 5
+
+const Bit32u BX_CR4_FLUSH_TLB_MASK = (BX_CR4_PSE_MASK | BX_CR4_PAE_MASK | BX_CR4_PGE_MASK | BX_CR4_LA57_MASK | BX_CR4_PCIDE_MASK | BX_CR4_SMEP_MASK | BX_CR4_SMAP_MASK | BX_CR4_PKE_MASK | BX_CR4_CET_MASK | BX_CR4_PKS_MASK | BX_CR4_LASS_MASK);
+
 struct bx_dr6_t {
     Bit32u val32; // 32bit value of register
 
