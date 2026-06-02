@@ -317,6 +317,11 @@ Bit64u bx_pc_system_c::time_usec()
     return (Bit64u)(((double)(Bit64s)time_ticks()) / m_ips);
 }
 
+Bit64u bx_pc_system_c::time_nsec()
+{
+    return (Bit64u)(((double)(Bit64s)time_ticks()) / m_ips * 1000.0);
+}
+
 void bx_pc_system_c::deactivate_timer(unsigned i)
 { //563
 #if BX_TIMER_DEBUG
@@ -391,6 +396,24 @@ void bx_pc_system_c::activate_timer(unsigned i, Bit32u useconds, bool continuous
             ticks = MinAllowableTimerPeriod;
         }
 
+        timer[i].period = ticks;
+    }
+
+    activate_timer_ticks(i, ticks, continuous);
+}
+
+void bx_pc_system_c::activate_timer_nsec(unsigned i, Bit64u nseconds, bool continuous)
+{
+    Bit64u ticks;
+
+    if (nseconds == 0) {
+        ticks = timer[i].period;
+    }
+    else {
+        ticks = (Bit64u)(double(nseconds) * m_ips / 1000.0);
+        if (ticks < MinAllowableTimerPeriod) {
+            ticks = MinAllowableTimerPeriod;
+        }
         timer[i].period = ticks;
     }
 

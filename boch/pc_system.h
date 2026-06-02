@@ -52,6 +52,7 @@ public:
 		bool continuous, bool active, const char* id);
 	void   setTimerParam(unsigned timerID, Bit32u param);//95
 	void   activate_timer(unsigned timer_index, Bit32u useconds, bool continuous); //97
+	void   activate_timer_nsec(unsigned timer_index, Bit64u nseconds, bool continuous);
 
 	void   deactivate_timer(unsigned timer_index); //99
 	
@@ -86,6 +87,7 @@ public:
 	void activate_timer_ticks(unsigned index, Bit64u instructions, bool continuous); //125
 	
 	Bit64u time_usec();
+	Bit64u time_nsec();
 
 	static BX_CPP_INLINE Bit64u time_ticks() {
 		return bx_pc_system.ticksTotal +

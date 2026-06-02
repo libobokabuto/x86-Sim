@@ -20,12 +20,7 @@ typedef enum {
 	BX_TOOLBAR_USB_DEBUG
 } bx_toolbar_buttons;
 
-//#define BX_LOG_OPTS_EXCLUDE(type, choice)  (             \
-   /* can't die, ask or warn, on debug or info events */ \
-   (type <= LOGLEV_INFO && (choice >= ACT_WARN))         \
-   /* can't ignore panics */                             \
-   || (type == LOGLEV_PANIC && choice == ACT_IGNORE)     \
-   )
+// Log option filtering is not used in this trimmed build.
 
 // floppy / cdrom media status
 enum { BX_EJECTED = 0, BX_INSERTED = 1 };

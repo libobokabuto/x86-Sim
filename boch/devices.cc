@@ -1,6 +1,6 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include "iodev.h"
-
+#include "virt_timer.h"
 #include "instrument.h"
 #include "soundmod.h"
 #include "debug.h"
@@ -29,6 +29,16 @@ bx_devices_c::bx_devices_c()
     for (unsigned i = 0; i < BX_MAX_IRQS; i++) {
         irq_handler_name[i] = NULL;
     }
+    timer_handle = BX_NULL_TIMER_HANDLE;
+    mouse_captured = false;
+    mouse_type = 0;
+    paste.buf = NULL;
+    paste.buf_len = 0;
+    paste.buf_ptr = 0;
+    paste.delay = 1;
+    paste.counter = 0;
+    paste.service = 0;
+    paste.stop = 0;
     sound_device_count = 0;
 }
 
@@ -46,7 +56,10 @@ bx_devices_c::~bx_devices_c()
 #if BX_SUPPORT_PCIUSB
     //bx_usbdev_ctl.exit();
 #endif
-
+    if (bx_gui != NULL) {
+        delete bx_gui;
+        bx_gui = NULL;
+    }
 
 }
 
@@ -85,12 +98,20 @@ void bx_devices_c::init(BX_MEM_C* newmem)
     unsigned chipset = 1;
     unsigned max_pci_slots = BX_N_PCI_SLOTS;
 #endif
+
+#if BX_SUPPORT_PCIUSB
+    bool load_uhci = false;
+#endif
+
     unsigned i, argc;
     const char def_name[] = "Default";
     const char* options;
     char* argv[16];
 
     mem = newmem;
+    if (bx_gui == NULL) {
+        bx_gui = new bx_gui_c();
+    }
 
     /* set builtin default handlers, will be overwritten by the real default handler */
     register_default_io_read_handler(NULL, &default_read_handler, def_name, 7);
@@ -126,8 +147,24 @@ void bx_devices_c::init(BX_MEM_C* newmem)
         bx_mouse[i].enq_event = NULL;
         bx_mouse[i].enabled_changed = NULL;
     }
+    mouse_captured = true;
+    mouse_type = 0;
+    paste.buf = NULL;
+    paste.buf_len = 0;
+    paste.buf_ptr = 0;
+    paste.delay = 1;
+    paste.counter = 0;
+    paste.service = 0;
+    paste.stop = 0;
 
+    // Source: devices init early initializes virtual timers here.
+    // 需要先补 bx_virt_timer_c::init()，否则这行会编译不过。
+    bx_virt_timer.init();
 
+    // Source also has bx_slowdown_timer.init().
+    // 当前裁剪项目没有 slowdown_timer.cc/.h，先不打开。
+    // bx_slowdown_timer.init();
+    // 
     // Source:
     // pci.enabled = SIM->get_param_bool(BXPN_PCI_ENABLED)->get();
     //
@@ -151,10 +188,23 @@ void bx_devices_c::init(BX_MEM_C* newmem)
         PLUG_load_plugin(pci, PLUGTYPE_CORE);
         PLUG_load_plugin(pci2isa, PLUGTYPE_CORE);
     }
+#if BX_SUPPORT_PCIUSB
+    if ((chipset == BX_PCI_CHIPSET_I440FX) ||
+        (chipset == BX_PCI_CHIPSET_I440BX)) {
+        // UHCI is a part of the PIIX3/PIIX4, so load it later in the visible chain.
+        load_uhci = true;
+    }
 #endif
     if ((pci.advopts & BX_PCI_ADVOPT_NOACPI) == 0) {
         PLUG_load_plugin(acpi, PLUGTYPE_STANDARD);
     }
+
+    if ((pci.advopts & BX_PCI_ADVOPT_NOHPET) == 0) {
+        PLUG_load_plugin(hpet, PLUGTYPE_STANDARD);
+    }
+
+#endif
+    
     PLUG_load_plugin(cmos, PLUGTYPE_CORE); //238
 
     PLUG_load_plugin(dma, PLUGTYPE_CORE); //239
@@ -163,16 +213,33 @@ void bx_devices_c::init(BX_MEM_C* newmem)
 
     PLUG_load_plugin(pit, PLUGTYPE_CORE);
 
+    if (pluginVgaDevice == &stubVga) {
+        PLUG_load_plugin(vga, PLUGTYPE_VGA);
+    }
+
+    PLUG_load_plugin(floppy, PLUGTYPE_CORE);
+
+#if BX_SUPPORT_APIC
+    PLUG_load_plugin(ioapic, PLUGTYPE_STANDARD);
+#endif
+
     PLUG_load_plugin(keyboard, PLUGTYPE_STANDARD); //250
 
+    const bool harddrv_enabled = true;
+
+    if (harddrv_enabled) {
+        PLUG_load_plugin(harddrv, PLUGTYPE_STANDARD);
 #if BX_SUPPORT_PCI
-    if (pci.enabled) {
-        PLUG_load_plugin(pci_ide, PLUGTYPE_STANDARD);
-    }
+        if (pci.enabled) {
+            PLUG_load_plugin(pci_ide, PLUGTYPE_STANDARD);
+        }
 #endif
+    }
+
+    PLUG_load_plugin(biosdev, PLUGTYPE_OPTIONAL);
+
 #if BX_SUPPORT_PCIUSB
-    if ((chipset == BX_PCI_CHIPSET_I440FX) ||
-        (chipset == BX_PCI_CHIPSET_I440BX)) {
+    if (load_uhci) {
         // UHCI is a part of the PIIX3/PIIX4, so load / enable it
         if (!PLUG_device_present("usb_uhci")) {
             PLUG_load_plugin(usb_uhci, PLUGTYPE_OPTIONAL);
@@ -184,8 +251,6 @@ void bx_devices_c::init(BX_MEM_C* newmem)
     PLUG_load_plugin(parallel, PLUGTYPE_OPTIONAL); //自己加的按 PLUGTYPE_OPTIONAL 加载，不按 CORE
 
     PLUG_load_plugin(serial, PLUGTYPE_OPTIONAL);//同parallel一样
-
-    PLUG_load_plugin(biosdev, PLUGTYPE_OPTIONAL);
 
     PLUG_load_plugin(speaker, PLUGTYPE_OPTIONAL);
 
@@ -270,6 +335,23 @@ void bx_devices_c::reset(unsigned type)
     if (paste.buf != NULL) {
         paste.stop = 1;
     }
+}
+
+void bx_devices_c::register_state(void)
+{
+}
+
+void bx_devices_c::after_restore_state(void)
+{
+}
+
+void bx_devices_c::exit(void)
+{
+    if (paste.buf != NULL) {
+        delete[] paste.buf;
+        paste.buf = NULL;
+    }
+    init_stubs();
 }
 
 Bit32u bx_devices_c::read_handler(void* this_ptr, Bit32u address, unsigned io_len)
@@ -413,6 +495,20 @@ void bx_devices_c::default_write_handler(void* this_ptr, Bit32u address, Bit32u 
 {
     //610
     UNUSED(this_ptr);
+}
+
+void bx_devices_c::timer_handler(void* this_ptr)
+{
+    bx_devices_c* class_ptr = (bx_devices_c*)this_ptr;
+    class_ptr->timer();
+}
+
+void bx_devices_c::timer(void)
+{
+    if (++paste.counter >= paste.delay) {
+        service_paste_buf();
+        paste.counter = 0;
+    }
 }
 
 bool bx_devices_c::register_irq(unsigned irq, const char* name)
@@ -978,6 +1074,17 @@ void bx_devices_c::gen_scancode(Bit32u key)
     }
 }
 
+Bit8u bx_devices_c::kbd_get_elements(void)
+{
+    if ((bx_keyboard[1].dev != NULL) && (bx_keyboard[1].get_elements != NULL)) {
+        return bx_keyboard[1].get_elements(bx_keyboard[1].dev);
+    }
+    if ((bx_keyboard[0].dev != NULL) && (bx_keyboard[0].get_elements != NULL)) {
+        return bx_keyboard[0].get_elements(bx_keyboard[0].dev);
+    }
+    return BX_KBD_ELEMENTS;
+}
+
 void bx_devices_c::release_keys()
 {//1230
     for (int i = 0; i < BX_KEY_NBKEYS; i++) {
@@ -995,8 +1102,67 @@ void bx_devices_c::kbd_set_indicator(Bit8u devid, Bit8u ledid, bool state)
     }
 }
 
+void bx_devices_c::service_paste_buf(void)
+{
+    if (paste.buf == NULL) {
+        return;
+    }
+    delete[] paste.buf;
+    paste.buf = NULL;
+    paste.buf_len = 0;
+    paste.buf_ptr = 0;
+    paste.stop = 0;
+    paste.service = 0;
+}
 
+void bx_devices_c::paste_delay_changed(Bit32u value)
+{
+    paste.delay = value / BX_IODEV_HANDLER_PERIOD;
+    if (paste.delay == 0) {
+        paste.delay = 1;
+    }
+    paste.counter = 0;
+}
 
+void bx_devices_c::paste_bytes(Bit8u* data, Bit32s length)
+{
+    if (paste.buf != NULL) {
+        delete[] paste.buf;
+    }
+    paste.buf = data;
+    paste.buf_ptr = 0;
+    paste.buf_len = (length > 0) ? (Bit32u)length : 0;
+    paste.stop = 0;
+    paste.service = 0;
+    service_paste_buf();
+}
+
+void bx_devices_c::mouse_enabled_changed(bool enabled)
+{
+    mouse_captured = enabled;
+
+    if ((bx_mouse[1].dev != NULL) && (bx_mouse[1].enabled_changed != NULL)) {
+        bx_mouse[1].enabled_changed(bx_mouse[1].dev, enabled);
+        return;
+    }
+    if ((bx_mouse[0].dev != NULL) && (bx_mouse[0].enabled_changed != NULL)) {
+        bx_mouse[0].enabled_changed(bx_mouse[0].dev, enabled);
+    }
+}
+
+void bx_devices_c::mouse_motion(int delta_x, int delta_y, int delta_z, unsigned button_state, bool absxy)
+{
+    if (!mouse_captured) {
+        return;
+    }
+    if ((bx_mouse[1].dev != NULL) && (bx_mouse[1].enq_event != NULL)) {
+        bx_mouse[1].enq_event(bx_mouse[1].dev, delta_x, delta_y, delta_z, button_state, absxy);
+        return;
+    }
+    if ((bx_mouse[0].dev != NULL) && (bx_mouse[0].enq_event != NULL)) {
+        bx_mouse[0].enq_event(bx_mouse[0].dev, delta_x, delta_y, delta_z, button_state, absxy);
+    }
+}
 
 #if BX_SUPPORT_PCI//1367
 
@@ -1227,6 +1393,71 @@ void bx_pci_device_c::after_restore_pci_state(memory_handler_t mem_read_handler)
             //BX_INFO(("new ROM address: 0x%08x", pci_rom_address));
         }
     }
+}
+
+void bx_pci_device_c::load_pci_rom(const char* path)
+{
+    struct stat stat_buf;
+    int fd, ret;
+    unsigned long size, max_size, offset;
+
+    if ((path == NULL) || (*path == '\0')) {
+        pci_rom_size = 0;
+        return;
+    }
+
+    fd = open(path, O_RDONLY
+#ifdef O_BINARY
+        | O_BINARY
+#endif
+    );
+    if (fd < 0) {
+        pci_rom_size = 0;
+        return;
+    }
+
+    ret = fstat(fd, &stat_buf);
+    if (ret != 0) {
+        close(fd);
+        pci_rom_size = 0;
+        return;
+    }
+
+    max_size = 0x20000;
+    size = (unsigned long)stat_buf.st_size;
+    if ((size == 0) || (size > max_size) || ((size % 512) != 0)) {
+        close(fd);
+        pci_rom_size = 0;
+        return;
+    }
+
+    while ((size - 1) < max_size) {
+        max_size >>= 1;
+    }
+
+    if (pci_rom != NULL) {
+        delete[] pci_rom;
+        pci_rom = NULL;
+    }
+
+    pci_rom_size = (max_size << 1);
+    pci_rom = new Bit8u[pci_rom_size];
+    memset(pci_rom, 0xff, pci_rom_size);
+
+    offset = 0;
+    size = (unsigned long)stat_buf.st_size;
+    while (offset < size) {
+        ret = read(fd, (void*)(pci_rom + offset), size - offset);
+        if (ret <= 0) {
+            delete[] pci_rom;
+            pci_rom = NULL;
+            pci_rom_size = 0;
+            close(fd);
+            return;
+        }
+        offset += ret;
+    }
+    close(fd);
 }
 
 void bx_pci_device_c::pci_write_handler_common(Bit8u address, Bit32u value, unsigned io_len)

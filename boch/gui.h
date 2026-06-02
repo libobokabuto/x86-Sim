@@ -1,6 +1,10 @@
 #pragma once
 #include "siminterface.h"
 #define BX_MAX_STATUSITEMS 10 //41
+#define BX_TEXT_BLINK_MODE      0x01
+#define BX_TEXT_BLINK_TOGGLE    0x02
+#define BX_TEXT_BLINK_STATE     0x04
+
 typedef struct {
 	Bit16u  start_address;
 	Bit8u   cs_start;
@@ -15,20 +19,56 @@ typedef struct {
 	Bit8u   actl_palette[16];
 } bx_vga_tminfo_t;
 
+typedef struct {
+	Bit16u bpp, pitch;
+	Bit8u red_shift, green_shift, blue_shift;
+	Bit8u is_indexed, is_little_endian;
+	unsigned long red_mask, green_mask, blue_mask;
+	bool snapshot_mode;
+} bx_svga_tileinfo_t;
+
 BOCHSAPI extern class bx_gui_c* bx_gui;  //116
 
 class BOCHSAPI bx_gui_c {
 public: //127
 	bx_gui_c(void);
 	virtual ~bx_gui_c();
+	virtual void specific_init(int argc, char** argv, unsigned header_bar_y) {}
+	virtual void text_update(Bit8u* old_text, Bit8u* new_text,
+		unsigned long cursor_x, unsigned long cursor_y,
+		bx_vga_tminfo_t* tm_info) {}
+	virtual void graphics_tile_update(Bit8u* tile, unsigned x, unsigned y) {}
+	virtual void handle_events(void) {}
+	virtual void flush(void) {}
+	virtual void clear_screen(void);
+	virtual bool palette_change(Bit8u index, Bit8u red, Bit8u green, Bit8u blue) { return false; }
+	virtual void dimension_update(unsigned x, unsigned y, unsigned fheight = 0,
+		unsigned fwidth = 0, unsigned bpp = 8);
+	virtual bx_svga_tileinfo_t* graphics_tile_info(bx_svga_tileinfo_t* info);
+	virtual Bit8u* graphics_tile_get(unsigned x, unsigned y, unsigned* w, unsigned* h);
+	virtual void graphics_tile_update_in_place(unsigned x, unsigned y, unsigned w, unsigned h) {}
 	virtual void statusbar_setitem_specific(int element, bool active, bool w) {} //160
 	virtual void beep_on(float frequency);//181
 	virtual void beep_off();//182
+	virtual void get_capabilities(Bit16u* xres, Bit16u* yres, Bit16u* bpp);
+	static void set_text_charmap(Bit8u map, Bit8u* fbuffer);
+	void init(int argc, char** argv, unsigned max_xres, unsigned max_yres,
+		unsigned x_tilesize, unsigned y_tilesize);
+	void text_update_common(Bit8u* old_text, Bit8u* new_text,
+		Bit16u cursor_address, bx_vga_tminfo_t* tm_info);
+	void graphics_tile_update_common(Bit8u* tile, unsigned x, unsigned y);
+	bx_svga_tileinfo_t* graphics_tile_info_common(bx_svga_tileinfo_t* info);
+	Bit8u* get_snapshot_buffer(void) { return snapshot_buffer; }
+	bool palette_change_common(Bit8u index, Bit8u red, Bit8u green, Bit8u blue);
 	int register_statusitem(const char* text, bool auto_off = 0); //209
 	void statusbar_setitem(int element, bool active, bool w = 0); //211
 protected: //247
 	unsigned bx_headerbar_entries; //300
 	Bit8u vga_charmap[2][0x2000]; //310
+	unsigned max_xres;
+	unsigned max_yres;
+	unsigned x_tilesize;
+	unsigned y_tilesize;
 	unsigned statusitem_count;//314
 	int led_timer_index; //315
 	struct {

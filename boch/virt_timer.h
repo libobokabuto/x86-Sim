@@ -83,8 +83,13 @@ public:
 
     void deactivate_timer(unsigned timer_index);
 
+    static void pc_system_timer_handler_0(void* this_ptr);
+    static void pc_system_timer_handler_1(void* this_ptr);
     void timer_handler(bool mode);
     void setup(void);
+    void init(void);
+    void register_state(void);
+    void set_realtime_delay(void);
 
 };
 

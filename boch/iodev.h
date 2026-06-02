@@ -44,7 +44,8 @@ public:
     virtual ~bx_devmodel_c() {}
     virtual void init(void) {}
     virtual void reset(unsigned type) {}
-
+    virtual void register_state(void) {}
+    virtual void after_restore_state(void) {}
 };
 
 class bx_list_c;
@@ -52,21 +53,8 @@ class device_image_t;
 class cdrom_base_c;
 
 #if BX_SUPPORT_PCI
-//#define BX_DEBUG_PCI_READ(addr, value, io_len) \
-  if (io_len == 1) \
-    BX_DEBUG(("read  PCI register 0x%02X value 0x%02X (len=1)", address, value)); \
-  else if (io_len == 2) \
-    BX_DEBUG(("read  PCI register 0x%02X value 0x%04X (len=2)", address, value)); \
-  else if (io_len == 4) \
-    BX_DEBUG(("read  PCI register 0x%02X value 0x%08X (len=4)", address, value));
-
-//#define BX_DEBUG_PCI_WRITE(addr, value, io_len) \
-  if (io_len == 1) \
-    BX_DEBUG(("write PCI register 0x%02X value 0x%02X (len=1)", addr, value)); \
-  else if (io_len == 2) \
-    BX_DEBUG(("write PCI register 0x%02X value 0x%04X (len=2)", addr, value)); \
-  else if (io_len == 4) \
-    BX_DEBUG(("write PCI register 0x%02X value 0x%08X (len=4)", addr, value));
+#define BX_DEBUG_PCI_READ(addr, value, io_len) do {} while (0)
+#define BX_DEBUG_PCI_WRITE(addr, value, io_len) do {} while (0)
 
 enum {
     BX_PCI_BAR_TYPE_NONE = 0,
@@ -119,7 +107,7 @@ public:
     void init_bar_mem(Bit8u num, Bit32u size, memory_handler_t rh, memory_handler_t wh);
     void register_pci_state(bx_list_c* list);
     void after_restore_pci_state(memory_handler_t mem_read_handler);
-    
+    void load_pci_rom(const char* path);
     void set_name(const char* name) { pci_name = name; }
     const char* get_name(void) { return pci_name; }
 
@@ -136,8 +124,7 @@ protected:
 };
 #endif
 //192
-#define STUBFUNC(dev,method) \
-   pluginlog->panic("%s called in %s stub. you must not have loaded the %s plugin", #dev, #method, #dev)
+#define STUBFUNC(dev,method) do {} while (0)
 
 
 class BOCHSAPI bx_hard_drive_stub_c : public bx_devmodel_c {
@@ -177,6 +164,7 @@ public:
 class BOCHSAPI bx_pit_stub_c : public bx_devmodel_c {
     //228
 public:
+    virtual void enable_irq(bool enabled) {}
 };
 class BOCHSAPI bx_dma_stub_c : public bx_devmodel_c {
     //235
@@ -238,6 +226,32 @@ class BOCHSAPI bx_vga_stub_c
     : public bx_devmodel_c
 #endif
 {
+public:
+    virtual void vga_redraw_area(unsigned x0, unsigned y0, unsigned width,
+        unsigned height) {}
+
+    virtual Bit8u mem_read(bx_phy_address addr) {
+        return 0;
+    }
+
+    virtual void mem_write(bx_phy_address addr, Bit8u value) {}
+
+    virtual void get_text_snapshot(Bit8u** text_snapshot,
+        unsigned* txHeight, unsigned* txWidth) {
+        if (text_snapshot != NULL) {
+            *text_snapshot = NULL;
+        }
+        if (txHeight != NULL) {
+            *txHeight = 0;
+        }
+        if (txWidth != NULL) {
+            *txWidth = 0;
+        }
+    }
+
+    virtual void set_override(bool enabled, void* dev) {}
+
+    virtual void refresh_display(void* this_ptr, bool redraw) {}
 };
 class BOCHSAPI bx_speaker_stub_c : public bx_devmodel_c {
 public:
@@ -304,6 +318,9 @@ public:
     void init_stubs(void);
     void init(BX_MEM_C*);//383
     void reset(unsigned type);
+    void exit(void);
+    void register_state(void);
+    void after_restore_state(void);
 
     BX_MEM_C* mem;//392
     bool register_io_read_handler(void* this_ptr, bx_read_handler_t f,
@@ -342,8 +359,12 @@ public:
     void register_removable_mouse(void* dev, bx_mouse_enq_t mouse_enq, bx_mouse_enabled_changed_t mouse_enabled_changed);
     void unregister_removable_mouse(void* dev);
     void gen_scancode(Bit32u key);//427
+    Bit8u kbd_get_elements(void);
     void release_keys(void);//429
+    void paste_bytes(Bit8u* data, Bit32s length);
     void kbd_set_indicator(Bit8u devid, Bit8u ledid, bool state); //431
+    void mouse_enabled_changed(bool enabled);
+    void mouse_motion(int delta_x, int delta_y, int delta_z, unsigned button_state, bool absxy);
     void add_sound_device(void);
     void remove_sound_device(void);//435
 #if BX_SUPPORT_PCI
@@ -358,6 +379,8 @@ public:
         const Bit8u* iomask, const char* name);
 #endif
     bool is_agp_present();
+    static void timer_handler(void*);
+    void timer(void);
 
     bx_cmos_stub_c* pluginCmosDevice;
     bx_dma_stub_c* pluginDmaDevice;
@@ -430,7 +453,12 @@ private:
     static Bit32u default_read_handler(void* this_ptr, Bit32u address, unsigned io_len);//535
     static void   default_write_handler(void* this_ptr, Bit32u address, Bit32u value, unsigned io_len);//536
     
-    
+    void paste_delay_changed(Bit32u value);
+    void service_paste_buf(void);
+
+    bool mouse_captured;
+    Bit8u mouse_type;
+
     struct { //545
         void* dev;
         bx_mouse_enq_t enq_event;

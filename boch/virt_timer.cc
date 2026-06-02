@@ -241,8 +241,59 @@ void bx_virt_timer_c::setup(void)
         s[i].last_sequential_time = 0;
         s[i].virtual_next_event_time = BX_MAX_VIRTUAL_TIME;
         s[i].current_virtual_time = 0;
+        s[i].system_timer_id = BX_NULL_TIMER_HANDLE;
     }
     init_done = 0;
+}
+
+void bx_virt_timer_c::init(void)
+{
+    if (init_done) {
+        return;
+    }
+
+    ips = 15000000;
+
+    register_timer(this, nullTimer, (Bit32u)NullTimerInterval, 1, 1, 0, "Null Timer #1");
+    register_timer(this, nullTimer, (Bit32u)NullTimerInterval, 1, 1, 1, "Null Timer #2");
+
+    s[0].system_timer_id = bx_pc_system.register_timer(this, pc_system_timer_handler_0,
+        (Bit32u)s[0].virtual_next_event_time, 0, 1, "Virtual Timer #0");
+    s[1].system_timer_id = bx_pc_system.register_timer(this, pc_system_timer_handler_1,
+        (Bit32u)s[1].virtual_next_event_time, 0, 1, "Virtual Timer #1");
+
+#if BX_HAVE_REALTIME_USEC
+    last_real_time = GET_VIRT_REALTIME64_USEC();
+#else
+    last_real_time = 0;
+#endif
+    total_real_usec = 0;
+    last_realtime_delta = 0;
+    real_time_delay = 0;
+    last_usec = 0;
+    usec_per_second = USEC_PER_SECOND;
+    stored_delta = 0;
+    last_system_usec = 0;
+    em_last_realtime = 0;
+    total_ticks = 0;
+    last_realtime_ticks = 0;
+    ticks_per_second = USEC_PER_SECOND;
+
+    init_done = 1;
+}
+
+void bx_virt_timer_c::register_state(void)
+{
+}
+
+void bx_virt_timer_c::pc_system_timer_handler_0(void* this_ptr)
+{
+    ((bx_virt_timer_c*)this_ptr)->timer_handler(0);
+}
+
+void bx_virt_timer_c::pc_system_timer_handler_1(void* this_ptr)
+{
+    ((bx_virt_timer_c*)this_ptr)->timer_handler(1);
 }
 
 void bx_virt_timer_c::timer_handler(bool mode)
@@ -339,7 +390,7 @@ void bx_virt_timer_c::timer_handler(bool mode)
         }
         usec_per_second = ALPHA_LOWER(a, b);
 #else
-        BX_ASSERT(0);
+        (void)ticks_delta;
 #endif
 #if BX_HAVE_REALTIME_USEC
         advance_virtual_time(ticks_delta, 1);
@@ -352,4 +403,13 @@ void bx_virt_timer_c::timer_handler(bool mode)
     bx_pc_system.activate_timer(s[1].system_timer_id,
         (Bit32u)BX_MIN(0x7FFFFFFF, BX_MAX(1, TICKS_TO_USEC(s[1].virtual_next_event_time))),
         0);
+}
+
+void bx_virt_timer_c::set_realtime_delay(void)
+{
+#if BX_HAVE_REALTIME_USEC
+    real_time_delay = GET_VIRT_REALTIME64_USEC() - last_real_time;
+#else
+    real_time_delay = 0;
+#endif
 }

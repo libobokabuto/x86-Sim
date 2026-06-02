@@ -145,6 +145,7 @@
     <ClCompile Include="ctrl_xfer32.cc" />
     <ClCompile Include="ctrl_xfer_pro.cc" />
     <ClCompile Include="dbg_main.cc" />
+    <ClCompile Include="ddc.cc" />
     <ClCompile Include="devices.cc" />
     <ClCompile Include="disasm.cc" />
     <ClCompile Include="dma.cc" />
@@ -167,11 +168,15 @@
     </ClCompile>
     <ClCompile Include="fetchdecode_opmap_evex.cc" />
     <ClCompile Include="flag_ctrl_pro.cc" />
+    <ClCompile Include="floppy.cc" />
     <ClCompile Include="gui.cc" />
+    <ClCompile Include="harddrv.cc" />
+    <ClCompile Include="hpet.cc" />
     <ClCompile Include="i486dx4.cc" />
     <ClCompile Include="icache.cc" />
     <ClCompile Include="init.cc" />
     <ClCompile Include="io.cc" />
+    <ClCompile Include="ioapic.cc" />
     <ClCompile Include="iret.cc" />
     <ClCompile Include="jmp_far.cc" />
     <ClCompile Include="keyboard.cc" />
@@ -214,6 +219,8 @@
     <ClCompile Include="usb_pcap.cc" />
     <ClCompile Include="usb_uhci.cc" />
     <ClCompile Include="vapic.cc" />
+    <ClCompile Include="vga.cc" />
+    <ClCompile Include="vgacore.cc" />
     <ClCompile Include="virt_timer.cc" />
     <ClCompile Include="vm8086.cc" />
     <ClCompile Include="vmcs.cc" />
@@ -237,17 +244,21 @@
     <ClInclude Include="cpuid.h" />
     <ClInclude Include="cpustats.h" />
     <ClInclude Include="crregs.h" />
+    <ClInclude Include="ddc.h" />
     <ClInclude Include="debug.h" />
     <ClInclude Include="decoder.h" />
     <ClInclude Include="descriptor.h" />
     <ClInclude Include="dma.h" />
     <ClInclude Include="extplugin.h" />
     <ClInclude Include="features.h" />
+    <ClInclude Include="floppy.h" />
     <ClCompile Include="fetchdecode_opmap_0f3a.cc" />
     <ClInclude Include="fetchdecode_x87.h" />
     <ClInclude Include="fetchdecode.h" />
     <ClInclude Include="fetchdecode_opmap.h" />
     <ClInclude Include="gui.h" />
+    <ClInclude Include="harddrv.h" />
+    <ClInclude Include="hpet.h" />
     <ClInclude Include="i386.h" />
     <ClInclude Include="i387.h" />
     <ClInclude Include="i486dx4.h" />
@@ -256,6 +267,7 @@
     <ClInclude Include="instr.h" />
     <ClInclude Include="instrument.h" />
     <ClInclude Include="iodev.h" />
+    <ClInclude Include="ioapic.h" />
     <ClInclude Include="keyboard.h" />
     <ClInclude Include="lazy_flags.h" />
     <ClInclude Include="MD5.h" />
@@ -295,6 +307,8 @@
     <ClInclude Include="usb_uhci.h" />
     <ClInclude Include="utctime.h" />
     <ClInclude Include="vcruntime.h" />
+    <ClInclude Include="vga.h" />
+    <ClInclude Include="vgacore.h" />
     <ClInclude Include="virt_timer.h" />
     <ClInclude Include="vmx.h" />
     <ClInclude Include="vmx_ctrls.h" />

@@ -4,7 +4,7 @@
 
 #include "debug.h"
 bx_unmapped_c* theUnmappedDevice = NULL;
-/*
+
 PLUGIN_ENTRY_FOR_MODULE(unmapped)
 {
     if (mode == PLUGIN_INIT) {
@@ -19,7 +19,7 @@ PLUGIN_ENTRY_FOR_MODULE(unmapped)
     }
     return(0); // Success
 }
-*/
+
 void bx_unmapped_c::init(void)
 {
 	DEV_register_default_ioread_handler(this, read_handler, "Unmapped", 7);

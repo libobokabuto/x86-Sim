@@ -103,6 +103,14 @@ void bx_reset_plugins(unsigned signal)
     }
 }
 
+void bx_plugins_register_state(void)
+{
+}
+
+void bx_plugins_after_restore_state(void)
+{
+}
+
 #define BUILTIN_OPT_PLUGIN_ENTRY(mod) {#mod, PLUGTYPE_OPTIONAL, 0, lib##mod##_plugin_entry, 0}
 #define BUILTIN_OPTPCI_PLUGIN_ENTRY(mod) {#mod, PLUGTYPE_OPTIONAL, PLUGFLAG_PCI, lib##mod##_plugin_entry, 0}
 #define BUILTIN_VGA_PLUGIN_ENTRY(mod, t, f) {#mod, PLUGTYPE_VGA | t, f, lib##mod##_plugin_entry, 0}
@@ -116,65 +124,13 @@ void bx_reset_plugins(unsigned signal)
 
 
 plugin_t bx_builtin_plugins[] = {
-    //986
-    /*1`    Aw3
-#if BX_USE_TEXTCONFIG
-  BUILTIN_CI_PLUGIN_ENTRY(textconfig),
-#endif
-#if BX_USE_WIN32CONFIG
-  BUILTIN_CI_PLUGIN_ENTRY(win32config),
-#endif
-#if BX_WITH_AMIGAOS
-  BUILTIN_GUI_PLUGIN_ENTRY(amigaos),
-#endif
-#if BX_WITH_CARBON
-  BUILTIN_GUI_PLUGIN_ENTRY(carbon),
-#endif
-#if BX_WITH_MACOS
-  BUILTIN_GUI_PLUGIN_ENTRY(macos),
-#endif
-#if BX_WITH_NOGUI
-  BUILTIN_GUI_PLUGIN_ENTRY(nogui),
-#endif
-#if BX_WITH_RFB
-  BUILTIN_GUI_PLUGIN_ENTRY(rfb),
-#endif
-#if BX_WITH_SDL
-  BUILTIN_GUI_PLUGIN_ENTRY(sdl),
-#endif
-#if BX_WITH_SDL2
-  BUILTIN_GUI_PLUGIN_ENTRY(sdl2),
-#endif
-#if BX_WITH_TERM
-  BUILTIN_GUI_PLUGIN_ENTRY(term),
-#endif
-#if BX_WITH_VNCSRV
-  BUILTIN_GUI_PLUGIN_ENTRY(vncsrv),
-#endif
-#if BX_WITH_WIN32
-  BUILTIN_GUI_PLUGIN_ENTRY(win32),
-#endif
-#if BX_WITH_WX
-  BUILTIN_GUICI_PLUGIN_ENTRY(wx),
-#endif
-#if BX_WITH_X11
-  BUILTIN_GUI_PLUGIN_ENTRY(x),
-#endif
-  BUILTIN_VGA_PLUGIN_ENTRY(vga, 0, PLUGFLAG_PCI),
-#if BX_SUPPORT_CLGD54XX
-  BUILTIN_VGA_PLUGIN_ENTRY(svga_cirrus, 0, PLUGFLAG_PCI),
-#endif
-#if BX_SUPPORT_VOODOO
-  BUILTIN_VGA_PLUGIN_ENTRY(voodoo, PLUGTYPE_OPTIONAL, PLUGFLAG_PCI),
-#endif
   BUILTIN_OPT_PLUGIN_ENTRY(unmapped),
   BUILTIN_OPT_PLUGIN_ENTRY(biosdev),
   BUILTIN_OPT_PLUGIN_ENTRY(speaker),
-  BUILTIN_OPT_PLUGIN_ENTRY(extfpuirq),
-  */
   BUILTIN_OPT_PLUGIN_ENTRY(parallel),
-  /*
   BUILTIN_OPT_PLUGIN_ENTRY(serial),
+  BUILTIN_OPTPCI_PLUGIN_ENTRY(usb_uhci),
+  /*
 #if BX_SUPPORT_BUSMOUSE
   BUILTIN_OPT_PLUGIN_ENTRY(busmouse),
 #endif
@@ -309,6 +265,22 @@ const char* bx_get_plugin_name_np(Bit16u type, Bit8u index)
     return NULL;
 }
 
+Bit8u bx_get_plugin_flags_np(Bit16u type, Bit8u index)
+{
+    int i = 0;
+    Bit8u count = 0;
+
+    while (strcmp(bx_builtin_plugins[i].name, "NULL")) {
+        if ((type & bx_builtin_plugins[i].type) != 0) {
+            if (count == index)
+                return bx_builtin_plugins[i].flags;
+            count++;
+        }
+        i++;
+    }
+    return 0;
+}
+
 
 int bx_load_plugin_np(const char* name, Bit16u type)
 {
@@ -332,3 +304,24 @@ int bx_load_plugin_np(const char* name, Bit16u type)
     return 0;
 }
 
+int bx_unload_opt_plugin(const char* name, bool devflag)
+{
+    UNUSED(devflag);
+
+    int i = 0;
+    while (strcmp(bx_builtin_plugins[i].name, "NULL")) {
+        if ((!strcmp(name, bx_builtin_plugins[i].name)) &&
+            (((bx_builtin_plugins[i].type & PLUGTYPE_OPTIONAL) != 0) ||
+             ((bx_builtin_plugins[i].type & PLUGTYPE_VGA) != 0))) {
+            if (bx_builtin_plugins[i].initialized != 0) {
+                bx_builtin_plugins[i].plugin_entry(NULL, bx_builtin_plugins[i].loadtype, PLUGIN_FINI);
+                bx_builtin_plugins[i].loadtype = PLUGTYPE_NULL;
+                bx_builtin_plugins[i].initialized = 0;
+                return 1;
+            }
+            return 0;
+        }
+        i++;
+    }
+    return 0;
+}

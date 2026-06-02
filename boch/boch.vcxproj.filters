@@ -117,6 +117,9 @@
     <ClCompile Include="dbg_main.cc">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="ddc.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
     <ClCompile Include="unmapped.cc">
       <Filter>源文件</Filter>
     </ClCompile>
@@ -138,6 +141,9 @@
     <ClCompile Include="flag_ctrl_pro.cc">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="floppy.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
     <ClCompile Include="access.cc">
       <Filter>源文件</Filter>
     </ClCompile>
@@ -148,6 +154,12 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="vapic.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="vga.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="vgacore.cc">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="memory.cc">
@@ -178,6 +190,15 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="gui.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="harddrv.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="hpet.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ioapic.cc">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="scancodes.cc">
@@ -368,6 +389,9 @@
     <ClInclude Include="crregs.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="ddc.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
     <ClInclude Include="svm.h">
       <Filter>头文件</Filter>
     </ClInclude>
@@ -428,6 +452,18 @@
     <ClInclude Include="gui.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="harddrv.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="floppy.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="hpet.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ioapic.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
     <ClInclude Include="scancodes.h">
       <Filter>头文件</Filter>
     </ClInclude>
@@ -477,6 +513,12 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="virt_timer.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="vga.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="vgacore.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="pci2isa.h">

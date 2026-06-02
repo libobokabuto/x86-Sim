@@ -8,10 +8,11 @@
 #  define BX_UM_THIS this->
 #endif
 
-class bx_unmapped_c  {
+class bx_unmapped_c : public bx_devmodel_c {
 public:
 
     virtual void init(void);
+    virtual void reset(unsigned type) {}
 private:
 
     static Bit32u read_handler(void* this_ptr, Bit32u address, unsigned io_len);
