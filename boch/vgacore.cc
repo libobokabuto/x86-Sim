@@ -26,9 +26,10 @@
 #define BX_PLUGGABLE
 
 #include "iodev.h"
+#include "param_names.h"
 #include "vgacore.h"
 #include "virt_timer.h"
-
+#include "debug.h"
 #ifndef BX_INFO
 #define BX_INFO(x) do {} while (0)
 #endif
@@ -106,8 +107,8 @@ bx_vgacore_c::~bx_vgacore_c()
 void bx_vgacore_c::init(void)
 {
   unsigned x,y;
-
-  BX_VGA_THIS pci_enabled = false;
+  BX_VGA_THIS vga_ext = NULL;
+  BX_VGA_THIS pci_enabled = 0;
 
   BX_VGA_THIS init_standard_vga();
   if (!BX_VGA_THIS init_vga_extension()) {
@@ -128,6 +129,9 @@ void bx_vgacore_c::init(void)
   for (y = 0; y < BX_VGA_THIS s.num_y_tiles; y++)
     for (x = 0; x < BX_VGA_THIS s.num_x_tiles; x++)
       SET_TILE_UPDATED(BX_VGA_THIS, x, y, 0);
+  if (!BX_VGA_THIS pci_enabled) {
+      BX_MEM(0)->load_ROM("E:/Study/codes/bochs/boch/boch/VGABIOS-lgpl-latest.bin", 0xc0000, 1);
+  }
 }
 
 void bx_vgacore_c::init_standard_vga(void)

@@ -1658,6 +1658,15 @@ bool BX_CPU_C::spp_walk(bx_phy_address guest_paddr, bx_address guest_laddr, BxMe
 bx_hostpageaddr_t BX_CPU_C::getHostMemAddr(bx_phy_address paddr, unsigned rw)
 {
 	//2491ÐÐ
+#if BX_SUPPORT_VMX && BX_SUPPORT_X86_64
+    if (is_virtual_apic_page(paddr))
+        return 0; // Do not allow direct access to virtual apic page
+#endif
+
+#if BX_SUPPORT_APIC
+    if (BX_CPU_THIS_PTR lapic->is_selected(paddr))
+        return 0; // Vetoed!  APIC address space
+#endif
 	return (bx_hostpageaddr_t)BX_MEM(0)->getHostMemAddr(BX_CPU_THIS, paddr, rw);
 }
 

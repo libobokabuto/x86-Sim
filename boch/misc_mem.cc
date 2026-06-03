@@ -278,7 +278,7 @@ Bit8u* BX_MEM_C::getHostMemAddr(BX_CPU_C* cpu, bx_phy_address addr, unsigned rw)
 		return(NULL);
 	}
 #endif
-	/*
+	struct memory_handler_struct* memory_handler = BX_MEM_THIS memory_handlers[a20addr >> 20];
 	while (memory_handler) {
     if (memory_handler->begin <= a20addr &&
         memory_handler->end >= a20addr) {
@@ -289,7 +289,7 @@ Bit8u* BX_MEM_C::getHostMemAddr(BX_CPU_C* cpu, bx_phy_address addr, unsigned rw)
     }
     memory_handler = memory_handler->next;
   }
-	*/
+	
 	if (!write) {
 		if ((a20addr >= 0x000a0000 && a20addr < 0x000c0000))
 			return(NULL); // Vetoed!  Mem mapped IO (VGA)
