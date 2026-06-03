@@ -291,6 +291,18 @@
     <ClCompile Include="ret_far.cc">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="avx512_helpers.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="hdimage.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="cdrom_win32.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="cdrom.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bochs.h">
@@ -543,6 +555,24 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="softfloat_types.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="hdimage.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="cdrom.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="cdrom_amigaos.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="cdrom_misc.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="cdrom_osx.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="cdrom_win32.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

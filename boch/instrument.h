@@ -12,6 +12,9 @@
 #define BX_INSTR_EXCEPTION(cpu_id, vector, error_code) //165
 #define BX_INSTR_INTERRUPT(cpu_id, vector)//166
 #define BX_INSTR_HWINTERRUPT(cpu_id, vector, cs, eip) //167
+
+#define BX_INSTR_CLFLUSH(cpu_id, laddr, paddr)
+#define BX_INSTR_CACHE_CNTRL(cpu_id, what)
 #define BX_INSTR_TLB_CNTRL(cpu_id, what, new_cr3) //172
 #define BX_INSTR_BEFORE_EXECUTION(cpu_id, i) //176
 #define BX_INSTR_AFTER_EXECUTION(cpu_id, i)

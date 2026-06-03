@@ -24,6 +24,68 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::branch_near32(Bit32u new_EIP)
 #endif
 }
 
+void BX_CPU_C::call_far32(bxInstruction_c* i, Bit16u cs_raw, Bit32u disp32)
+{
+    BX_INSTR_FAR_BRANCH_ORIGIN();
+
+    invalidate_prefetch_q();
+
+#if BX_DEBUGGER
+    BX_CPU_THIS_PTR show_flag |= Flag_call;
+#endif
+
+    RSP_SPECULATIVE;
+
+    if (protected_mode()) {
+        call_protected(i, cs_raw, disp32);
+    }
+    else {
+        // CS.LIMIT can't change when in real/v8086 mode
+        if (disp32 > BX_CPU_THIS_PTR sregs[BX_SEG_REG_CS].cache.u.segment.limit_scaled) {
+            //BX_ERROR(("%s: instruction pointer not within code segment limits", i->getIaOpcodeNameShort()));
+            exception(BX_GP_EXCEPTION, 0);
+        }
+
+        push_32(BX_CPU_THIS_PTR sregs[BX_SEG_REG_CS].selector.value);
+        push_32(EIP);
+
+        load_seg_reg(&BX_CPU_THIS_PTR sregs[BX_SEG_REG_CS], cs_raw);
+        EIP = disp32;
+    }
+
+    RSP_COMMIT;
+
+    BX_INSTR_FAR_BRANCH(BX_CPU_ID, BX_INSTR_IS_CALL,
+        FAR_BRANCH_PREV_CS, FAR_BRANCH_PREV_RIP,
+        BX_CPU_THIS_PTR sregs[BX_SEG_REG_CS].selector.value, EIP);
+}
+
+void BX_CPU_C::jmp_far32(bxInstruction_c* i, Bit16u cs_raw, Bit32u disp32)
+{
+    BX_INSTR_FAR_BRANCH_ORIGIN();
+
+    invalidate_prefetch_q();
+
+    // jump_protected doesn't affect ESP so it is ESP safe
+    if (protected_mode()) {
+        jump_protected(i, cs_raw, disp32);
+    }
+    else {
+        // CS.LIMIT can't change when in real/v8086 mode
+        if (disp32 > BX_CPU_THIS_PTR sregs[BX_SEG_REG_CS].cache.u.segment.limit_scaled) {
+            //BX_ERROR(("%s: instruction pointer not within code segment limits", i->getIaOpcodeNameShort()));
+            exception(BX_GP_EXCEPTION, 0);
+        }
+
+        load_seg_reg(&BX_CPU_THIS_PTR sregs[BX_SEG_REG_CS], cs_raw);
+        EIP = disp32;
+    }
+
+    BX_INSTR_FAR_BRANCH(BX_CPU_ID, BX_INSTR_IS_JMP,
+        FAR_BRANCH_PREV_CS, FAR_BRANCH_PREV_RIP,
+        BX_CPU_THIS_PTR sregs[BX_SEG_REG_CS].selector.value, EIP);
+}
+
 #if BX_SUPPORT_X86_64
 void BX_CPP_AttrRegparmN(1) BX_CPU_C::branch_near64(bxInstruction_c* i)
 {
@@ -41,30 +103,5 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::branch_near64(bxInstruction_c* i)
 }
 #endif
 
-void BX_CPU_C::jmp_far32(bxInstruction_c* i, Bit16u cs_raw, Bit32u disp32)
-{
-    BX_INSTR_FAR_BRANCH_ORIGIN();
-
-    invalidate_prefetch_q();
-
-    // jump_protected doesn't affect ESP so it is ESP safe
-    if (protected_mode()) {
-        jump_protected(i, cs_raw, disp32);
-    }
-    else {
-        // CS.LIMIT can't change when in real/v8086 mode
-        if (disp32 > BX_CPU_THIS_PTR sregs[BX_SEG_REG_CS].cache.u.segment.limit_scaled) {
-           // BX_ERROR(("%s: instruction pointer not within code segment limits", i->getIaOpcodeNameShort()));
-            exception(BX_GP_EXCEPTION, 0);
-        }
-
-        load_seg_reg(&BX_CPU_THIS_PTR sregs[BX_SEG_REG_CS], cs_raw);
-        EIP = disp32;
-    }
-
-    BX_INSTR_FAR_BRANCH(BX_CPU_ID, BX_INSTR_IS_JMP,
-        FAR_BRANCH_PREV_CS, FAR_BRANCH_PREV_RIP,
-        BX_CPU_THIS_PTR sregs[BX_SEG_REG_CS].selector.value, EIP);
-}
 
 #endif

@@ -131,9 +131,12 @@
     <ClCompile Include="access2.cc" />
     <ClCompile Include="acpi.cc" />
     <ClCompile Include="apic.cc" />
+    <ClCompile Include="avx512_helpers.cc" />
     <ClCompile Include="biosdev.cc" />
     <ClCompile Include="bxthread.cc" />
     <ClCompile Include="call_far.cc" />
+    <ClCompile Include="cdrom.cc" />
+    <ClCompile Include="cdrom_win32.cc" />
     <ClCompile Include="cet.cc" />
     <ClCompile Include="coms.cc" />
     <ClCompile Include="config.cc" />
@@ -171,6 +174,7 @@
     <ClCompile Include="floppy.cc" />
     <ClCompile Include="gui.cc" />
     <ClCompile Include="harddrv.cc" />
+    <ClCompile Include="hdimage.cc" />
     <ClCompile Include="hpet.cc" />
     <ClCompile Include="i486dx4.cc" />
     <ClCompile Include="icache.cc" />
@@ -237,6 +241,11 @@
     <ClInclude Include="bochs.h" />
     <ClInclude Include="bswap.h" />
     <ClInclude Include="bxthread.h" />
+    <ClInclude Include="cdrom.h" />
+    <ClInclude Include="cdrom_amigaos.h" />
+    <ClInclude Include="cdrom_misc.h" />
+    <ClInclude Include="cdrom_osx.h" />
+    <ClInclude Include="cdrom_win32.h" />
     <ClInclude Include="cmos.h" />
     <ClInclude Include="config.h" />
     <ClInclude Include="corei7_haswell_4770.h" />
@@ -258,6 +267,7 @@
     <ClInclude Include="fetchdecode_opmap.h" />
     <ClInclude Include="gui.h" />
     <ClInclude Include="harddrv.h" />
+    <ClInclude Include="hdimage.h" />
     <ClInclude Include="hpet.h" />
     <ClInclude Include="i386.h" />
     <ClInclude Include="i387.h" />

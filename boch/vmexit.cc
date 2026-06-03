@@ -144,6 +144,32 @@ void BX_CPP_AttrRegparmN(3) BX_CPU_C::VMexit_Instruction(bxInstruction_c* i, Bit
     VMexit(reason, qualification);
 }
 
+void BX_CPU_C::VMexit_PAUSE(void)
+{
+    //BX_ASSERT(BX_CPU_THIS_PTR in_vmx_guest);
+
+    VMCS_CACHE* vm = &BX_CPU_THIS_PTR vmcs;
+
+    if (vm->vmexec_ctrls1.PAUSE_VMEXIT()) {
+        VMexit(VMX_VMEXIT_PAUSE, 0);
+    }
+
+#if BX_SUPPORT_VMX >= 2
+    if (vm->vmexec_ctrls2.PAUSE_LOOP_VMEXIT() && CPL == 0) {
+        VMX_PLE* ple = &vm->ple;
+        Bit64u currtime = bx_pc_system.time_ticks();
+        if ((currtime - ple->last_pause_time) > ple->pause_loop_exiting_gap) {
+            ple->first_pause_time = currtime;
+        }
+        else {
+            if ((currtime - ple->first_pause_time) > ple->pause_loop_exiting_window)
+                VMexit(VMX_VMEXIT_PAUSE, 0);
+        }
+        ple->last_pause_time = currtime;
+    }
+#endif
+}
+
 void BX_CPU_C::VMexit_ExtInterrupt(void)
 {
     //BX_ASSERT(BX_CPU_THIS_PTR in_vmx_guest);

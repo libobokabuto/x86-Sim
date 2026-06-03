@@ -945,6 +945,19 @@ void BX_CPU_C::SvmInterceptTaskSwitch(Bit16u tss_selector, unsigned source, bool
     Svm_Vmexit(SVM_VMEXIT_TASK_SWITCH, tss_selector, qualification);
 }
 
+void BX_CPU_C::SvmInterceptPAUSE(void)
+{
+    if (BX_SUPPORT_SVM_EXTENSION(BX_CPUID_SVM_PAUSE_FILTER)) {
+        SVM_CONTROLS* ctrls = &BX_CPU_THIS_PTR vmcb->ctrls;
+        if (ctrls->pause_filter_count) {
+            ctrls->pause_filter_count--;
+            return;
+        }
+    }
+
+    Svm_Vmexit(SVM_VMEXIT_PAUSE);
+}
+
 void BX_CPU_C::Svm_Update_VM_CR_MSR(Bit64u val_64)
 {
     // VM_CR_MSR 0xc0010114

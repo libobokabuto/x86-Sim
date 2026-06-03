@@ -70,6 +70,8 @@ void BX_CPU_C::enter_sleep_state(unsigned state)
 #endif
 }
 
+
+
 void BX_CPU_C::handleCpuModeChange(void)
 {
 	unsigned mode = BX_CPU_THIS_PTR cpu_mode;

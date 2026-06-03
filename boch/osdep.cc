@@ -1,3 +1,4 @@
+#define _CRT_SECURE_NO_WARNINGS
 #include "bochs.h"
 #include "bxthread.h"
 
@@ -29,3 +30,15 @@ Bit64u bx_get_realtime64_usec(void)
 }
 #endif
 #endif
+
+#if !BX_HAVE_MKSTEMP
+int bx_mkstemp(char* tpl)
+{
+    mktemp(tpl);
+    return ::open(tpl, O_RDWR | O_CREAT | O_TRUNC
+#  ifdef O_BINARY
+        | O_BINARY
+#  endif
+        , S_IWUSR | S_IRUSR | S_IRGRP | S_IWGRP);
+}
+#endif // !BX_HAVE_MKSTEMP
