@@ -51,6 +51,26 @@ const char* builtin_mode_names[n_hdimage_builtin_modes] = {
 
 const char** hdimage_mode_names;
 
+#ifdef WIN32
+#include <windows.h>
+#include <process.h>
+#endif
+
+static bool bx_pid_is_alive(unsigned long pid)
+{
+#ifdef WIN32
+    HANDLE h = OpenProcess(SYNCHRONIZE, FALSE, (DWORD)pid);
+    if (h == NULL) return false;
+
+    DWORD wait_result = WaitForSingleObject(h, 0);
+    CloseHandle(h);
+
+    return wait_result == WAIT_TIMEOUT;
+#else
+    return pid > 0 && kill((pid_t)pid, 0) == 0;
+#endif
+}
+
 bx_hdimage_ctl_c::bx_hdimage_ctl_c()
 {
 	//put("hdimage", "IMG");
@@ -337,20 +357,49 @@ int hdimage_open_file(const char* pathname, int flags, Bit64u* fsize, FILETIME* 
 
 #ifndef BXIMAGE
     sprintf(lockfn, "%s.lock", pathname);
-    lockfd = ::open(lockfn, O_RDONLY);
-    if (lockfd >= 0) {
-        ::close(lockfd);
-        if (false) {
-            // Remove lock file if requested
-            if (access(lockfn, F_OK) == 0) {
-                unlink(lockfn);
-            }
+
+    lockfd = ::open(lockfn, O_WRONLY | O_CREAT | O_EXCL
+#ifdef O_BINARY
+        | O_BINARY
+#endif
+        , S_IWUSR | S_IRUSR | S_IRGRP | S_IWGRP);
+
+    if (lockfd < 0) {
+        FILE* lf = fopen(lockfn, "r");
+        unsigned long old_pid = 0;
+
+        if (lf != NULL) {
+            fscanf(lf, "pid=%lu", &old_pid);
+            fclose(lf);
         }
-        else {
-            // Opening image must fail if lock file exists.
-            //BX_PANIC(("image locked: '%s'", pathname));
+
+        if (old_pid != 0 && !bx_pid_is_alive(old_pid)) {
+            unlink(lockfn);
+
+            lockfd = ::open(lockfn, O_WRONLY | O_CREAT | O_EXCL
+#ifdef O_BINARY
+                | O_BINARY
+#endif
+                , S_IWUSR | S_IRUSR | S_IRGRP | S_IWGRP);
+        }
+
+        if (lockfd < 0) {
+            printf("image locked: %s\n", pathname);
+            printf("lock file: %s\n", lockfn);
+            printf("If no Bochs process is running, delete the lock file manually.\n");
             return -1;
         }
+    }
+
+    {
+        char buf[64];
+#ifdef WIN32
+        sprintf(buf, "pid=%lu\n", (unsigned long)_getpid());
+#else
+        sprintf(buf, "pid=%lu\n", (unsigned long)getpid());
+#endif
+        ::write(lockfd, buf, strlen(buf));
+        ::close(lockfd);
     }
 #endif
 

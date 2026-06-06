@@ -95,7 +95,7 @@ static const bx_local_ata_channel_conf_t bx_local_ata_channels[BX_MAX_ATA_CHANNE
 
 static const bx_local_ata_device_conf_t bx_local_ata_devices[BX_MAX_ATA_CHANNEL][2] = {
     {
-        { BX_ATA_DEVICE_DISK, "Generic 1234", "E:/Study/codes/bochs/boch/hd.img", "flat", "", 0, 16, 63, 512, BX_EJECTED, BX_ATA_TRANSLATION_AUTO, BX_ATA_BIOSDETECT_AUTO },
+        { BX_ATA_DEVICE_DISK, "Generic 1234", "E:/Study/codes/bochs/boch/boch/hd.img", "flat", "", 1024, 16, 63, 512, BX_EJECTED, BX_ATA_TRANSLATION_AUTO, BX_ATA_BIOSDETECT_AUTO },
         { BX_ATA_DEVICE_NONE, "", "", "flat", "", 0, 0, 0, 512, BX_EJECTED, BX_ATA_TRANSLATION_AUTO, BX_ATA_BIOSDETECT_AUTO }
     },
     {
