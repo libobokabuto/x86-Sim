@@ -1,9 +1,68 @@
 #pragma once
 #include "siminterface.h"
-#define BX_MAX_STATUSITEMS 10 //41
+
+#define BX_HEADER_BAR_Y 32
+
+#if BX_USB_DEBUGGER
+#define BX_MAX_PIXMAPS 19
+#define BX_MAX_HEADERBAR_ENTRIES 13
+#else
+#define BX_MAX_PIXMAPS 17
+#define BX_MAX_HEADERBAR_ENTRIES 12
+#endif
+
+#define BX_GRAVITY_LEFT 10
+#define BX_GRAVITY_RIGHT 11
+
+#define BX_MAX_STATUSITEMS 10
+
+// gui dialog capabilities
+#define BX_GUI_DLG_FLOPPY       0x01
+#define BX_GUI_DLG_CDROM        0x02
+#define BX_GUI_DLG_SNAPSHOT     0x04
+#define BX_GUI_DLG_RUNTIME      0x08
+#define BX_GUI_DLG_USER         0x10
+#define BX_GUI_DLG_SAVE_RESTORE 0x20
+#if BX_USB_DEBUGGER
+#define BX_GUI_DLG_USB          0x40
+#define BX_GUI_DLG_ALL          0x7F
+#else
+#define BX_GUI_DLG_ALL          0x3F
+#endif
+
+// text mode blink feature
 #define BX_TEXT_BLINK_MODE      0x01
 #define BX_TEXT_BLINK_TOGGLE    0x02
 #define BX_TEXT_BLINK_STATE     0x04
+
+// modifier keys
+#define BX_MOD_KEY_SHIFT        0x01
+#define BX_MOD_KEY_CTRL         0x02
+#define BX_MOD_KEY_ALT          0x04
+#define BX_MOD_KEY_CAPS         0x08
+
+// mouse capture toggle feature
+#define BX_MT_KEY_CTRL          0x01
+#define BX_MT_KEY_ALT           0x02
+#define BX_MT_KEY_F10           0x04
+#define BX_MT_KEY_F12           0x08
+#define BX_MT_KEY_G             0x10
+#define BX_MT_MBUTTON           0x20
+#define BX_MT_LBUTTON           0x40
+#define BX_MT_RBUTTON           0x80
+
+#define BX_GUI_MT_CTRL_MB       (BX_MT_KEY_CTRL | BX_MT_MBUTTON)
+#define BX_GUI_MT_CTRL_LRB      (BX_MT_KEY_CTRL | BX_MT_LBUTTON | BX_MT_RBUTTON)
+#define BX_GUI_MT_CTRL_F10      (BX_MT_KEY_CTRL | BX_MT_KEY_F10)
+#define BX_GUI_MT_F12           (BX_MT_KEY_F12)
+#define BX_GUI_MT_CTRL_ALT      (BX_MT_KEY_CTRL | BX_MT_KEY_ALT)
+#define BX_GUI_MT_CTRL_ALT_G    (BX_MT_KEY_CTRL | BX_MT_KEY_ALT | BX_MT_KEY_G)
+
+// display library option flags
+#define BX_GUI_OPT_HIDE_IPS       0x01
+#define BX_GUI_OPT_NOKEYREPEAT    0x02
+#define BX_GUI_OPT_CMDMODE        0x04
+#define BX_GUI_OPT_NO_GUI_CONSOLE 0x08
 
 typedef struct {
 	Bit16u  start_address;
@@ -29,48 +88,181 @@ typedef struct {
 
 BOCHSAPI extern class bx_gui_c* bx_gui;  //116
 
+#if BX_SUPPORT_X86_64
+#define BOCHS_WINDOW_NAME "Bochs x86-64 emulator, https://bochs.sourceforge.io/"
+#else
+#define BOCHS_WINDOW_NAME "Bochs x86 emulator, https://bochs.sourceforge.io/"
+#endif
+
 class BOCHSAPI bx_gui_c {
 public: //127
 	bx_gui_c(void);
 	virtual ~bx_gui_c();
-	virtual void specific_init(int argc, char** argv, unsigned header_bar_y) {}
+
+	virtual void specific_init(int argc, char** argv, unsigned header_bar_y) = 0;
 	virtual void text_update(Bit8u* old_text, Bit8u* new_text,
 		unsigned long cursor_x, unsigned long cursor_y,
-		bx_vga_tminfo_t* tm_info) {}
-	virtual void graphics_tile_update(Bit8u* tile, unsigned x, unsigned y) {}
-	virtual void handle_events(void) {}
-	virtual void flush(void) {}
-	virtual void clear_screen(void);
-	virtual bool palette_change(Bit8u index, Bit8u red, Bit8u green, Bit8u blue) { return false; }
-	virtual void dimension_update(unsigned x, unsigned y, unsigned fheight = 0,
-		unsigned fwidth = 0, unsigned bpp = 8);
+		bx_vga_tminfo_t* tm_info) = 0;
+	virtual void graphics_tile_update(Bit8u* tile, unsigned x, unsigned y) = 0;
+	virtual void handle_events(void) = 0;
+	virtual void flush(void) = 0;
+	virtual void clear_screen(void) = 0;
+	virtual bool palette_change(Bit8u index, Bit8u red, Bit8u green, Bit8u blue) = 0;
+	virtual void dimension_update(unsigned x, unsigned y, unsigned fheight = 0, unsigned fwidth = 0, unsigned bpp = 8) = 0;
+	virtual unsigned create_bitmap(const unsigned char* bmap, unsigned xdim, unsigned ydim) = 0;
+	virtual unsigned headerbar_bitmap(unsigned bmap_id, unsigned alignment, void (*f)(void)) = 0;
+	virtual void replace_bitmap(unsigned hbar_id, unsigned bmap_id) = 0;
+	virtual void show_headerbar(void) = 0;
+	virtual int get_clipboard_text(Bit8u** bytes, Bit32s* nbytes) = 0;
+	virtual int set_clipboard_text(char* snapshot, Bit32u len) = 0;
+	virtual void mouse_enabled_changed_specific(bool val) = 0;
+	virtual void exit(void) = 0;
+
+
 	virtual bx_svga_tileinfo_t* graphics_tile_info(bx_svga_tileinfo_t* info);
 	virtual Bit8u* graphics_tile_get(unsigned x, unsigned y, unsigned* w, unsigned* h);
-	virtual void graphics_tile_update_in_place(unsigned x, unsigned y, unsigned w, unsigned h) {}
+	virtual void graphics_tile_update_in_place(unsigned x, unsigned y, unsigned w, unsigned h);
+	// new text update API
+	virtual void set_font(bool lg) {}
+	virtual void draw_char(Bit8u ch, Bit8u fc, Bit8u bc, Bit16u xc, Bit16u yc,
+		Bit8u fw, Bit8u fh, Bit8u fx, Bit8u fy,
+		bool gfxcharw9, Bit8u cs, Bit8u ce, bool curs, bool font2) {}
 	virtual void statusbar_setitem_specific(int element, bool active, bool w) {} //160
+	virtual void set_tooltip(unsigned hbar_id, const char* tip) {}
+
+	virtual void set_display_mode(disp_mode_t newmode) { /* default=no action*/ }
+
+	virtual Bit32u get_sighandler_mask() { return 0; }
+	// called when registered signal arrives
+	virtual void sighandler(int sig) {}
+
+#if BX_USE_IDLE_HACK
+	// this is called from the CPU model when the HLT instruction is executed.
+	virtual void sim_is_idle(void) {}
+#endif
+	virtual void show_ips(Bit32u ips_count);
 	virtual void beep_on(float frequency);//181
 	virtual void beep_off();//182
 	virtual void get_capabilities(Bit16u* xres, Bit16u* yres, Bit16u* bpp);
+	virtual void set_mouse_mode_absxy(bool mode) {}
+#if BX_USE_GUI_CONSOLE
+	virtual void set_console_edit_mode(bool mode) {}
+#endif
+
 	static void set_text_charmap(Bit8u map, Bit8u* fbuffer);
+	static Bit8u get_mouse_headerbar_id();
+
 	void init(int argc, char** argv, unsigned max_xres, unsigned max_yres,
 		unsigned x_tilesize, unsigned y_tilesize);
+	void cleanup(void);
+	void draw_char_common(Bit8u ch, Bit8u fc, Bit8u bc, Bit16u xc, Bit16u yc,
+		Bit8u fw, Bit8u fh, Bit8u fx, Bit8u fy,
+		bool gfxcharw9, Bit8u cs, Bit8u ce, bool curs, bool font2);
 	void text_update_common(Bit8u* old_text, Bit8u* new_text,
 		Bit16u cursor_address, bx_vga_tminfo_t* tm_info);
 	void graphics_tile_update_common(Bit8u* tile, unsigned x, unsigned y);
 	bx_svga_tileinfo_t* graphics_tile_info_common(bx_svga_tileinfo_t* info);
 	Bit8u* get_snapshot_buffer(void) { return snapshot_buffer; }
 	bool palette_change_common(Bit8u index, Bit8u red, Bit8u green, Bit8u blue);
+	void update_drive_status_buttons(void);
+	static void     mouse_enabled_changed(bool val);
 	int register_statusitem(const char* text, bool auto_off = 0); //209
+	void unregister_statusitem(int id);
 	void statusbar_setitem(int element, bool active, bool w = 0); //211
+	void statusbar_setall(bool active);
+	static void init_signal_handlers();
+	static void toggle_mouse_enable(void);
+	bool mouse_toggle_check(Bit32u key, bool pressed);
+	const char* get_toggle_info(void);
+	Bit8u get_modifier_keys(void);
+	Bit8u set_modifier_keys(Bit8u modifier, bool pressed);
+	bool parse_user_shortcut(const char* val);
+#if BX_USE_GUI_CONSOLE
+	bool has_gui_console(void) { return console.present; }
+	bool console_running(void) { return console.running; }
+	void console_refresh(bool force);
+	void console_key_enq(Bit8u key);
+	int bx_printf(const char* s);
+	char* bx_gets(char* s, int size);
+#else
+	bool has_gui_console(void) { return 0; }
+	bool console_running(void) { return 0; }
+	void console_refresh(bool force) {}
+	void console_key_enq(Bit8u key) {}
+#endif
+
+	bool has_command_mode(void) { return command_mode.present; }
+	bool command_mode_active(void) { return command_mode.active; }
+	void set_command_mode(bool active);
+	void set_fullscreen_mode(bool active) { fullscreen_mode = active; }
+	// marklog handler without button, called in gui command mode
+	static void marklog_handler(void);
+
+
 protected: //247
+	static void floppyA_handler(void);
+	static void floppyB_handler(void);
+	static void cdrom1_handler(void);
+	static void reset_handler(void);
+	static void power_handler(void);
+	static void copy_handler(void);
+	static void paste_handler(void);
+	static void snapshot_handler(void);
+	static void config_handler(void);
+
+	static void userbutton_handler(void);
+	static void save_restore_handler(void);
+	// process clicks on the "classic" Bochs headerbar
+	void headerbar_click(int x);
+	// snapshot helper functions
+	static void make_text_snapshot(char** snapshot, Bit32u* length);
+	static Bit32u set_snapshot_mode(bool mode);
+	// status bar LED timer
+	static void led_timer_handler(void*);
+	void led_timer(void);
+#if BX_USE_GUI_CONSOLE
+	void console_init(void);
+	void console_cleanup(void);
+#else
+	void console_cleanup(void) {}
+#endif
+	bool parse_common_gui_options(const char* arg, Bit8u flags);
+
+	bool floppyA_status;
+	bool floppyB_status;
+	bool cdrom1_status;
+	unsigned floppyA_bmap_id, floppyA_eject_bmap_id, floppyA_hbar_id;
+	unsigned floppyB_bmap_id, floppyB_eject_bmap_id, floppyB_hbar_id;
+	unsigned cdrom1_bmap_id, cdrom1_eject_bmap_id, cdrom1_hbar_id;
+	unsigned power_bmap_id, power_hbar_id;
+	unsigned reset_bmap_id, reset_hbar_id;
+	unsigned copy_bmap_id, copy_hbar_id;
+	unsigned paste_bmap_id, paste_hbar_id;
+	unsigned snapshot_bmap_id, snapshot_hbar_id;
+	unsigned config_bmap_id, config_hbar_id;
+	unsigned mouse_bmap_id, nomouse_bmap_id, mouse_hbar_id;
+	unsigned user_bmap_id, user_hbar_id;
+	unsigned save_restore_bmap_id, save_restore_hbar_id;
+#if BX_USB_DEBUGGER
+	unsigned usbdbg_bmap_id, usbdbg_dis_bmap_id, usbdbg_trigger_bmap_id, usbdbg_hbar_id;
+#endif
+
 	unsigned bx_headerbar_entries; //300
+	struct {
+		unsigned bmap_id;
+		unsigned xdim;
+		unsigned ydim;
+		unsigned xorigin;
+		unsigned alignment;
+		void (*f)(void);
+	} bx_headerbar_entry[BX_MAX_HEADERBAR_ENTRIES];
+
 	Bit8u vga_charmap[2][0x2000]; //310
-	unsigned max_xres;
-	unsigned max_yres;
-	unsigned x_tilesize;
-	unsigned y_tilesize;
-	unsigned statusitem_count;//314
-	int led_timer_index; //315
+	bool charmap_updated;
+	bool char_changed[2][256];
+
+	unsigned statusitem_count;
+	int led_timer_index;
 	struct {
 		bool in_use;
 		char text[8];
@@ -79,25 +271,53 @@ protected: //247
 		bool auto_off;
 		Bit8u counter;
 	} statusitem[BX_MAX_STATUSITEMS];
-	disp_mode_t disp_mode; //325
-	Bit8u* framebuffer; //332
-	bool guest_textmode; //343
+	// display mode
+	disp_mode_t disp_mode;
+	// new graphics API (with compatibility mode)
+	bool new_gfx_api;
+	Bit16u host_xres;
+	Bit16u host_yres;
+	Bit16u host_pitch;
+	Bit8u host_bpp;
+	Bit8u* framebuffer;
+	// new text update API
+	bool new_text_api;
+	Bit16u cursor_address;
+	bx_vga_tminfo_t tm_info;
+	// maximum guest display size and tile size
+	unsigned max_xres;
+	unsigned max_yres;
+	unsigned x_tilesize;
+	unsigned y_tilesize;
+	// current guest display settings
+	bool guest_textmode;
 	Bit8u   guest_fwidth;
 	Bit8u   guest_fheight;
 	Bit16u  guest_xres;
 	Bit16u  guest_yres;
-	Bit8u   guest_bpp; //348
-
-	bool snapshot_mode; //351
+	Bit8u   guest_bpp;
+	// graphics snapshot
+	bool snapshot_mode;
+	Bit8u* snapshot_buffer;
 	struct {
 		Bit8u blue;
 		Bit8u green;
 		Bit8u red;
 		Bit8u reserved;
 	} palette[256];
-	Bit8u* snapshot_buffer;
-
-#if BX_USE_GUI_CONSOLE  //370
+	// modifier keys
+	Bit8u keymodstate;
+	// mouse toggle setup
+	Bit8u toggle_method;
+	Bit32u toggle_keystate;
+	char mouse_toggle_text[20];
+	// userbutton shortcut
+	Bit32u user_shortcut[4];
+	int user_shortcut_len;
+	bool user_shortcut_error;
+	// gui dialog capabilities
+	Bit32u dialog_caps;
+#if BX_USE_GUI_CONSOLE
 	struct {
 		bool present;
 		bool running;
@@ -117,14 +337,16 @@ protected: //247
 		Bit8u keys[16];
 		Bit8u n_keys;
 	} console;
-	Bit32u marker_count; //397
 #endif
-	struct { //392
+	// command mode
+	struct {
 		bool present;
 		bool active;
 	} command_mode;
-
-	struct { //399
+	bool fullscreen_mode;
+	Bit32u marker_count;
+	// display library options
+	struct {
 #if BX_SHOW_IPS
 		bool hide_ips;
 #endif
@@ -135,6 +357,38 @@ protected: //247
 #endif
 	} gui_opts;
 };
+
+#define DECLARE_GUI_VIRTUAL_METHODS()                                       \
+virtual void specific_init(int argc, char **argv,                           \
+                           unsigned header_bar_y);                          \
+virtual void text_update(Bit8u *old_text, Bit8u *new_text,                  \
+                  unsigned long cursor_x, unsigned long cursor_y,           \
+                  bx_vga_tminfo_t *tm_info);                                \
+virtual void graphics_tile_update(Bit8u *tile, unsigned x, unsigned y);     \
+virtual void handle_events(void);                                           \
+virtual void flush(void);                                                   \
+virtual void clear_screen(void);                                            \
+virtual bool palette_change(Bit8u index, Bit8u red, Bit8u green, Bit8u blue); \
+virtual void dimension_update(unsigned x, unsigned y, unsigned fheight=0,   \
+                          unsigned fwidth=0, unsigned bpp=8);               \
+virtual unsigned create_bitmap(const unsigned char *bmap,                   \
+                               unsigned xdim, unsigned ydim);               \
+virtual unsigned headerbar_bitmap(unsigned bmap_id, unsigned alignment,     \
+                                  void (*f)(void));                         \
+virtual void replace_bitmap(unsigned hbar_id, unsigned bmap_id);            \
+virtual void show_headerbar(void);                                          \
+virtual int get_clipboard_text(Bit8u **bytes, Bit32s *nbytes);              \
+virtual int set_clipboard_text(char *snapshot, Bit32u len);                 \
+virtual void mouse_enabled_changed_specific(bool val);                  \
+virtual void exit(void);                                                    \
+/* end of DECLARE_GUI_VIRTUAL_METHODS */
+
+#define DECLARE_GUI_NEW_VIRTUAL_METHODS()                                   \
+virtual bx_svga_tileinfo_t *graphics_tile_info(bx_svga_tileinfo_t *info);   \
+virtual Bit8u *graphics_tile_get(unsigned x, unsigned y,                    \
+                             unsigned *w, unsigned *h);                     \
+virtual void graphics_tile_update_in_place(unsigned x, unsigned y,          \
+                                       unsigned w, unsigned h);
 
 #define BX_KEY_PRESSED  0x00000000
 #define BX_KEY_RELEASED 0x80000000
@@ -282,3 +536,18 @@ enum {
 
 	BX_KEY_NBKEYS
 };
+
+#define IMPLEMENT_GUI_PLUGIN_CODE(gui_name)                             \
+  PLUGIN_ENTRY_FOR_GUI_MODULE(gui_name)                                 \
+  {                                                                     \
+    if (mode == PLUGIN_INIT) {                                          \
+      theGui = new bx_##gui_name##_gui_c ();                            \
+      bx_gui = theGui;                                                  \
+    } else if (mode == PLUGIN_FINI) {                                   \
+      delete theGui;                                                    \
+      bx_gui = NULL;                                                    \
+    } else if (mode == PLUGIN_PROBE) {                                  \
+      return (int)PLUGTYPE_GUI;                                         \
+    }                                                                   \
+    return(0); /* Success */                                            \
+  }

@@ -39,8 +39,8 @@
 
 #if 1
 // quit_sim is defined in gui/siminterface.h
-#define BX_EXIT(x)  SIM->quit_sim (x)
-#else
+//#define BX_EXIT(x)  SIM->quit_sim (x)
+//#else
 // provide the real main and the usual exit.
 #define BX_EXIT(x)  ::exit(x)
 #endif

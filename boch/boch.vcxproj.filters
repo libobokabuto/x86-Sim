@@ -303,6 +303,9 @@
     <ClCompile Include="cdrom.cc">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="keymap.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bochs.h">
@@ -573,6 +576,48 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="cdrom_win32.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="sdl.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="floppya.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="floppyb.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="mouse.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="reset.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="power.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="snapshot.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="copy.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="paste.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="configbutton.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="cdrom1.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="userbutton.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="saverestore.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="keymap.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
