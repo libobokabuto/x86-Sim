@@ -14,6 +14,7 @@ BX_CPU_C::write_linear_byte(unsigned s, bx_address laddr, Bit8u data)
             bx_hostpageaddr_t hostPageAddr = tlbEntry->hostPageAddr;
             Bit32u pageOffset = PAGE_OFFSET(laddr);
             bx_phy_address pAddr = tlbEntry->ppf | pageOffset;
+          
             BX_NOTIFY_LIN_MEMORY_ACCESS(laddr, pAddr, 1, tlbEntry->get_memtype(), BX_WRITE, (Bit8u*)&data);
             Bit8u* hostAddr = (Bit8u*)(hostPageAddr | pageOffset);
             pageWriteStampTable.decWriteStamp(pAddr, 1);

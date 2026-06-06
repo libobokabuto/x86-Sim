@@ -80,7 +80,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>ws2_32.lib;Comctl32.lib;Advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -95,7 +95,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>ws2_32.lib;Comctl32.lib;Advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -108,7 +108,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>ws2_32.lib;Comctl32.lib;Advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -123,7 +123,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>ws2_32.lib;Comctl32.lib;Advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -193,6 +193,7 @@
     <ClCompile Include="msr.cc" />
     <ClCompile Include="mwait.cc" />
     <ClCompile Include="myinst.cc" />
+    <ClCompile Include="nogui.cc" />
     <ClCompile Include="osdep.cc" />
     <ClCompile Include="paging.cc" />
     <ClCompile Include="parallel.cc" />
@@ -208,6 +209,7 @@
     <ClCompile Include="proc_ctrl.cc" />
     <ClCompile Include="ret_far.cc" />
     <ClCompile Include="scancodes.cc" />
+    <ClCompile Include="scrollwin.cc" />
     <ClCompile Include="segment_ctrl_pro.cc" />
     <ClCompile Include="serial.cc" />
     <ClCompile Include="siminterface.cc" />
@@ -232,6 +234,9 @@
     <ClCompile Include="vmexit.cc" />
     <ClCompile Include="vmx.cc" />
     <ClCompile Include="wide_int.cc" />
+    <ClCompile Include="win32.cc" />
+    <ClCompile Include="win32config.cc" />
+    <ClCompile Include="win32paramdlg.cc" />
     <ClCompile Include="xsave.cc" />
   </ItemGroup>
   <ItemGroup>
@@ -280,6 +285,7 @@
     <ClInclude Include="i486dx4.h" />
     <ClInclude Include="ia_opcodes.h" />
     <ClInclude Include="icache.h" />
+    <ClInclude Include="icon_bochs.h" />
     <ClInclude Include="instr.h" />
     <ClInclude Include="instrument.h" />
     <ClInclude Include="iodev.h" />
@@ -309,6 +315,7 @@
     <ClInclude Include="saverestore.h" />
     <ClInclude Include="scalar_arith.h" />
     <ClInclude Include="scancodes.h" />
+    <ClInclude Include="scrollwin.h" />
     <ClInclude Include="sdl.h" />
     <ClInclude Include="serial.h" />
     <ClInclude Include="simd_compare.h" />
@@ -333,12 +340,16 @@
     <ClInclude Include="userbutton.h" />
     <ClInclude Include="utctime.h" />
     <ClInclude Include="vcruntime.h" />
+    <ClInclude Include="vga.bitmap.h" />
     <ClInclude Include="vga.h" />
     <ClInclude Include="vgacore.h" />
     <ClInclude Include="virt_timer.h" />
     <ClInclude Include="vmx.h" />
     <ClInclude Include="vmx_ctrls.h" />
     <ClInclude Include="wide_int.h" />
+    <ClInclude Include="win32dialog.h" />
+    <ClInclude Include="win32paramdlg.h" />
+    <ClInclude Include="win32res.h" />
     <ClInclude Include="xmm.h" />
   </ItemGroup>
   <ItemGroup>

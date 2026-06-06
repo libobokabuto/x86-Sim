@@ -30,6 +30,21 @@ bx_pc_system_c bx_pc_system;
 
 int bx_begin_simulation(int argc, char* argv[])
 {
+
+	const char* gui_name = "win32";
+
+	for (int i = 1; i < argc; i++) {
+		if (!strcmp(argv[i], "--nogui")) {
+			gui_name = "nogui";
+		}
+		else if (!strcmp(argv[i], "--win32")) {
+			gui_name = "win32";
+		}
+	}
+
+	if (bx_gui == NULL) {
+		PLUG_load_plugin_var(gui_name, PLUGTYPE_GUI);
+	}
 	bx_init_hardware();
 
 	BX_CPU(0)->cpu_loop();
@@ -103,10 +118,40 @@ int bxmain(void)
 	return 0;
 }
 //530ÐÐmain.cc
+#if !defined(__WXMSW__)
+// normal main function, presently in for all cases except for
+// wxWidgets under win32.
 int CDECL main(int argc, char* argv[])
 {
+	bx_startup_flags.argc = argc;
+	bx_startup_flags.argv = argv;
+#ifdef WIN32
+	int arg = 1;
+	bool bx_noconsole = 0;
+	while (arg < argc) {
+		if (!strcmp("-noconsole", argv[arg])) {
+			bx_noconsole = 1;
+			break;
+		}
+		arg++;
+	}
+
+	if (bx_noconsole) {
+		FreeConsole();
+	}
+	else {
+#if BX_WITH_SDL || BX_WITH_SDL2
+		// if SDL/win32, try to create a console window.
+		if (!RedirectIOToConsole()) {
+			return 1;
+		}
+#endif
+		SetConsoleTitle("Bochs for Windows - Console");
+	}
+#endif
 	return bxmain();
 }
+#endif
 //595ÐÐmain.cc
 int bx_init_main(int argc, char* argv[])
 {
@@ -130,3 +175,25 @@ int bx_init_main(int argc, char* argv[])
 
 	return 0;
 }
+
+#if BX_SHOW_IPS
+void bx_show_ips_handler(void)
+{//1443
+	static Bit64u ticks_count = 0;
+	static Bit64u counts = 0;
+
+	// amount of system ticks passed from last time the handler was called
+	Bit64u ips_count = bx_pc_system.time_ticks() - ticks_count;
+	if (ips_count) {
+		bx_gui->show_ips((Bit32u)ips_count);
+		ticks_count = bx_pc_system.time_ticks();
+		counts++;
+		if (bx_dbg.print_timestamps) {
+			printf("IPS: %u\taverage = %u\t\t(%us)\n",
+				(unsigned)ips_count, (unsigned)(ticks_count / counts), (unsigned)counts);
+			fflush(stdout);
+		}
+	}
+	return;
+}
+#endif

@@ -120,6 +120,7 @@ void BX_CPP_AttrRegparmN(2) BX_CPU_C::stack_write_byte(bx_address offset, Bit8u 
     if (BX_CPU_THIS_PTR espHostPtr) {
         Bit8u* hostPageAddr = (Bit8u*)(BX_CPU_THIS_PTR espHostPtr + espBiased);
         bx_phy_address pAddr = BX_CPU_THIS_PTR pAddrStackPage + espBiased;
+        
         BX_NOTIFY_LIN_MEMORY_ACCESS(get_laddr(BX_SEG_REG_SS, offset), pAddr, 1,
             MEMTYPE(BX_CPU_THIS_PTR espPageMemtype), BX_WRITE, (Bit8u*)&data);
 
@@ -147,6 +148,7 @@ void BX_CPP_AttrRegparmN(2) BX_CPU_C::stack_write_word(bx_address offset, Bit16u
     if (BX_CPU_THIS_PTR espHostPtr) {
         Bit16u* hostPageAddr = (Bit16u*)(BX_CPU_THIS_PTR espHostPtr + espBiased);
         bx_phy_address pAddr = BX_CPU_THIS_PTR pAddrStackPage + espBiased;
+        
 #if BX_CPU_LEVEL >= 4 && BX_SUPPORT_ALIGNMENT_CHECK
         if (BX_CPU_THIS_PTR alignment_check() && (pAddr & 1) != 0) {
             //BX_ERROR(("stack_write_word(): #AC misaligned access"));
@@ -277,6 +279,7 @@ Bit16u BX_CPP_AttrRegparmN(1) BX_CPU_C::stack_read_word(bx_address offset)
         }
 #endif
         data = ReadHostWordFromLittleEndian(hostPageAddr);
+        
         BX_NOTIFY_LIN_MEMORY_ACCESS(get_laddr(BX_SEG_REG_SS, offset),
             (BX_CPU_THIS_PTR pAddrStackPage + espBiased), 2,
             MEMTYPE(BX_CPU_THIS_PTR espPageMemtype), BX_READ, (Bit8u*)&data);

@@ -306,6 +306,21 @@
     <ClCompile Include="keymap.cc">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="nogui.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="win32.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="win32config.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="win32paramdlg.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="scrollwin.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bochs.h">
@@ -618,6 +633,24 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="keymap.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="icon_bochs.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="win32dialog.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="win32res.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="vga.bitmap.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="win32paramdlg.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="scrollwin.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

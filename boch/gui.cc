@@ -1516,7 +1516,7 @@ bool bx_gui_c::parse_common_gui_options(const char* arg, Bit8u flags)
             return false;
         }
 #else
-        SIM->message_box("ERROR", "Bochs debugger not available - ignoring 'gui_debug' option");
+        //SIM->message_box("ERROR", "Bochs debugger not available - ignoring 'gui_debug' option");
 #endif
         return true;
 #if BX_SHOW_IPS

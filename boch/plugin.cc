@@ -130,6 +130,7 @@ plugin_t bx_builtin_plugins[] = {
   BUILTIN_OPT_PLUGIN_ENTRY(parallel),
   BUILTIN_OPT_PLUGIN_ENTRY(serial),
   BUILTIN_OPTPCI_PLUGIN_ENTRY(usb_uhci),
+  BUILTIN_GUI_PLUGIN_ENTRY(win32),
   /*
 #if BX_SUPPORT_BUSMOUSE
   BUILTIN_OPT_PLUGIN_ENTRY(busmouse),

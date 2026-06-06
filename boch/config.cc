@@ -71,3 +71,70 @@ int bx_split_option_list(const char* msg, const char* rawopt, char** argv, int m
     delete[] options;
     return argc;
 }
+
+const char* get_builtin_variable(const char* varname)
+{//1914
+#ifdef WIN32
+    int code;
+    DWORD size;
+    DWORD type = 0;
+    HKEY hkey;
+    char keyname[80];
+    static char data[MAX_PATH];
+#endif
+
+    if (strlen(varname) < 1) return NULL;
+    else {
+        if (!strcmp(varname, "BXSHARE")) {
+#ifdef WIN32
+            wsprintf(keyname, "Software\\Bochs");
+            code = RegOpenKeyEx(HKEY_LOCAL_MACHINE, keyname, 0, KEY_READ, &hkey);
+            if (code == ERROR_SUCCESS) {
+                data[0] = 0;
+                size = MAX_PATH;
+                if (RegQueryValueEx(hkey, "BX_SHARE_PATH", NULL, (LPDWORD)&type, (LPBYTE)data,
+                    (LPDWORD)&size) == ERROR_SUCCESS) {
+                    RegCloseKey(hkey);
+                    return data;
+                }
+                else if (RegQueryValueEx(hkey, "", NULL, (LPDWORD)&type, (LPBYTE)data,
+                    (LPDWORD)&size) == ERROR_SUCCESS) {
+                    RegCloseKey(hkey);
+                    return data;
+                }
+                else {
+                    RegCloseKey(hkey);
+                    return NULL;
+                }
+            }
+            else {
+                return NULL;
+            }
+#else
+            return BX_SHARE_PATH;
+#endif
+        }
+        return NULL;
+    }
+}
+
+void get_bxshare_path(char* path)
+{//1957
+    const char* varptr = NULL;
+
+#if BX_HAVE_GETENV
+    varptr = getenv("BXSHARE");
+#endif
+    if (varptr != NULL) {
+        sprintf(path, "%s", varptr);
+    }
+    else {
+        varptr = get_builtin_variable("BXSHARE");
+        if (varptr != NULL) {
+            sprintf(path, "%s", varptr);
+        }
+        else {
+            strcpy(path, ".");
+        }
+    }
+}

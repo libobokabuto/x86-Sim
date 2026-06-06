@@ -192,7 +192,7 @@ void bx_vgacore_c::init_gui(void)
   char *argv[1];
 
   if (bx_gui == NULL) {
-    bx_gui = new bx_gui_c();
+      return;
   }
   argv[0] = (char *)"bochs";
   bx_gui->init(1, argv, BX_VGA_THIS s.max_xres, BX_VGA_THIS s.max_yres,

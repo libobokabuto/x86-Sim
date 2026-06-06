@@ -606,7 +606,7 @@ typedef Bit64u bx_ptr_equiv_t;
 
 #define BX_GDBSTUB 0
 #define BX_DEBUGGER 1
-#define BX_DEBUGGER_GUI 1
+#define BX_DEBUGGER_GUI 0
 
 #define BX_INSTRUMENTATION 0
 
@@ -816,7 +816,7 @@ typedef Bit64u bx_ptr_equiv_t;
 #endif
 
 // set to 1 to include the USB debugger interface
-#define BX_USB_DEBUGGER 1
+#define BX_USB_DEBUGGER 0
 
 // MS bus mouse support
 #define BX_SUPPORT_BUSMOUSE 1

@@ -9,13 +9,26 @@
 class bx_cmos_c : public bx_cmos_stub_c {
 public:
 	bx_cmos_c();
+    virtual ~bx_cmos_c();
+
     virtual void init(void);
     virtual void checksum_cmos(void);
+    virtual void reset(unsigned type);
+    virtual void save_image(void);
+    virtual void register_state(void);
+    virtual void after_restore_state(void);
+
     virtual Bit32u get_reg(Bit8u reg) {
         return s.reg[reg];
     }
     virtual void set_reg(Bit8u reg, Bit32u val) {
         s.reg[reg] = val;
+    }
+    virtual Bit64s get_timeval() {
+        return s.timeval;
+    }
+    virtual void enable_irq(bool enabled) {
+        s.irq_enabled = enabled;
     }
     struct {
         int     periodic_timer_index;
@@ -41,7 +54,17 @@ private:
 
     static Bit32u read_handler(void* this_ptr, Bit32u address, unsigned io_len);
     static void   write_handler(void* this_ptr, Bit32u address, Bit32u value, unsigned io_len);
-
+#if !BX_USE_CMOS_SMF
+    Bit32u read(Bit32u address, unsigned io_len);
+    void   write(Bit32u address, Bit32u value, unsigned len);
+#endif
+public:
+    static void periodic_timer_handler(void*);
+    static void one_second_timer_handler(void*);
+    static void uip_timer_handler(void*);
+    BX_CMOS_SMF void periodic_timer(void);
+    BX_CMOS_SMF void one_second_timer(void);
+    BX_CMOS_SMF void uip_timer(void);
 private:
     BX_CMOS_SMF void update_clock(void);
     BX_CMOS_SMF void update_timeval(void);

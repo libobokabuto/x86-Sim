@@ -2,6 +2,7 @@
 #define BX_PLUGGABLE
 #include "iodev.h"
 #include "cmos.h"
+#include "virt_timer.h"
 #include "utctime.h"
 #include "debug.h"
 #define LOG_THIS theCmosDevice->
@@ -73,6 +74,22 @@ bx_cmos_c::bx_cmos_c(void)
     s.uip_timer_index = BX_NULL_TIMER_HANDLE;
 }
 
+bx_cmos_c::~bx_cmos_c(void)
+{
+    save_image();
+    char* tmptime;
+    if ((tmptime = strdup(ascutc(utctime(&(BX_CMOS_THIS s.timeval))))) != NULL) {
+        tmptime[strlen(tmptime) - 1] = '\0';
+        //BX_INFO(("Last time: " FMT_LL "d tz=utc (%s)", get_timeval(), tmptime));
+        free(tmptime);
+    }
+    //SIM->get_bochs_root()->remove("cmos");
+    //bx_list_c* misc_rt = (bx_list_c*)SIM->get_param(BXPN_MENU_RUNTIME_MISC);
+    //misc_rt->remove("cmosimage");
+    //BX_DEBUG(("Exit"));
+    
+}
+
 void bx_cmos_c::init(void)
 {
     //144
@@ -83,6 +100,26 @@ void bx_cmos_c::init(void)
     DEV_register_iowrite_handler(this, write_handler, 0x0070, "CMOS RAM", 1);
     DEV_register_iowrite_handler(this, write_handler, 0x0071, "CMOS RAM", 1);
     DEV_register_irq(8, "CMOS RTC");
+
+    BX_CMOS_THIS s.rtc_sync = false;
+
+    if (BX_CMOS_THIS s.periodic_timer_index == BX_NULL_TIMER_HANDLE) {
+        BX_CMOS_THIS s.periodic_timer_index =
+            DEV_register_timer(this, periodic_timer_handler,
+                1000000, 1, 0, "cmos");
+    }
+
+    if (BX_CMOS_THIS s.one_second_timer_index == BX_NULL_TIMER_HANDLE) {
+        BX_CMOS_THIS s.one_second_timer_index =
+            bx_virt_timer.register_timer(this, one_second_timer_handler,
+                1000000, 1, 0, BX_CMOS_THIS s.rtc_sync, "cmos");
+    }
+
+    if (BX_CMOS_THIS s.uip_timer_index == BX_NULL_TIMER_HANDLE) {
+        BX_CMOS_THIS s.uip_timer_index =
+            DEV_register_timer(this, uip_timer_handler,
+                244, 0, 0, "cmos");
+    }
 
     BX_CMOS_THIS s.max_reg = 127;
     BX_CMOS_THIS s.use_image = false;
@@ -121,6 +158,62 @@ void bx_cmos_c::init(void)
     update_clock();
 
 }
+
+void bx_cmos_c::reset(unsigned type)
+{
+    BX_CMOS_THIS s.cmos_mem_address = 0;
+    BX_CMOS_THIS s.irq_enabled = 1;
+
+    // RESET affects the following registers:
+    //  CRA: no effects
+    //  CRB: bits 4,5,6 forced to 0
+    //  CRC: bits 4,5,6,7 forced to 0
+    //  CRD: no effects
+    BX_CMOS_THIS s.reg[REG_STAT_B] &= 0x8f;
+    BX_CMOS_THIS s.reg[REG_STAT_C] = 0;
+
+    // One second timer for updating clock & alarm functions
+    bx_virt_timer.activate_timer(BX_CMOS_THIS s.one_second_timer_index,
+        1000000, 1);
+
+    // handle periodic interrupt rate select
+    BX_CMOS_THIS CRA_change();
+}
+
+void bx_cmos_c::save_image(void)
+{/*
+    int fd, ret;
+
+    // save CMOS to image file if requested.
+    if (SIM->get_param_bool(BXPN_CMOSIMAGE_ENABLED)->get()) {
+        fd = open(SIM->get_param_string(BXPN_CMOSIMAGE_PATH)->getptr(), O_CREAT | O_WRONLY | O_TRUNC
+#ifdef O_BINARY
+            | O_BINARY
+#endif
+            , S_IWUSR | S_IRUSR | S_IWGRP | S_IRGRP
+        );
+        ret = ::write(fd, (bx_ptr_t)BX_CMOS_THIS s.reg, BX_CMOS_THIS s.max_reg + 1);
+        if (ret != (BX_CMOS_THIS s.max_reg + 1)) {
+            //BX_PANIC(("CMOS: error writing cmos file."));
+        }
+        close(fd);
+    }
+    */
+}
+
+void bx_cmos_c::register_state(void)
+{
+    
+}
+
+void bx_cmos_c::after_restore_state(void)
+{
+    BX_CMOS_THIS s.rtc_mode_12hour = ((BX_CMOS_THIS s.reg[REG_STAT_B] & 0x02) == 0);
+    BX_CMOS_THIS s.rtc_mode_binary = ((BX_CMOS_THIS s.reg[REG_STAT_B] & 0x04) != 0);
+    BX_CMOS_THIS update_timeval();
+    BX_CMOS_THIS CRA_change();
+}
+
 void bx_cmos_c::CRA_change(void)
 {
     //341
@@ -193,6 +286,7 @@ Bit32u bx_cmos_c::read(Bit32u address, unsigned io_len)
         return 0;
     }
 }
+
 void bx_cmos_c::write_handler(void* this_ptr, Bit32u address, Bit32u value, unsigned io_len)
 {
 #if !BX_USE_CMOS_SMF
@@ -467,6 +561,7 @@ void bx_cmos_c::write(Bit32u address, Bit32u value, unsigned io_len)
         break;
     }
 }
+
 void bx_cmos_c::checksum_cmos(void)
 {
     //686
@@ -476,6 +571,99 @@ void bx_cmos_c::checksum_cmos(void)
     BX_CMOS_THIS s.reg[REG_CSUM_HIGH] = (sum >> 8) & 0xff; /* checksum high */
     BX_CMOS_THIS s.reg[REG_CSUM_LOW] = (sum & 0xff);      /* checksum low */
 }
+
+void bx_cmos_c::periodic_timer_handler(void* this_ptr)
+{
+    bx_cmos_c* class_ptr = (bx_cmos_c*)this_ptr;
+    class_ptr->periodic_timer();
+}
+
+void bx_cmos_c::periodic_timer()
+{
+    // if periodic interrupts are enabled, trip IRQ 8, and
+    // update status register C
+    if (BX_CMOS_THIS s.reg[REG_STAT_B] & 0x40) {
+        BX_CMOS_THIS s.reg[REG_STAT_C] |= 0xc0; // Interrupt Request, Periodic Int
+        if (BX_CMOS_THIS s.irq_enabled) {
+            DEV_pic_raise_irq(8);
+        }
+    }
+}
+
+void bx_cmos_c::one_second_timer_handler(void* this_ptr)
+{
+    bx_cmos_c* class_ptr = (bx_cmos_c*)this_ptr;
+    class_ptr->one_second_timer();
+}
+
+void bx_cmos_c::one_second_timer()
+{
+    // divider chain reset - RTC stopped
+    if ((BX_CMOS_THIS s.reg[REG_STAT_A] & 0x60) == 0x60)
+        return;
+
+    // update internal time/date buffer
+    BX_CMOS_THIS s.timeval++;
+
+    // Dont update CMOS user copy of time/date if CRB bit7 is 1
+    // Nothing else do to
+    if (BX_CMOS_THIS s.reg[REG_STAT_B] & 0x80)
+        return;
+
+    BX_CMOS_THIS s.reg[REG_STAT_A] |= 0x80; // set UIP bit
+
+    // UIP timer for updating clock & alarm functions
+    bx_pc_system.activate_timer(BX_CMOS_THIS s.uip_timer_index, 244, 0);
+}
+
+void bx_cmos_c::uip_timer_handler(void* this_ptr)
+{
+    bx_cmos_c* class_ptr = (bx_cmos_c*)this_ptr;
+    class_ptr->uip_timer();
+}
+
+void bx_cmos_c::uip_timer()
+{
+    update_clock();
+
+    // if update interrupts are enabled, trip IRQ 8, and
+    // update status register C
+    if (BX_CMOS_THIS s.reg[REG_STAT_B] & 0x10) {
+        BX_CMOS_THIS s.reg[REG_STAT_C] |= 0x90; // Interrupt Request, Update Ended
+        if (BX_CMOS_THIS s.irq_enabled) {
+            DEV_pic_raise_irq(8);
+        }
+    }
+
+    // compare CMOS user copy of time/date to alarm time/date here
+    if (BX_CMOS_THIS s.reg[REG_STAT_B] & 0x20) {
+        // Alarm interrupts enabled
+        bool alarm_match = 1;
+        if ((BX_CMOS_THIS s.reg[REG_SEC_ALARM] & 0xc0) != 0xc0) {
+            // seconds alarm not in dont care mode
+            if (BX_CMOS_THIS s.reg[REG_SEC] != BX_CMOS_THIS s.reg[REG_SEC_ALARM])
+                alarm_match = 0;
+        }
+        if ((BX_CMOS_THIS s.reg[REG_MIN_ALARM] & 0xc0) != 0xc0) {
+            // minutes alarm not in dont care mode
+            if (BX_CMOS_THIS s.reg[REG_MIN] != BX_CMOS_THIS s.reg[REG_MIN_ALARM])
+                alarm_match = 0;
+        }
+        if ((BX_CMOS_THIS s.reg[REG_HOUR_ALARM] & 0xc0) != 0xc0) {
+            // hours alarm not in dont care mode
+            if (BX_CMOS_THIS s.reg[REG_HOUR] != BX_CMOS_THIS s.reg[REG_HOUR_ALARM])
+                alarm_match = 0;
+        }
+        if (alarm_match) {
+            BX_CMOS_THIS s.reg[REG_STAT_C] |= 0xa0; // Interrupt Request, Alarm Int
+            if (BX_CMOS_THIS s.irq_enabled) {
+                DEV_pic_raise_irq(8);
+            }
+        }
+    }
+    BX_CMOS_THIS s.reg[REG_STAT_A] &= 0x7f; // clear UIP bit
+}
+
 void bx_cmos_c::update_clock()
 {
     struct utctm* time_calendar;

@@ -10,6 +10,16 @@ struct utctm {
 	Bit16s tm_wday; // days since Sunday        0-6
 	Bit16s tm_yday; // days since January 1     0-365
 };
+
+char* ascutc(struct utctm* src)
+{
+	static const char wdaystr[8][4] = { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "N/D" };
+	static const char monstr[13][4] = { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "N/D" };
+	static char timestr[28];
+	sprintf(timestr, "%.3s %.3s %2d %2d:%02d:%02d %6d\n", wdaystr[((src->tm_wday >= 0) && (src->tm_wday < 7)) ? src->tm_wday : 7], monstr[((src->tm_mon >= 0) && (src->tm_mon < 12)) ? src->tm_mon : 12], ((Bit16u)src->tm_mday) % 100, ((Bit16u)src->tm_hour) % 100, ((Bit16u)src->tm_min) % 100, ((Bit16u)src->tm_sec) % 100, (Bit32s)src->tm_year + 1900);  //Set the string up using extra caution to protect against bogus values, since snprintf() might not be available
+	return (char*)&timestr;
+}
+
 struct utctm* utctime_ext(const Bit64s* a, struct utctm* trgt)
 {
 	//108

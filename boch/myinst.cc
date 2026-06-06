@@ -16927,6 +16927,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::POPA16(bxInstruction_c* i)
     else
     {
         Bit16u temp_SP = SP;
+
         di = stack_read_word((Bit16u)(temp_SP + 0));
         si = stack_read_word((Bit16u)(temp_SP + 2));
         bp = stack_read_word((Bit16u)(temp_SP + 4));

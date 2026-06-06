@@ -221,11 +221,17 @@ Bit8u bx_get_plugin_flags_np(Bit16u type, Bit8u index);
 int bx_load_plugin_np(const char* name, Bit16u type);
 int bx_unload_opt_plugin(const char* name, bool devflag);
 #endif
+#if BX_PLUGINS && defined(WIN32)
 
+#elif BX_PLUGINS
 
+#else
 #define PLUGIN_ENTRY_FOR_MODULE(mod) \
   int CDECL lib##mod##_plugin_entry(plugin_t *plugin, Bit16u type, Bit8u mode) //396
+#define PLUGIN_ENTRY_FOR_GUI_MODULE(mod) \
+  int CDECL lib##mod##_gui_plugin_entry(plugin_t *plugin, Bit16u type, Bit8u mode)
 
+// device plugins
 PLUGIN_ENTRY_FOR_MODULE(harddrv);
 PLUGIN_ENTRY_FOR_MODULE(keyboard);
 PLUGIN_ENTRY_FOR_MODULE(serial);//411
@@ -246,3 +252,8 @@ PLUGIN_ENTRY_FOR_MODULE(acpi);//439
 PLUGIN_ENTRY_FOR_MODULE(ioapic);
 PLUGIN_ENTRY_FOR_MODULE(hpet);
 PLUGIN_ENTRY_FOR_MODULE(unmapped);
+// gui plugins
+PLUGIN_ENTRY_FOR_GUI_MODULE(nogui);
+PLUGIN_ENTRY_FOR_GUI_MODULE(win32);
+
+#endif

@@ -109,9 +109,7 @@ void bx_devices_c::init(BX_MEM_C* newmem)
     char* argv[16];
 
     mem = newmem;
-    if (bx_gui == NULL) {
-        bx_gui = new bx_gui_c();
-    }
+    
 
     /* set builtin default handlers, will be overwritten by the real default handler */
     register_default_io_read_handler(NULL, &default_read_handler, def_name, 7);
