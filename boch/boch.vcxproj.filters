@@ -321,6 +321,699 @@
     <ClCompile Include="scrollwin.cc">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="gather.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="sse_pfp.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ui32_to_f16.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ui32_to_f32.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ui32_to_f64.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ui32_to_extF80.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ui32_to_f128.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ui64_to_extF80.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ui64_to_f16.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ui64_to_f32.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ui64_to_f64.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ui64_to_f128.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f16_addsub.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f16_class.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f16_compare.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f16_div.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f16_getExp.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f16_getMant.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f16_max.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f16_min.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f16_minmax.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f16_mul.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f16_mulAdd.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f16_range.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f16_roundToInt.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f16_sqrt.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f16_to_extF80.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f16_to_f32.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f16_to_f64.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f16_to_i8.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f16_to_i8_r_minMag.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f16_to_i16.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f16_to_i16_r_minMag.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f16_to_i32.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f16_to_i32_r_minMag.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f16_to_i64.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f16_to_i64_r_minMag.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f16_to_ui8.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f16_to_ui8_r_minMag.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f16_to_ui16.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f16_to_ui16_r_minMag.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f16_to_ui32.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f16_to_ui32_r_minMag.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f16_to_ui64.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f16_to_ui64_r_minMag.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f32_addsub.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f32_class.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f32_compare.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f32_div.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f32_frc.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f32_getExp.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f32_getMant.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f32_max.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f32_min.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f32_minmax.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f32_mul.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f32_mulAdd.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f32_range.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f32_roundToInt.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f32_scalef.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f32_sqrt.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f32_to_extF80.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f32_to_f16.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f32_to_f64.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f32_to_f128.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f32_to_i8.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f32_to_i8_r_minMag.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f32_to_i32.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f32_to_i32_r_minMag.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f32_to_i64.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f32_to_i64_r_minMag.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f32_to_ui8.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f32_to_ui8_r_minMag.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f32_to_ui32.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f32_to_ui32_r_minMag.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f32_to_ui64.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f32_to_ui64_r_minMag.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f64_addsub.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f64_class.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f64_compare.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f64_div.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f64_frc.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f64_getExp.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f64_getMant.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f64_max.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f64_min.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f64_minmax.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f64_mul.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f64_mulAdd.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f64_range.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f64_roundToInt.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f64_scalef.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f64_sqrt.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f64_to_extF80.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f64_to_f16.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f64_to_f32.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f64_to_f128.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f64_to_i32.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f64_to_i32_r_minMag.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f64_to_i64.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f64_to_i64_r_minMag.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f64_to_ui32.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f64_to_ui32_r_minMag.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f64_to_ui64.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f64_to_ui64_r_minMag.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f128_addsub.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f128_div.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f128_mul.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f128_mulAdd.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f128_roundToInt.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f128_to_extF80.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f128_to_f32.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f128_to_f64.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f128_to_i32.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f128_to_i32_r_minMag.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f128_to_i64.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f128_to_i64_r_minMag.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f128_to_ui32.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f128_to_ui32_r_minMag.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f128_to_ui64.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f128_to_ui64_r_minMag.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="i32_to_extF80.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="i32_to_f16.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="i32_to_f32.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="i32_to_f64.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="i32_to_f128.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="i64_to_extF80.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="i64_to_f16.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="i64_to_f32.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="i64_to_f64.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="i64_to_f128.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="extF80_addsub.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="extF80_class.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="extF80_compare.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="extF80_div.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="extF80_extract.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="extF80_mul.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="extF80_rem.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="extF80_roundToInt.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="extF80_scale.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="extF80_sqrt.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="extF80_to_f16.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="extF80_to_f32.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="extF80_to_f64.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="extF80_to_f128.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="extF80_to_i32.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="extF80_to_i32_r_minMag.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="extF80_to_i64.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="extF80_to_i64_r_minMag.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="extF80_to_ui32.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="extF80_to_ui32_r_minMag.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="extF80_to_ui64.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="extF80_to_ui64_r_minMag.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="isNaN.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="isSignalingNaN.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="s_add128.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="s_add256M.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="s_addMagsExtF80.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="s_addMagsF16.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="s_addMagsF32.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="s_addMagsF64.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="s_addMagsF128.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="s_approxRecip_1Ks.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="s_approxRecipSqrt_1Ks.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="s_approxRecipSqrt32_1.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="s_countLeadingZeros8.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="s_countLeadingZeros16.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="s_countLeadingZeros32.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="s_countLeadingZeros64.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="s_eq128.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="s_le128.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="s_lt128.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="s_mul64ByShifted32To128.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="s_mul64To128.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="s_mul128By32.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="s_mul128To256M.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="s_normRoundPackToExtF80.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="s_normRoundPackToF16.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="s_normRoundPackToF32.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="s_normRoundPackToF64.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="s_normRoundPackToF128.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="s_normSubnormalExtF80Sig.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="s_normSubnormalF16Sig.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="s_normSubnormalF32Sig.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="s_normSubnormalF64Sig.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="s_normSubnormalF128Sig.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="s_packToExtF80.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="s_roundPackToExtF80.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="s_roundPackToF16.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="s_roundPackToF32.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="s_roundPackToF64.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="s_roundPackToF128.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="s_roundToI8.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="s_roundToI16.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="s_roundToI32.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="s_roundToI64.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="s_roundToUI8.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="s_roundToUI16.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="s_roundToUI32.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="s_roundToUI64.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="s_shiftRightJam32.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="s_shiftRightJam64.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="s_shiftRightJam64Extra.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="s_shiftRightJam128.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="s_shiftRightJam128Extra.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="s_shiftRightJam256M.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="s_shortShiftLeft128.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="s_shortShiftRight128.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="s_shortShiftRightJam64.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="s_shortShiftRightJam64Extra.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="s_shortShiftRightJam128.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="s_shortShiftRightJam128Extra.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="s_sub128.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="s_sub256M.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="s_subMagsExtF80.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="s_subMagsF16.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="s_subMagsF32.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="s_subMagsF64.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="s_subMagsF128.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="aes.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="crc32.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="sse_move.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="sse_rcp.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="sse_string.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="3dnow.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="3dnow_rcp.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="sha.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="sha512.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="sm3.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="sm4.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="amx.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bochs.h">
@@ -651,6 +1344,39 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="scrollwin.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="softfloat-compare.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="softfloat-extra.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="internals.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="primitives.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="specialize.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="tag_w.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="status_w.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="control_w.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="softfloat-specialize.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="amx.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="bf16.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
