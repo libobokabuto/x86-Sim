@@ -27,6 +27,12 @@ bool BX_CPP_AttrRegparmN(1) BX_CPU_C::ShadowStackEnabled(unsigned cpl)
         BX_CPU_THIS_PTR msr.ia32_cet_control[cpl == 3] & BX_CET_SHADOW_STACK_ENABLED;
 }
 
+bool BX_CPP_AttrRegparmN(1) BX_CPU_C::ShadowStackWriteEnabled(unsigned cpl)
+{
+    return BX_CPU_THIS_PTR cr4.get_CET() && protected_mode() &&
+        (BX_CPU_THIS_PTR msr.ia32_cet_control[cpl == 3] & (BX_CET_SHADOW_STACK_ENABLED | BX_CET_SHADOW_STACK_WRITE_ENABLED)) == (BX_CET_SHADOW_STACK_ENABLED | BX_CET_SHADOW_STACK_WRITE_ENABLED);
+}
+
 bool BX_CPP_AttrRegparmN(1) BX_CPU_C::EndbranchEnabled(unsigned cpl)
 {
     return BX_CPU_THIS_PTR cr4.get_CET() && protected_mode() &&
@@ -57,5 +63,29 @@ void BX_CPP_AttrRegparmN(2) BX_CPU_C::track_indirect_if_not_suppressed(bxInstruc
         BX_CPU_THIS_PTR msr.ia32_cet_control[cpl == 3] |= BX_CET_WAIT_FOR_ENBRANCH;
     }
 }
+
+void BX_CPP_AttrRegparmN(2) BX_CPU_C::reset_endbranch_tracker(unsigned cpl, bool suppress)
+{
+    BX_CPU_THIS_PTR msr.ia32_cet_control[cpl == 3] &= ~(BX_CET_WAIT_FOR_ENBRANCH | BX_CET_SUPPRESS_INDIRECT_BRANCH_TRACKING);
+    if (suppress && !(BX_CPU_THIS_PTR msr.ia32_cet_control[cpl == 3] & BX_CET_SUPPRESS_DIS))
+        BX_CPU_THIS_PTR msr.ia32_cet_control[cpl == 3] |= BX_CET_SUPPRESS_INDIRECT_BRANCH_TRACKING;
+}
+
+bool BX_CPP_AttrRegparmN(1) BX_CPU_C::LegacyEndbranchTreatment(unsigned cpl)
+{
+    if (BX_CPU_THIS_PTR msr.ia32_cet_control[cpl == 3] & BX_CET_LEGACY_INDIRECT_BRANCH_TREATMENT)
+    {
+        bx_address lip = get_laddr(BX_SEG_REG_CS, RIP);
+        bx_address bitmap_addr = LPFOf(BX_CPU_THIS_PTR msr.ia32_cet_control[cpl == 3]) + ((lip & BX_CONST64(0xFFFFFFFFFFFF)) >> 15);
+        unsigned bitmap_index = (lip >> 12) & 0x7;
+        Bit8u bitmap = system_read_byte(bitmap_addr);
+        if ((bitmap & (1 << bitmap_index)) != 0) {
+            reset_endbranch_tracker(cpl, true);
+            return false;
+        }
+    }
+    return true;
+}
+
 
 #endif //最后一行

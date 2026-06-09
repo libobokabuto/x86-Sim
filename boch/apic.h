@@ -245,13 +245,17 @@ public:
 	void enable_xapic_extensions(void);
 	
 #endif
+
 	void startup_msg(Bit8u vector);
+	void register_state(bx_param_c* parent);
 #if BX_SUPPORT_VMX >= 2
 	Bit32u read_vmx_preemption_timer(void);
+	void set_vmx_preemption_timer(Bit32u value);
 	void deactivate_vmx_preemption_timer(void);
 	static void vmx_preemption_timer_expired(void*);
 #endif
 #if BX_SUPPORT_MONITOR_MWAIT
+	void set_mwaitx_timer(Bit64u value);
 	void deactivate_mwaitx_timer(void);
 	static void mwaitx_timer_expired(void*);
 #endif

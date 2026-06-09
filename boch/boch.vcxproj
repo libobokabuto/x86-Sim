@@ -135,7 +135,18 @@
     <ClCompile Include="aes.cc" />
     <ClCompile Include="amx.cc" />
     <ClCompile Include="apic.cc" />
+    <ClCompile Include="avx10_2_bf16.cc" />
+    <ClCompile Include="avx10_2_misc.cc" />
+    <ClCompile Include="avx512.cc" />
     <ClCompile Include="avx512_helpers.cc" />
+    <ClCompile Include="avx512_pfp.cc" />
+    <ClCompile Include="avx512_pfp16.cc" />
+    <ClCompile Include="avx512_rcp14.cc" />
+    <ClCompile Include="avx512_rsqrt14.cc" />
+    <ClCompile Include="avx_ifma52.cc" />
+    <ClCompile Include="avx_ne_convert.cc" />
+    <ClCompile Include="avx_pfp.cc" />
+    <ClCompile Include="bf16_arith.cc" />
     <ClCompile Include="biosdev.cc" />
     <ClCompile Include="bxthread.cc" />
     <ClCompile Include="call_far.cc" />
@@ -230,6 +241,7 @@
     <ClCompile Include="f16_to_ui64_r_minMag.c" />
     <ClCompile Include="f16_to_ui8.c" />
     <ClCompile Include="f16_to_ui8_r_minMag.c" />
+    <ClCompile Include="f2xm1.cc" />
     <ClCompile Include="f32_addsub.c" />
     <ClCompile Include="f32_class.c" />
     <ClCompile Include="f32_compare.c" />
@@ -290,6 +302,8 @@
     <ClCompile Include="f64_to_ui32_r_minMag.c" />
     <ClCompile Include="f64_to_ui64.c" />
     <ClCompile Include="f64_to_ui64_r_minMag.c" />
+    <ClCompile Include="faststring.cc" />
+    <ClCompile Include="ferr.cc" />
     <ClCompile Include="fetchdecode_opmap_xop.cc" />
     <ClCompile Include="fetchdecode32.cc" />
     <ClCompile Include="fetchdecode64.cc" />
@@ -308,7 +322,17 @@
     <ClCompile Include="fetchdecode_opmap_evex.cc" />
     <ClCompile Include="flag_ctrl_pro.cc" />
     <ClCompile Include="floppy.cc" />
+    <ClCompile Include="fpatan.cc" />
+    <ClCompile Include="fprem.cc" />
+    <ClCompile Include="fpu.cc" />
+    <ClCompile Include="fpu_arith.cc" />
+    <ClCompile Include="fpu_compare.cc" />
+    <ClCompile Include="fpu_const.cc" />
+    <ClCompile Include="fpu_load_store.cc" />
+    <ClCompile Include="fsincos.cc" />
+    <ClCompile Include="fyl2x.cc" />
     <ClCompile Include="gather.cc" />
+    <ClCompile Include="gf2.cc" />
     <ClCompile Include="gui.cc" />
     <ClCompile Include="harddrv.cc" />
     <ClCompile Include="hdimage.cc" />
@@ -355,7 +379,9 @@
     <ClCompile Include="pit.cc" />
     <ClCompile Include="pit82c54.cc" />
     <ClCompile Include="plugin.cc" />
+    <ClCompile Include="poly.cc" />
     <ClCompile Include="proc_ctrl.cc" />
+    <ClCompile Include="rdrand.cc" />
     <ClCompile Include="ret_far.cc" />
     <ClCompile Include="scancodes.cc" />
     <ClCompile Include="scrollwin.cc" />
@@ -370,6 +396,7 @@
     <ClCompile Include="soundlow.cc" />
     <ClCompile Include="soundmod.cc" />
     <ClCompile Include="speaker.cc" />
+    <ClCompile Include="sse.cc" />
     <ClCompile Include="sse_move.cc" />
     <ClCompile Include="sse_pfp.cc" />
     <ClCompile Include="sse_rcp.cc" />
@@ -452,6 +479,7 @@
     <ClCompile Include="ui64_to_f16.c" />
     <ClCompile Include="ui64_to_f32.c" />
     <ClCompile Include="ui64_to_f64.c" />
+    <ClCompile Include="uintr.cc" />
     <ClCompile Include="unmapped.cc" />
     <ClCompile Include="usb_common.cc" />
     <ClCompile Include="usb_pcap.cc" />
@@ -463,11 +491,13 @@
     <ClCompile Include="vm8086.cc" />
     <ClCompile Include="vmcs.cc" />
     <ClCompile Include="vmexit.cc" />
+    <ClCompile Include="vmfunc.cc" />
     <ClCompile Include="vmx.cc" />
     <ClCompile Include="wide_int.cc" />
     <ClCompile Include="win32.cc" />
     <ClCompile Include="win32config.cc" />
     <ClCompile Include="win32paramdlg.cc" />
+    <ClCompile Include="xop.cc" />
     <ClCompile Include="xsave.cc" />
   </ItemGroup>
   <ItemGroup>
@@ -475,6 +505,7 @@
     <ClInclude Include="acpi.h" />
     <ClInclude Include="amx.h" />
     <ClInclude Include="apic.h" />
+    <ClInclude Include="bf16-compare.h" />
     <ClInclude Include="bf16.h" />
     <ClInclude Include="biosdev.h" />
     <ClInclude Include="bochs.h" />
@@ -510,6 +541,8 @@
     <ClInclude Include="fetchdecode_opmap.h" />
     <ClInclude Include="floppya.h" />
     <ClInclude Include="floppyb.h" />
+    <ClInclude Include="fpu_constant.h" />
+    <ClInclude Include="fpu_trans.h" />
     <ClInclude Include="gui.h" />
     <ClInclude Include="harddrv.h" />
     <ClInclude Include="hdimage.h" />
@@ -532,6 +565,7 @@
     <ClInclude Include="memory-bochs.h" />
     <ClInclude Include="mouse.h" />
     <ClInclude Include="msr.h" />
+    <ClInclude Include="opts-GCC.h" />
     <ClInclude Include="parallel.h" />
     <ClInclude Include="paste.h" />
     <ClInclude Include="pci.h" />
@@ -547,6 +581,7 @@
     <ClInclude Include="plugin.h" />
     <ClInclude Include="power.h" />
     <ClInclude Include="primitives.h" />
+    <ClInclude Include="primitiveTypes.h" />
     <ClInclude Include="reset.h" />
     <ClInclude Include="saverestore.h" />
     <ClInclude Include="scalar_arith.h" />
@@ -562,6 +597,7 @@
     <ClInclude Include="snapshot.h" />
     <ClInclude Include="softfloat-compare.h" />
     <ClInclude Include="softfloat-extra.h" />
+    <ClInclude Include="softfloat-helpers.h" />
     <ClInclude Include="softfloat-specialize.h" />
     <ClInclude Include="softfloat.h" />
     <ClInclude Include="softfloat_types.h" />

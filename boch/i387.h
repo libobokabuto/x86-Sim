@@ -168,6 +168,7 @@ public:
 	bx_packed_reg_t(Bit64s val) : _s64(val) {}
 } BxPackedRegister;
 
+typedef BxPackedRegister BxPackedMmxRegister;
 
 #ifdef BX_BIG_ENDIAN
 #define s64      _s64
@@ -188,5 +189,53 @@ public:
 #define u32(i)   _u32[(i)]
 #define u64      _u64
 #endif
+
+#define MMXSB0(reg) (reg.sbyte(0))
+#define MMXSB1(reg) (reg.sbyte(1))
+#define MMXSB2(reg) (reg.sbyte(2))
+#define MMXSB3(reg) (reg.sbyte(3))
+#define MMXSB4(reg) (reg.sbyte(4))
+#define MMXSB5(reg) (reg.sbyte(5))
+#define MMXSB6(reg) (reg.sbyte(6))
+#define MMXSB7(reg) (reg.sbyte(7))
+
+#define MMXSW0(reg) (reg.s16(0))
+#define MMXSW1(reg) (reg.s16(1))
+#define MMXSW2(reg) (reg.s16(2))
+#define MMXSW3(reg) (reg.s16(3))
+
+#define MMXSD0(reg) (reg.s32(0))
+#define MMXSD1(reg) (reg.s32(1))
+
+#define MMXSQ(reg)  (reg.s64)
+#define MMXUQ(reg)  (reg.u64)
+
+#define MMXUD0(reg) (reg.u32(0))
+#define MMXUD1(reg) (reg.u32(1))
+
+#define MMXUW0(reg) (reg.u16(0))
+#define MMXUW1(reg) (reg.u16(1))
+#define MMXUW2(reg) (reg.u16(2))
+#define MMXUW3(reg) (reg.u16(3))
+
+#define MMXUB0(reg) (reg.ubyte(0))
+#define MMXUB1(reg) (reg.ubyte(1))
+#define MMXUB2(reg) (reg.ubyte(2))
+#define MMXUB3(reg) (reg.ubyte(3))
+#define MMXUB4(reg) (reg.ubyte(4))
+#define MMXUB5(reg) (reg.ubyte(5))
+#define MMXUB6(reg) (reg.ubyte(6))
+#define MMXUB7(reg) (reg.ubyte(7))
+
+#define BX_MMX_REG(index) (BX_FPU_REG(index).signif)
+
+#define BX_READ_MMX_REG(index)                         \
+    (*((const BxPackedMmxRegister*)(&(BX_MMX_REG(index)))))
+
+#define BX_WRITE_MMX_REG(index, value)                 \
+{                                                      \
+   (BX_FPU_REG(index)).signif = MMXUQ(value);          \
+   (BX_FPU_REG(index)).signExp = 0xffff;               \
+}
 
 #endif    

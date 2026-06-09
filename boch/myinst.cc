@@ -18001,6 +18001,39 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::LOAD_BROADCAST_MASK_Quarter_VectorW(bxInst
 
 #endif // BX_SUPPORT_AVX
 
+// myinst.cc 前面，放在指令函数第一次使用这些 helper 之前
+#include "aes.cc"
+#include "crc32.cc"
+#include "sse_pfp.cc"
+#include "sse_string.cc"
+#include "sse_rcp.cc"
+#include "3dnow.cc"
+#include "3dnow_rcp.cc"
+#include "sha.cc"
+#include "sha512.cc"
+#include "sm3.cc"
+#include "sm4.cc"
+#include "amx.cc"
+
+#include "bf16.h"
+
+#include "gf2.cc"
+#include "rdrand.cc"
+#include "sse.cc"
+#include "avx_ifma52.cc"
+#include "xop.cc"
+#include "faststring.cc"
+#include "uintr.cc"
+#include "vmfunc.cc"
+#include "avx512_helpers.cc"
+
+#include "fpu_trans.h"
+#include "softfloat-extra.h"
+#include "softfloat-specialize.h"
+#include "simd_pfp.h"
+
+extern softfloat_status_t i387cw_to_softfloat_status_word(Bit16u control_word);
+
 // Opcode handlers migrated from cpu.h gao_no stubs.
 void BX_CPP_AttrRegparmN(1) BX_CPU_C::AADD_EdGdM(bxInstruction_c *i)
 {
@@ -23038,7 +23071,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::FXRSTOR(bxInstruction_c *i)
   BxPackedXmmRegister xmm;
   unsigned index;
 
-  BX_DEBUG(("FXRSTOR: restore FPU/MMX/SSE state"));
+ // BX_DEBUG(("FXRSTOR: restore FPU/MMX/SSE state"));
 
   if (BX_CPU_THIS_PTR cr0.get_EM() || BX_CPU_THIS_PTR cr0.get_TS())
     exception(BX_NM_EXCEPTION, 0);
@@ -23093,7 +23126,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::FXRSTOR(bxInstruction_c *i)
   Bit32u new_mxcsr = xmm.xmm32u(2);
   if (is_cpu_extension_supported(BX_ISA_SSE)) {
     if (new_mxcsr & ~MXCSR_MASK) {
-       BX_ERROR(("%s: corrupted MXCSR state restored new_mxcsr=0x%08x", i->getIaOpcodeNameShort(), new_mxcsr));
+       //BX_ERROR(("%s: corrupted MXCSR state restored new_mxcsr=0x%08x", i->getIaOpcodeNameShort(), new_mxcsr));
        exception(BX_GP_EXCEPTION, 0);
     }
   }
@@ -23151,7 +23184,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::FXSAVE(bxInstruction_c *i)
   unsigned index;
   BxPackedXmmRegister xmm;
 
-  BX_DEBUG(("FXSAVE: save FPU/MMX/SSE state"));
+  //BX_DEBUG(("FXSAVE: save FPU/MMX/SSE state"));
 
   if (BX_CPU_THIS_PTR cr0.get_EM() || BX_CPU_THIS_PTR cr0.get_TS())
     exception(BX_NM_EXCEPTION, 0);
@@ -23601,7 +23634,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::HANDLE_AVX_PFP_3OP(bxInstruction_c *i)
 void BX_CPP_AttrRegparmN(1) BX_CPU_C::INCSSPD(bxInstruction_c *i)
 {
   if (! ShadowStackEnabled(CPL)) {
-    BX_ERROR(("%s: shadow stack not enabled", i->getIaOpcodeNameShort()));
+   // BX_ERROR(("%s: shadow stack not enabled", i->getIaOpcodeNameShort()));
     exception(BX_UD_EXCEPTION, 0);
   }
 
@@ -23618,7 +23651,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::INCSSPD(bxInstruction_c *i)
 void BX_CPP_AttrRegparmN(1) BX_CPU_C::INCSSPQ(bxInstruction_c *i)
 {
   if (! ShadowStackEnabled(CPL)) {
-    BX_ERROR(("%s: shadow stack not enabled", i->getIaOpcodeNameShort()));
+   // BX_ERROR(("%s: shadow stack not enabled", i->getIaOpcodeNameShort()));
     exception(BX_UD_EXCEPTION, 0);
   }
 
@@ -23697,7 +23730,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::INVEPT(bxInstruction_c *i)
   }
 
   if (CPL != 0) {
-    BX_ERROR(("%s: with CPL!=0 cause #GP(0)", i->getIaOpcodeNameShort()));
+   // BX_ERROR(("%s: with CPL!=0 cause #GP(0)", i->getIaOpcodeNameShort()));
     exception(BX_GP_EXCEPTION, 0);
   }
 
@@ -23716,7 +23749,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::INVEPT(bxInstruction_c *i)
   switch(type) {
   case BX_INVEPT_INVVPID_SINGLE_CONTEXT_INVALIDATION:
      if (! is_eptptr_valid(inv_eptp.xmm64u(0))) {
-       BX_ERROR(("INVEPT: invalid EPTPTR value !"));
+      // BX_ERROR(("INVEPT: invalid EPTPTR value !"));
        VMfail(VMXERR_INVALID_INVEPT_INVVPID);
        BX_NEXT_TRACE(i);
      }
@@ -23728,7 +23761,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::INVEPT(bxInstruction_c *i)
      break;
 
   default:
-     BX_ERROR(("INVEPT: not supported type !"));
+    // BX_ERROR(("INVEPT: not supported type !"));
      VMfail(VMXERR_INVALID_INVEPT_INVVPID);
      BX_NEXT_TRACE(i);
   }
@@ -23748,7 +23781,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::INVLPG(bxInstruction_c* i)
 {
   // CPL is always 0 in real mode
   if (/* !real_mode() && */ CPL!=0) {
-    BX_ERROR(("%s: priveledge check failed, generate #GP(0)", i->getIaOpcodeNameShort()));
+   // BX_ERROR(("%s: priveledge check failed, generate #GP(0)", i->getIaOpcodeNameShort()));
     exception(BX_GP_EXCEPTION, 0);
   }
 
@@ -23785,14 +23818,14 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::INVPCID(bxInstruction_c *i)
   // INVPCID will always #UD in legacy VMX mode, the #UD takes priority over any other exception the instruction may incur.
   if (BX_CPU_THIS_PTR in_vmx_guest) {
     if (! BX_CPU_THIS_PTR vmcs.vmexec_ctrls2.INVPCID()) {
-       BX_ERROR(("INVPCID in VMX guest: not allowed to use instruction !"));
+      // BX_ERROR(("INVPCID in VMX guest: not allowed to use instruction !"));
        exception(BX_UD_EXCEPTION, 0);
     }
   }
 #endif
 
   if (v8086_mode()) {
-    BX_ERROR(("INVPCID: #GP - not recognized in v8086 mode"));
+   // BX_ERROR(("INVPCID: #GP - not recognized in v8086 mode"));
     exception(BX_GP_EXCEPTION, 0);
   }
 
@@ -23806,7 +23839,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::INVPCID(bxInstruction_c *i)
 #endif
 
   if (CPL != 0) {
-    BX_ERROR(("%s: with CPL!=0 cause #GP(0)", i->getIaOpcodeNameShort()));
+    //BX_ERROR(("%s: with CPL!=0 cause #GP(0)", i->getIaOpcodeNameShort()));
     exception(BX_GP_EXCEPTION, 0);
   }
 
@@ -23826,7 +23859,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::INVPCID(bxInstruction_c *i)
   read_virtual_xmmword(i->seg(), eaddr, &invpcid_desc);
 
   if (invpcid_desc.xmm64u(0) > 0xfff) {
-    BX_ERROR(("INVPCID: INVPCID_DESC reserved bits set"));
+    //BX_ERROR(("INVPCID: INVPCID_DESC reserved bits set"));
     exception(BX_GP_EXCEPTION, 0);
   }
 
@@ -23841,7 +23874,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::INVPCID(bxInstruction_c *i)
     }
 #endif
     if (! BX_CPU_THIS_PTR cr4.get_PCIDE() && pcid != 0) {
-      BX_ERROR(("INVPCID: invalid PCID"));
+     // BX_ERROR(("INVPCID: invalid PCID"));
       exception(BX_GP_EXCEPTION, 0);
     }
     TLB_flushNonGlobal(); // Invalidate all mappings for LADDR tagged with PCID except globals
@@ -23849,7 +23882,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::INVPCID(bxInstruction_c *i)
 
   case BX_INVPCID_SINGLE_CONTEXT_NON_GLOBAL_INVALIDATION:
     if (! BX_CPU_THIS_PTR cr4.get_PCIDE() && pcid != 0) {
-      BX_ERROR(("INVPCID: invalid PCID"));
+     // BX_ERROR(("INVPCID: invalid PCID"));
       exception(BX_GP_EXCEPTION, 0);
     }
     TLB_flushNonGlobal(); // Invalidate all mappings tagged with PCID except globals
@@ -23864,7 +23897,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::INVPCID(bxInstruction_c *i)
     break;
 
   default:
-    BX_ERROR(("INVPCID: not supported type !"));
+    //BX_ERROR(("INVPCID: not supported type !"));
     exception(BX_GP_EXCEPTION, 0);
   }
 
@@ -23884,7 +23917,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::INVVPID(bxInstruction_c *i)
   }
 
   if (CPL != 0) {
-    BX_ERROR(("%s: with CPL!=0 cause #GP(0)", i->getIaOpcodeNameShort()));
+   // BX_ERROR(("%s: with CPL!=0 cause #GP(0)", i->getIaOpcodeNameShort()));
     exception(BX_GP_EXCEPTION, 0);
   }
 
@@ -23901,14 +23934,14 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::INVVPID(bxInstruction_c *i)
   read_virtual_xmmword(i->seg(), eaddr, &invvpid_desc);
 
   if (invvpid_desc.xmm64u(0) > 0xffff) {
-    BX_ERROR(("INVVPID: INVVPID_DESC reserved bits set"));
+   // BX_ERROR(("INVVPID: INVVPID_DESC reserved bits set"));
     VMfail(VMXERR_INVALID_INVEPT_INVVPID);
     BX_NEXT_TRACE(i);
   }
 
   Bit16u vpid = invvpid_desc.xmm16u(0);
   if (vpid == 0 && type != BX_INVEPT_INVVPID_ALL_CONTEXT_INVALIDATION) {
-    BX_ERROR(("INVVPID with VPID=0"));
+   // BX_ERROR(("INVVPID with VPID=0"));
     VMfail(VMXERR_INVALID_INVEPT_INVVPID);
     BX_NEXT_TRACE(i);
   }
@@ -23916,7 +23949,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::INVVPID(bxInstruction_c *i)
   switch(type) {
   case BX_INVEPT_INVVPID_INDIVIDUAL_ADDRESS_INVALIDATION:
     if (! IsCanonical(invvpid_desc.xmm64u(1))) {
-      BX_ERROR(("INVVPID: non canonical LADDR single context invalidation"));
+    //  BX_ERROR(("INVVPID: non canonical LADDR single context invalidation"));
       VMfail(VMXERR_INVALID_INVEPT_INVVPID);
       BX_NEXT_TRACE(i);
     }
@@ -23937,7 +23970,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::INVVPID(bxInstruction_c *i)
     break;
 
   default:
-    BX_ERROR(("INVVPID: not supported type !"));
+   //BX_ERROR(("INVVPID: not supported type !"));
     VMfail(VMXERR_INVALID_INVEPT_INVVPID);
     BX_NEXT_TRACE(i);
   }
@@ -24831,12 +24864,12 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::MINSS_VssWssR(bxInstruction_c *i)
 void BX_CPP_AttrRegparmN(1) BX_CPU_C::MONITOR(bxInstruction_c *i)
 {
 #if BX_SUPPORT_MONITOR_MWAIT
-  BX_DEBUG(("%s instruction executed RAX = 0x" FMT_ADDRX, i->getIaOpcodeNameShort(), RAX));
+  //BX_DEBUG(("%s instruction executed RAX = 0x" FMT_ADDRX, i->getIaOpcodeNameShort(), RAX));
 
   if (i->getIaOpcode() == BX_IA_MONITOR) {
     // CPL is always 0 in real mode
     if (CPL != 0) {
-      BX_DEBUG(("%s: instruction not recognized when CPL != 0", i->getIaOpcodeNameShort()));
+      //BX_DEBUG(("%s: instruction not recognized when CPL != 0", i->getIaOpcodeNameShort()));
       exception(BX_UD_EXCEPTION, 0);
     }
 
@@ -24850,7 +24883,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::MONITOR(bxInstruction_c *i)
   }
 
   if (RCX != 0) {
-    BX_ERROR(("%s: no optional extensions supported", i->getIaOpcodeNameShort()));
+   // BX_ERROR(("%s: no optional extensions supported", i->getIaOpcodeNameShort()));
     exception(BX_GP_EXCEPTION, 0);
   }
 
@@ -24879,7 +24912,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::MONITOR(bxInstruction_c *i)
 
   BX_CPU_THIS_PTR monitor.arm(paddr, (i->getIaOpcode() == BX_IA_MONITOR) ? BX_MONITOR_ARMED_BY_MONITOR : BX_MONITOR_ARMED_BY_MONITORX);
 
-  BX_DEBUG(("%s: for phys_addr=0x" FMT_PHY_ADDRX, i->getIaOpcodeNameShort(), BX_CPU_THIS_PTR monitor.monitor_addr));
+ // BX_DEBUG(("%s: for phys_addr=0x" FMT_PHY_ADDRX, i->getIaOpcodeNameShort(), BX_CPU_THIS_PTR monitor.monitor_addr));
 #endif
 
   BX_NEXT_INSTR(i);
@@ -25446,12 +25479,12 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::MULSS_VssWssR(bxInstruction_c *i)
 void BX_CPP_AttrRegparmN(1) BX_CPU_C::MWAIT(bxInstruction_c *i)
 {
 #if BX_SUPPORT_MONITOR_MWAIT
-  BX_DEBUG(("%s instruction executed ECX = 0x%08x", i->getIaOpcodeNameShort(), ECX));
+ // BX_DEBUG(("%s instruction executed ECX = 0x%08x", i->getIaOpcodeNameShort(), ECX));
 
   if (i->getIaOpcode() == BX_IA_MWAIT) {
     // CPL is always 0 in real mode
     if (CPL != 0) {
-      BX_DEBUG(("%s: instruction not recognized when CPL != 0", i->getIaOpcodeNameShort()));
+      //BX_DEBUG(("%s: instruction not recognized when CPL != 0", i->getIaOpcodeNameShort()));
       exception(BX_UD_EXCEPTION, 0);
     }
 
@@ -25476,7 +25509,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::MWAIT(bxInstruction_c *i)
     supported_bits |= BX_MWAIT_MONITORLESS_MWAIT;
 
   if (RCX & ~supported_bits) {
-    BX_ERROR(("%s: incorrect optional extensions in RCX", i->getIaOpcodeNameShort()));
+    //BX_ERROR(("%s: incorrect optional extensions in RCX", i->getIaOpcodeNameShort()));
     exception(BX_GP_EXCEPTION, 0);
   }
 
@@ -25502,7 +25535,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::MWAIT(bxInstruction_c *i)
     }
 
     if (! monitor_armed) {
-      BX_DEBUG(("%s: the MONITOR was not armed or already triggered", i->getIaOpcodeNameShort()));
+     // BX_DEBUG(("%s: the MONITOR was not armed or already triggered", i->getIaOpcodeNameShort()));
       BX_NEXT_TRACE(i);
     }
   }
@@ -25536,7 +25569,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::MWAIT(bxInstruction_c *i)
     new_state = BX_ACTIVITY_STATE_MWAIT_IF;
   }
 
-  BX_INSTR_MWAIT(BX_CPU_ID, BX_CPU_THIS_PTR monitor.monitor_addr, CACHE_LINE_SIZE, ECX);
+  //BX_INSTR_MWAIT(BX_CPU_ID, BX_CPU_THIS_PTR monitor.monitor_addr, CACHE_LINE_SIZE, ECX);
 
   if (i->getIaOpcode() == BX_IA_MWAITX) {
     if ((ECX & 0x2) != 0 && EBX != 0) {
@@ -29888,7 +29921,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::RDTSC(bxInstruction_c *i)
 {
 #if BX_CPU_LEVEL >= 5
   if (BX_CPU_THIS_PTR cr4.get_TSD() && CPL != 0) {
-    BX_ERROR(("%s: not allowed to use instruction !", i->getIaOpcodeNameShort()));
+    //BX_ERROR(("%s: not allowed to use instruction !", i->getIaOpcodeNameShort()));
     exception(BX_GP_EXCEPTION, 0);
   }
 
@@ -29910,7 +29943,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::RDTSC(bxInstruction_c *i)
   RAX = GET32L(ticks);
   RDX = GET32H(ticks);
 
-  BX_DEBUG(("RDTSC: ticks 0x%08x:%08x", EDX, EAX));
+  //BX_DEBUG(("RDTSC: ticks 0x%08x:%08x", EDX, EAX));
 #endif
 
   BX_NEXT_INSTR(i);
@@ -29924,14 +29957,14 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::RDTSCP(bxInstruction_c *i)
   // RDTSCP will always #UD in legacy VMX mode, the #UD takes priority over any other exception the instruction may incur.
   if (BX_CPU_THIS_PTR in_vmx_guest) {
     if (! BX_CPU_THIS_PTR vmcs.vmexec_ctrls2.RDTSCP()) {
-       BX_ERROR(("%s in VMX guest: not allowed to use instruction !", i->getIaOpcodeNameShort()));
+      // BX_ERROR(("%s in VMX guest: not allowed to use instruction !", i->getIaOpcodeNameShort()));
        exception(BX_UD_EXCEPTION, 0);
     }
   }
 #endif
 
   if (BX_CPU_THIS_PTR cr4.get_TSD() && CPL != 0) {
-    BX_ERROR(("%s: not allowed to use instruction !", i->getIaOpcodeNameShort()));
+   // BX_ERROR(("%s: not allowed to use instruction !", i->getIaOpcodeNameShort()));
     exception(BX_GP_EXCEPTION, 0);
   }
 
@@ -30113,25 +30146,25 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::SAVEPREVSSP(bxInstruction_c *i)
   // Note that the alignment hole can be present only when in legacy/compatibility mode
   if (BX_CPU_THIS_PTR get_CF()) {
     if (long64_mode()) {
-      BX_ERROR(("%s: shadow stack alignment hole in long64 mode", i->getIaOpcodeNameShort()));
+     // BX_ERROR(("%s: shadow stack alignment hole in long64 mode", i->getIaOpcodeNameShort()));
       exception(BX_GP_EXCEPTION, 0);
     }
     else {
       // pop the alignment hole
       if (shadow_stack_pop_32() != 0) {
-        BX_ERROR(("%s: shadow stack alignment hole must be zero", i->getIaOpcodeNameShort()));
+      //  BX_ERROR(("%s: shadow stack alignment hole must be zero", i->getIaOpcodeNameShort()));
         exception(BX_GP_EXCEPTION, 0);
       }
     }
   }
 
   if ((previous_ssp_token & 0x02) == 0) {
-    BX_ERROR(("%s: previous SSP token reserved bits set", i->getIaOpcodeNameShort()));
+   // BX_ERROR(("%s: previous SSP token reserved bits set", i->getIaOpcodeNameShort()));
     exception(BX_GP_EXCEPTION, 0);
   }
 
   if (!long64_mode() && GET32H(previous_ssp_token) != 0) {
-    BX_ERROR(("%s: previous SSP token reserved bits set", i->getIaOpcodeNameShort()));
+   // BX_ERROR(("%s: previous SSP token reserved bits set", i->getIaOpcodeNameShort()));
     exception(BX_GP_EXCEPTION, 0);
   }
 
@@ -30150,18 +30183,18 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::SAVEPREVSSP(bxInstruction_c *i)
 void BX_CPP_AttrRegparmN(1) BX_CPU_C::SENDUIPI_Gq(bxInstruction_c *i)
 {
   if (! BX_CPU_THIS_PTR cr4.get_UINTR()) {
-    BX_ERROR(("%s: UINTR in not enabled in CR4", i->getIaOpcodeNameShort()));
+   // BX_ERROR(("%s: UINTR in not enabled in CR4", i->getIaOpcodeNameShort()));
     exception(BX_UD_EXCEPTION, 0);
   }
 
   if (! BX_CPU_THIS_PTR uintr.senduipi_enabled()) {
-    BX_ERROR(("SENDUIPI in disabled by IA32_UINTR_TT[0]"));
+    //BX_ERROR(("SENDUIPI in disabled by IA32_UINTR_TT[0]"));
     exception(BX_UD_EXCEPTION, 0);
   }
 
   Bit64u index = BX_READ_64BIT_REG(i->src());
   if (index > BX_CPU_THIS_PTR uintr.uitt_size) {
-    BX_ERROR(("SENDUIPI: value of the source operand exceeds UITT.SIZE"));
+   // BX_ERROR(("SENDUIPI: value of the source operand exceeds UITT.SIZE"));
     exception(BX_GP_EXCEPTION, 0);
   }
 
@@ -30177,7 +30210,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::SENDUIPI_Gq(bxInstruction_c *i)
   Bit64u tmpUITT_entry_lo = system_read_qword(entry_addr);
   Bit64u tmpUITT_upidaddr = system_read_qword(entry_addr + 8);
   if ((tmpUITT_entry_lo & 0x1) == 0) {
-    BX_ERROR(("SENDUIPI #GP(0): invalid UITT entry"));
+   // BX_ERROR(("SENDUIPI #GP(0): invalid UITT entry"));
     exception(BX_GP_EXCEPTION, 0);
   }
   if (tmpUITT_entry_lo & BX_CONST64(0xFFFFFFFFFFFF00FE)) {
@@ -30186,11 +30219,11 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::SENDUIPI_Gq(bxInstruction_c *i)
   }
   unsigned uvector = (tmpUITT_entry_lo >> 8) & 0xFF;
   if (uvector >= 64) {
-    BX_ERROR(("SENDUIPI #GP(0): UVector=%d >= 64", uvector));
+   // BX_ERROR(("SENDUIPI #GP(0): UVector=%d >= 64", uvector));
     exception(BX_GP_EXCEPTION, 0);
   }
   if (tmpUITT_upidaddr & 0x3F) {
-    BX_ERROR(("SENDUIPI #GP(0): UPID_ADDR must be 64-byte aligned"));
+   // BX_ERROR(("SENDUIPI #GP(0): UPID_ADDR must be 64-byte aligned"));
     exception(BX_GP_EXCEPTION, 0);
   }
 
@@ -30213,7 +30246,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::SENDUIPI_Gq(bxInstruction_c *i)
   Bit64u tmpUPID_lo = system_read_qword(tmpUITT_upidaddr);
   Bit64u tmpUPID_hi = system_read_qword(tmpUITT_upidaddr + 8);
   if (tmpUPID_lo & BX_CONST64(0xFF00FFFC)) {
-    BX_ERROR(("SENDUIPI #GP(0): invalid UPID, reserved bits set"));
+    //BX_ERROR(("SENDUIPI #GP(0): invalid UPID, reserved bits set"));
     exception(BX_GP_EXCEPTION, 0);
   }
 
@@ -30239,23 +30272,23 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::SENDUIPI_Gq(bxInstruction_c *i)
 void BX_CPP_AttrRegparmN(1) BX_CPU_C::SETSSBSY(bxInstruction_c *i)
 {
   if (! ShadowStackEnabled(0)) {
-    BX_ERROR(("%s: shadow stack not enabled", i->getIaOpcodeNameShort()));
+    //BX_ERROR(("%s: shadow stack not enabled", i->getIaOpcodeNameShort()));
     exception(BX_UD_EXCEPTION, 0);
   }
 
   if (CPL > 0) {
-    BX_ERROR(("%s: CPL != 0", i->getIaOpcodeNameShort()));
+   // BX_ERROR(("%s: CPL != 0", i->getIaOpcodeNameShort()));
     exception(BX_GP_EXCEPTION, 0);
   }
 
   Bit64u ssp_laddr = BX_CPU_THIS_PTR msr.ia32_pl_ssp[0];
   if (ssp_laddr & 0x7) {
-    BX_ERROR(("%s: SSP_LA not aligned to 8 bytes boundary", i->getIaOpcodeNameShort()));
+   // BX_ERROR(("%s: SSP_LA not aligned to 8 bytes boundary", i->getIaOpcodeNameShort()));
     exception(BX_GP_EXCEPTION, 0);
   }
 
   if (!shadow_stack_atomic_set_busy(ssp_laddr, CPL)) {
-    BX_ERROR(("%s: failed to set SSP busy bit", i->getIaOpcodeNameShort()));
+    //BX_ERROR(("%s: failed to set SSP busy bit", i->getIaOpcodeNameShort()));
     exception(BX_CP_EXCEPTION, BX_CP_SETSSBSY);
   }
 
@@ -30471,7 +30504,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::SQRTSS_VssWssR(bxInstruction_c *i)
 void BX_CPP_AttrRegparmN(1) BX_CPU_C::STAC(bxInstruction_c *i)
 {
   if (CPL != 0) {
-    BX_ERROR(("STAC is not recognized when CPL != 0"));
+    //BX_ERROR(("STAC is not recognized when CPL != 0"));
     exception(BX_UD_EXCEPTION, 0);
   }
 
@@ -30502,7 +30535,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::STTILECFG(bxInstruction_c *i)
 void BX_CPP_AttrRegparmN(1) BX_CPU_C::STUI(bxInstruction_c *i)
 {
   if (! BX_CPU_THIS_PTR cr4.get_UINTR()) {
-    BX_ERROR(("%s: UINTR in not enabled in CR4", i->getIaOpcodeNameShort()));
+   // BX_ERROR(("%s: UINTR in not enabled in CR4", i->getIaOpcodeNameShort()));
     exception(BX_UD_EXCEPTION, 0);
   }
   BX_CPU_THIS_PTR uintr.UIF = 1;
@@ -30544,7 +30577,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::SYSCALL(bxInstruction_c *i)
 #if BX_CPU_LEVEL >= 5
   bx_address temp_RIP;
 
-  BX_DEBUG(("Execute SYSCALL instruction"));
+ // BX_DEBUG(("Execute SYSCALL instruction"));
 
   if (!BX_CPU_THIS_PTR efer.get_SCE()) {
     exception(BX_UD_EXCEPTION, 0);
@@ -30687,11 +30720,11 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::SYSENTER(bxInstruction_c *i)
 {
 #if BX_CPU_LEVEL >= 6
   if (real_mode()) {
-    BX_ERROR(("%s: not recognized in real mode !", i->getIaOpcodeNameShort()));
+    //BX_ERROR(("%s: not recognized in real mode !", i->getIaOpcodeNameShort()));
     exception(BX_GP_EXCEPTION, 0);
   }
   if ((BX_CPU_THIS_PTR msr.sysenter_cs_msr & BX_SELECTOR_RPL_MASK) == 0) {
-    BX_ERROR(("SYSENTER with zero sysenter_cs_msr !"));
+    //BX_ERROR(("SYSENTER with zero sysenter_cs_msr !"));
     exception(BX_GP_EXCEPTION, 0);
   }
 
@@ -30706,11 +30739,11 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::SYSENTER(bxInstruction_c *i)
 #if BX_SUPPORT_X86_64
   if (long_mode()) {
     if (!IsCanonical(BX_CPU_THIS_PTR msr.sysenter_eip_msr)) {
-      BX_ERROR(("SYSENTER with non-canonical SYSENTER_EIP_MSR !"));
+     // BX_ERROR(("SYSENTER with non-canonical SYSENTER_EIP_MSR !"));
       exception(BX_GP_EXCEPTION, 0);
     }
     if (!IsCanonical(BX_CPU_THIS_PTR msr.sysenter_esp_msr)) {
-      BX_ERROR(("SYSENTER with non-canonical SYSENTER_ESP_MSR !"));
+     // BX_ERROR(("SYSENTER with non-canonical SYSENTER_ESP_MSR !"));
       exception(BX_GP_EXCEPTION, 0);
     }
   }
@@ -30791,11 +30824,11 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::SYSEXIT(bxInstruction_c *i)
 {
 #if BX_CPU_LEVEL >= 6
   if (real_mode() || CPL != 0) {
-    BX_ERROR(("SYSEXIT from real mode or with CPL<>0 !"));
+   // BX_ERROR(("SYSEXIT from real mode or with CPL<>0 !"));
     exception(BX_GP_EXCEPTION, 0);
   }
   if ((BX_CPU_THIS_PTR msr.sysenter_cs_msr & BX_SELECTOR_RPL_MASK) == 0) {
-    BX_ERROR(("SYSEXIT with zero sysenter_cs_msr !"));
+   // BX_ERROR(("SYSEXIT with zero sysenter_cs_msr !"));
     exception(BX_GP_EXCEPTION, 0);
   }
 
@@ -30810,11 +30843,11 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::SYSEXIT(bxInstruction_c *i)
 #if BX_SUPPORT_X86_64
   if (i->os64L()) {
     if (!IsCanonical(RDX)) {
-       BX_ERROR(("SYSEXIT with non-canonical RDX (RIP) pointer !"));
+       //BX_ERROR(("SYSEXIT with non-canonical RDX (RIP) pointer !"));
        exception(BX_GP_EXCEPTION, 0);
     }
     if (!IsCanonical(RCX)) {
-       BX_ERROR(("SYSEXIT with non-canonical RCX (RSP) pointer !"));
+       //BX_ERROR(("SYSEXIT with non-canonical RCX (RSP) pointer !"));
        exception(BX_GP_EXCEPTION, 0);
     }
 
@@ -30903,14 +30936,14 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::SYSRET(bxInstruction_c *i)
 #if BX_CPU_LEVEL >= 5
   bx_address temp_RIP;
 
-  BX_DEBUG(("Execute SYSRET instruction"));
+  //BX_DEBUG(("Execute SYSRET instruction"));
 
   if (!BX_CPU_THIS_PTR efer.get_SCE()) {
     exception(BX_UD_EXCEPTION, 0);
   }
 
   if(!protected_mode() || CPL != 0) {
-    BX_ERROR(("%s: priveledge check failed, generate #GP(0)", i->getIaOpcodeNameShort()));
+   // BX_ERROR(("%s: priveledge check failed, generate #GP(0)", i->getIaOpcodeNameShort()));
     exception(BX_GP_EXCEPTION, 0);
   }
 
@@ -30927,7 +30960,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::SYSRET(bxInstruction_c *i)
   {
     if (i->os64L()) {
       if (!IsCanonical(RCX)) {
-        BX_ERROR(("SYSRET: canonical failure for RCX (RIP)"));
+       //BX_ERROR(("SYSRET: canonical failure for RCX (RIP)"));
         exception(BX_GP_EXCEPTION, 0);
       }
 
@@ -31380,7 +31413,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::TDPFP16PS_TnnnTrmTreg(bxInstruction_c *i)
 void BX_CPP_AttrRegparmN(1) BX_CPU_C::TESTUI(bxInstruction_c *i)
 {
   if (! BX_CPU_THIS_PTR cr4.get_UINTR()) {
-    BX_ERROR(("%s: UINTR in not enabled in CR4", i->getIaOpcodeNameShort()));
+   // BX_ERROR(("%s: UINTR in not enabled in CR4", i->getIaOpcodeNameShort()));
     exception(BX_UD_EXCEPTION, 0);
   }
   clearEFlagsOSZAPC();
@@ -31392,7 +31425,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::TESTUI(bxInstruction_c *i)
 void BX_CPP_AttrRegparmN(1) BX_CPU_C::TILELOADD_TnnnMdq(bxInstruction_c *i)
 {
   if (i->sibIndex() == BX_NIL_REGISTER) {
-    BX_ERROR(("%s: SIB byte required", i->getIaOpcodeNameShort()));
+   // BX_ERROR(("%s: SIB byte required", i->getIaOpcodeNameShort()));
     exception(BX_UD_EXCEPTION, 0);
   }
 
@@ -31404,7 +31437,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::TILELOADD_TnnnMdq(bxInstruction_c *i)
   unsigned dword_elements_per_row = BX_CPU_THIS_PTR amx->tile_dword_elements_per_row(tile);
 
   if (BX_CPU_THIS_PTR amx->start_row >= rows) {
-    BX_ERROR(("%s: invalid tile %d (start_row=%d) >= (rows=%d)", i->getIaOpcodeNameShort(), tile, BX_CPU_THIS_PTR amx->start_row, rows));
+    //BX_ERROR(("%s: invalid tile %d (start_row=%d) >= (rows=%d)", i->getIaOpcodeNameShort(), tile, BX_CPU_THIS_PTR amx->start_row, rows));
     exception(BX_UD_EXCEPTION, 0);
   }
 
@@ -31448,7 +31481,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::TILERELEASE(bxInstruction_c *i)
 void BX_CPP_AttrRegparmN(1) BX_CPU_C::TILESTORED_MdqTnnn(bxInstruction_c *i)
 {
   if (i->sibIndex() == BX_NIL_REGISTER) {
-    BX_ERROR(("%s: SIB byte required", i->getIaOpcodeNameShort()));
+   // BX_ERROR(("%s: SIB byte required", i->getIaOpcodeNameShort()));
     exception(BX_UD_EXCEPTION, 0);
   }
 
@@ -31460,7 +31493,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::TILESTORED_MdqTnnn(bxInstruction_c *i)
   unsigned dword_elements_per_row = BX_CPU_THIS_PTR amx->tile_dword_elements_per_row(tile);
 
   if (BX_CPU_THIS_PTR amx->start_row >= rows) {
-    BX_ERROR(("TILESTORED: invalid tile %d (start_row=%d) >= (rows=%d)", tile, BX_CPU_THIS_PTR amx->start_row, rows));
+    //BX_ERROR(("TILESTORED: invalid tile %d (start_row=%d) >= (rows=%d)", tile, BX_CPU_THIS_PTR amx->start_row, rows));
     exception(BX_UD_EXCEPTION, 0);
   }
 
@@ -31491,7 +31524,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::TILEZERO_Tnnn(bxInstruction_c *i)
   unsigned tile = i->dst();
 
   if (tile >= BX_TILE_REGISTERS || ! BX_CPU_THIS_PTR amx->tile_valid(tile)) {
-    BX_ERROR(("TILEZERO: invalid tile %d", tile));
+    //BX_ERROR(("TILEZERO: invalid tile %d", tile));
     exception(BX_UD_EXCEPTION, 0);
   }
 
@@ -32930,7 +32963,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::VGATHERDPD_VpdHpd(bxInstruction_c *i)
 void BX_CPP_AttrRegparmN(1) BX_CPU_C::VGATHERDPS_VpsHps(bxInstruction_c *i)
 {
   if (i->sibIndex() == i->src2() || i->sibIndex() == i->dst() || i->src2() == i->dst()) {
-    BX_ERROR(("%s: incorrect source operands", i->getIaOpcodeNameShort()));
+    //BX_ERROR(("%s: incorrect source operands", i->getIaOpcodeNameShort()));
     exception(BX_UD_EXCEPTION, 0);
   }
 
@@ -33033,7 +33066,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::VGATHERQPD_VpdHpd(bxInstruction_c *i)
 void BX_CPP_AttrRegparmN(1) BX_CPU_C::VGATHERQPS_VpsHps(bxInstruction_c *i)
 {
   if (i->sibIndex() == i->src2() || i->sibIndex() == i->dst() || i->src2() == i->dst()) {
-    BX_ERROR(("%s: incorrect source operands", i->getIaOpcodeNameShort()));
+    //BX_ERROR(("%s: incorrect source operands", i->getIaOpcodeNameShort()));
     exception(BX_UD_EXCEPTION, 0);
   }
 
@@ -33289,7 +33322,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::VMCALL(bxInstruction_c *i)
     exception(BX_UD_EXCEPTION, 0);
 
   if (CPL != 0) {
-    BX_ERROR(("%s: with CPL!=0 cause #GP(0)", i->getIaOpcodeNameShort()));
+   // BX_ERROR(("%s: with CPL!=0 cause #GP(0)", i->getIaOpcodeNameShort()));
     exception(BX_GP_EXCEPTION, 0);
   }
 
@@ -33306,19 +33339,19 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::VMCALL(bxInstruction_c *i)
                      of the IntelR 64 and IA-32 Architectures Software Developer's Manual, Volume 3B);
 */
   if (BX_CPU_THIS_PTR vmcsptr == BX_INVALID_VMCSPTR) {
-    BX_ERROR(("VMFAIL: VMCALL with invalid VMCS ptr"));
+    //BX_ERROR(("VMFAIL: VMCALL with invalid VMCS ptr"));
     VMfailInvalid();
     BX_NEXT_TRACE(i);
   }
 
   Bit32u launch_state = VMread32(VMCS_LAUNCH_STATE_FIELD_ENCODING);
   if (launch_state != VMCS_STATE_CLEAR) {
-    BX_ERROR(("VMFAIL: VMCALL with launched VMCS"));
+    //BX_ERROR(("VMFAIL: VMCALL with launched VMCS"));
     VMfail(VMXERR_VMCALL_NON_CLEAR_VMCS);
     BX_NEXT_TRACE(i);
   }
 
-  BX_PANIC(("VMCALL: not implemented yet"));
+  //BX_PANIC(("VMCALL: not implemented yet"));
 /*
   if VM-exit control fields are not valid (see Section 24.16.6.1 of the IntelR 64 and IA-32 Architectures Software Developer's Manual, Volume 3B)
       THEN VMfail(VMXERR_VMCALL_INVALID_VMEXIT_FIELD);
@@ -33358,20 +33391,20 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::VMCLEAR(bxInstruction_c *i)
   }
 
   if (CPL != 0) {
-    BX_ERROR(("%s: with CPL!=0 cause #GP(0)", i->getIaOpcodeNameShort()));
+   // BX_ERROR(("%s: with CPL!=0 cause #GP(0)", i->getIaOpcodeNameShort()));
     exception(BX_GP_EXCEPTION, 0);
   }
 
   bx_address eaddr = BX_CPU_RESOLVE_ADDR(i);
   Bit64u pAddr = read_virtual_qword(i->seg(), eaddr); // keep 64-bit
   if (! IsValidPageAlignedPhyAddr(pAddr)) {
-    BX_ERROR(("VMFAIL: VMCLEAR with invalid physical address!"));
+   // BX_ERROR(("VMFAIL: VMCLEAR with invalid physical address!"));
     VMfail(VMXERR_VMCLEAR_WITH_INVALID_ADDR);
     BX_NEXT_INSTR(i);
   }
 
   if (pAddr == BX_CPU_THIS_PTR vmxonptr) {
-    BX_ERROR(("VMFAIL: VMLEAR with VMXON ptr !"));
+   // BX_ERROR(("VMFAIL: VMLEAR with VMXON ptr !"));
     VMfail(VMXERR_VMCLEAR_WITH_VMXON_VMCS_PTR);
   }
   else {
@@ -33380,8 +33413,8 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::VMCLEAR(bxInstruction_c *i)
 
     // clear VMCS launch state
     unsigned launch_field_offset = BX_CPU_THIS_PTR vmcs_map->vmcs_field_offset(VMCS_LAUNCH_STATE_FIELD_ENCODING);
-    if(launch_field_offset >= VMX_VMCS_AREA_SIZE)
-      BX_PANIC(("VMCLEAR: can't access VMCS_LAUNCH_STATE encoding, offset=0x%x", launch_field_offset));
+    if(launch_field_offset >= VMX_VMCS_AREA_SIZE){}
+      //BX_PANIC(("VMCLEAR: can't access VMCS_LAUNCH_STATE encoding, offset=0x%x", launch_field_offset));
 
     write_physical_dword(pAddr + launch_field_offset, VMCS_STATE_CLEAR, MEMTYPE(BX_CPU_THIS_PTR vmcs_memtype), BX_VMCS_ACCESS);
 
@@ -33409,12 +33442,12 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::VMFUNC(bxInstruction_c *i)
   Bit32u function = EAX;
 
   if (function >= 64) {
-    BX_ERROR(("VMFUNC: invalid function 0x%08x", function));
+    //BX_ERROR(("VMFUNC: invalid function 0x%08x", function));
     exception(BX_UD_EXCEPTION, 0);
   }
 
   if (0 == (vm->vmfunc_ctrls & (BX_CONST64(1)<<function))) {
-    BX_ERROR(("VMFUNC: function %d not enabled", function));
+    //BX_ERROR(("VMFUNC: function %d not enabled", function));
     VMexit(VMX_VMEXIT_VMFUNC, 0);
   }
 
@@ -33424,7 +33457,8 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::VMFUNC(bxInstruction_c *i)
      break;
 
   default:
-     BX_PANIC(("VMFUNC: invalid function 0x%08x", function));
+    // BX_PANIC(("VMFUNC: invalid function 0x%08x", function));
+      break;
   }
 #endif
 
@@ -33472,11 +33506,11 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::VMLAUNCH(bxInstruction_c *i)
 
   bool vmlaunch = false;
   if ((i->getIaOpcode() == BX_IA_VMLAUNCH)) {
-    BX_DEBUG(("VMLAUNCH VMCS ptr: 0x" FMT_ADDRX64, BX_CPU_THIS_PTR vmcsptr));
+    //X_DEBUG(("VMLAUNCH VMCS ptr: 0x" FMT_ADDRX64, BX_CPU_THIS_PTR vmcsptr));
     vmlaunch = true;
   }
   else {
-    BX_DEBUG(("VMRESUME VMCS ptr: 0x" FMT_ADDRX64, BX_CPU_THIS_PTR vmcsptr));
+   // BX_DEBUG(("VMRESUME VMCS ptr: 0x" FMT_ADDRX64, BX_CPU_THIS_PTR vmcsptr));
   }
 
   if (BX_CPU_THIS_PTR in_vmx_guest) {
@@ -33484,18 +33518,18 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::VMLAUNCH(bxInstruction_c *i)
   }
 
   if (CPL != 0) {
-    BX_ERROR(("%s: with CPL!=0 cause #GP(0)", i->getIaOpcodeNameShort()));
+   // BX_ERROR(("%s: with CPL!=0 cause #GP(0)", i->getIaOpcodeNameShort()));
     exception(BX_GP_EXCEPTION, 0);
   }
 
   if (BX_CPU_THIS_PTR vmcsptr == BX_INVALID_VMCSPTR) {
-    BX_ERROR(("VMFAIL: VMLAUNCH with invalid VMCS ptr !"));
+    //BX_ERROR(("VMFAIL: VMLAUNCH with invalid VMCS ptr !"));
     VMfailInvalid();
     BX_NEXT_TRACE(i);
   }
 
   if (interrupts_inhibited(BX_INHIBIT_INTERRUPTS_BY_MOVSS)) {
-    BX_ERROR(("VMFAIL: VMLAUNCH with interrupts blocked by MOV_SS !"));
+   // BX_ERROR(("VMFAIL: VMLAUNCH with interrupts blocked by MOV_SS !"));
     VMfail(VMXERR_VMENTRY_MOV_SS_BLOCKING);
     BX_NEXT_TRACE(i);
   }
@@ -33503,14 +33537,14 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::VMLAUNCH(bxInstruction_c *i)
   Bit32u launch_state = VMread32(VMCS_LAUNCH_STATE_FIELD_ENCODING);
   if (vmlaunch) {
     if (launch_state != VMCS_STATE_CLEAR) {
-       BX_ERROR(("VMFAIL: VMLAUNCH with non-clear VMCS!"));
+       //BX_ERROR(("VMFAIL: VMLAUNCH with non-clear VMCS!"));
        VMfail(VMXERR_VMLAUNCH_NON_CLEAR_VMCS);
        BX_NEXT_TRACE(i);
     }
   }
   else {
     if (launch_state != VMCS_STATE_LAUNCHED) {
-       BX_ERROR(("VMFAIL: VMRESUME with non-launched VMCS!"));
+      // BX_ERROR(("VMFAIL: VMRESUME with non-launched VMCS!"));
        VMfail(VMXERR_VMRESUME_NON_LAUNCHED_VMCS);
        BX_NEXT_TRACE(i);
     }
@@ -33545,7 +33579,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::VMLAUNCH(bxInstruction_c *i)
   Bit64u qualification = VMENTER_ERR_NO_ERROR;
   Bit32u state_load_error = VMenterLoadCheckGuestState(&qualification);
   if (state_load_error) {
-    BX_ERROR(("VMEXIT: Guest State Checks Failed"));
+   // BX_ERROR(("VMEXIT: Guest State Checks Failed"));
     VMexit(VMX_VMEXIT_VMENTRY_FAILURE_GUEST_STATE | (1 << 31), qualification);
   }
 
@@ -33553,7 +33587,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::VMLAUNCH(bxInstruction_c *i)
 
   Bit32u msr = LoadMSRs(vm->vmentry_msr_load_cnt, vm->vmentry_msr_load_addr);
   if (msr) {
-    BX_ERROR(("VMEXIT: Error when loading guest MSR number %d", msr));
+   // BX_ERROR(("VMEXIT: Error when loading guest MSR number %d", msr));
     VMexit(VMX_VMEXIT_VMENTRY_FAILURE_MSR | (1 << 31), msr);
   }
 
@@ -33619,7 +33653,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::VMLAUNCH(bxInstruction_c *i)
     }
     else {
       // activate VMX preemption timer
-      BX_DEBUG(("VMX preemption timer active"));
+     // BX_DEBUG(("VMX preemption timer active"));
       BX_CPU_THIS_PTR lapic->set_vmx_preemption_timer(timer_value);
     }
   }
@@ -33910,20 +33944,20 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::VMPTRLD(bxInstruction_c *i)
   }
 
   if (CPL != 0) {
-    BX_ERROR(("VMPTRLD with CPL!=0 willcause #GP(0)"));
+   // BX_ERROR(("VMPTRLD with CPL!=0 willcause #GP(0)"));
     exception(BX_GP_EXCEPTION, 0);
   }
 
   bx_address eaddr = BX_CPU_RESOLVE_ADDR(i);
   Bit64u pAddr = read_virtual_qword(i->seg(), eaddr); // keep 64-bit
   if (! IsValidPageAlignedPhyAddr(pAddr)) {
-    BX_ERROR(("VMFAIL: invalid or not page aligned physical address !"));
+   // BX_ERROR(("VMFAIL: invalid or not page aligned physical address !"));
     VMfail(VMXERR_VMPTRLD_INVALID_PHYSICAL_ADDRESS);
     BX_NEXT_INSTR(i);
   }
 
   if (pAddr == BX_CPU_THIS_PTR vmxonptr) {
-    BX_ERROR(("VMFAIL: VMPTRLD with VMXON ptr !"));
+   // BX_ERROR(("VMFAIL: VMPTRLD with VMXON ptr !"));
     VMfail(VMXERR_VMPTRLD_WITH_VMXON_PTR);
   }
   else {
@@ -33933,7 +33967,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::VMPTRLD(bxInstruction_c *i)
       revision &= ~BX_VMCS_SHADOW_BIT_MASK; // allowed to be shadow VMCS
 
     if (revision != BX_CPU_THIS_PTR vmcs_map->get_vmcs_revision_id()) {
-       BX_ERROR(("VMPTRLD: not expected (%d != %d) VMCS revision id !", revision, BX_CPU_THIS_PTR vmcs_map->get_vmcs_revision_id()));
+       //BX_ERROR(("VMPTRLD: not expected (%d != %d) VMCS revision id !", revision, BX_CPU_THIS_PTR vmcs_map->get_vmcs_revision_id()));
        VMfail(VMXERR_VMPTRLD_INCORRECT_VMCS_REVISION_ID);
     }
     else {
@@ -33957,7 +33991,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::VMPTRST(bxInstruction_c *i)
   }
 
   if (CPL != 0) {
-    BX_ERROR(("%s: with CPL!=0 cause #GP(0)", i->getIaOpcodeNameShort()));
+   // BX_ERROR(("%s: with CPL!=0 cause #GP(0)", i->getIaOpcodeNameShort()));
     exception(BX_GP_EXCEPTION, 0);
   }
 
@@ -33987,12 +34021,12 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::VMREAD_EdGd(bxInstruction_c *i)
   }
 
   if (CPL != 0) {
-    BX_ERROR(("%s: with CPL!=0 cause #GP(0)", i->getIaOpcodeNameShort()));
+    //BX_ERROR(("%s: with CPL!=0 cause #GP(0)", i->getIaOpcodeNameShort()));
     exception(BX_GP_EXCEPTION, 0);
   }
 
   if (vmcs_pointer == BX_INVALID_VMCSPTR) {
-    BX_ERROR(("VMFAIL: VMREAD with invalid VMCS ptr !"));
+    //BX_ERROR(("VMFAIL: VMREAD with invalid VMCS ptr !"));
     VMfailInvalid();
     BX_NEXT_INSTR(i);
   }
@@ -34000,7 +34034,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::VMREAD_EdGd(bxInstruction_c *i)
   unsigned encoding = BX_READ_32BIT_REG(i->src());
 
   if (! BX_CPU_THIS_PTR vmcs_map->is_valid(encoding)) {
-    BX_ERROR(("VMREAD: not supported field 0x%08x", encoding));
+    //BX_ERROR(("VMREAD: not supported field 0x%08x", encoding));
     VMfail(VMXERR_UNSUPPORTED_VMCS_COMPONENT_ACCESS);
     BX_NEXT_INSTR(i);
   }
@@ -34045,25 +34079,25 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::VMREAD_EqGq(bxInstruction_c *i)
   }
 
   if (CPL != 0) {
-    BX_ERROR(("%s: with CPL!=0 cause #GP(0)", i->getIaOpcodeNameShort()));
+    //BX_ERROR(("%s: with CPL!=0 cause #GP(0)", i->getIaOpcodeNameShort()));
     exception(BX_GP_EXCEPTION, 0);
   }
 
   if (vmcs_pointer == BX_INVALID_VMCSPTR) {
-    BX_ERROR(("VMFAIL: VMREAD with invalid VMCS ptr !"));
+    //BX_ERROR(("VMFAIL: VMREAD with invalid VMCS ptr !"));
     VMfailInvalid();
     BX_NEXT_INSTR(i);
   }
 
   if (BX_READ_64BIT_REG_HIGH(i->src())) {
-    BX_ERROR(("VMREAD: not supported field (upper 32-bit not zero)"));
+    //BX_ERROR(("VMREAD: not supported field (upper 32-bit not zero)"));
     VMfail(VMXERR_UNSUPPORTED_VMCS_COMPONENT_ACCESS);
     BX_NEXT_INSTR(i);
   }
   unsigned encoding = BX_READ_32BIT_REG(i->src());
 
   if (! BX_CPU_THIS_PTR vmcs_map->is_valid(encoding)) {
-    BX_ERROR(("VMREAD: not supported field 0x%08x", encoding));
+    //BX_ERROR(("VMREAD: not supported field 0x%08x", encoding));
     VMfail(VMXERR_UNSUPPORTED_VMCS_COMPONENT_ACCESS);
     BX_NEXT_INSTR(i);
   }
@@ -34140,12 +34174,12 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::VMWRITE_GdEd(bxInstruction_c *i)
   }
 
   if (CPL != 0) {
-    BX_ERROR(("%s: with CPL!=0 cause #GP(0)", i->getIaOpcodeNameShort()));
+   // BX_ERROR(("%s: with CPL!=0 cause #GP(0)", i->getIaOpcodeNameShort()));
     exception(BX_GP_EXCEPTION, 0);
   }
 
   if (vmcs_pointer == BX_INVALID_VMCSPTR) {
-    BX_ERROR(("VMFAIL: VMWRITE with invalid VMCS ptr !"));
+   // BX_ERROR(("VMFAIL: VMWRITE with invalid VMCS ptr !"));
     VMfailInvalid();
     BX_NEXT_INSTR(i);
   }
@@ -34163,7 +34197,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::VMWRITE_GdEd(bxInstruction_c *i)
   Bit32u encoding = BX_READ_32BIT_REG(i->dst());
 
   if (! BX_CPU_THIS_PTR vmcs_map->is_valid(encoding)) {
-    BX_ERROR(("VMWRITE: not supported field 0x%08x", encoding));
+    //BX_ERROR(("VMWRITE: not supported field 0x%08x", encoding));
     VMfail(VMXERR_UNSUPPORTED_VMCS_COMPONENT_ACCESS);
     BX_NEXT_INSTR(i);
   }
@@ -34171,7 +34205,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::VMWRITE_GdEd(bxInstruction_c *i)
   if (VMCS_FIELD_TYPE(encoding) == VMCS_FIELD_TYPE_READ_ONLY)
   {
     if ((VMX_MSR_MISC & VMX_MISC_SUPPORT_VMWRITE_READ_ONLY_FIELDS) == 0) {
-      BX_ERROR(("VMWRITE: write to read only field 0x%08x", encoding));
+      //BX_ERROR(("VMWRITE: write to read only field 0x%08x", encoding));
       VMfail(VMXERR_VMWRITE_READ_ONLY_VMCS_COMPONENT);
       BX_NEXT_INSTR(i);
     }
@@ -34208,12 +34242,12 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::VMWRITE_GqEq(bxInstruction_c *i)
   }
 
   if (CPL != 0) {
-    BX_ERROR(("%s: with CPL!=0 cause #GP(0)", i->getIaOpcodeNameShort()));
+    //BX_ERROR(("%s: with CPL!=0 cause #GP(0)", i->getIaOpcodeNameShort()));
     exception(BX_GP_EXCEPTION, 0);
   }
 
   if (vmcs_pointer == BX_INVALID_VMCSPTR) {
-    BX_ERROR(("VMFAIL: VMWRITE with invalid VMCS ptr !"));
+    //BX_ERROR(("VMFAIL: VMWRITE with invalid VMCS ptr !"));
     VMfailInvalid();
     BX_NEXT_INSTR(i);
   }
@@ -34229,7 +34263,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::VMWRITE_GqEq(bxInstruction_c *i)
   }
 
   if (BX_READ_64BIT_REG_HIGH(i->dst())) {
-     BX_ERROR(("VMWRITE: not supported field (upper 32-bit not zero)"));
+    // BX_ERROR(("VMWRITE: not supported field (upper 32-bit not zero)"));
      VMfail(VMXERR_UNSUPPORTED_VMCS_COMPONENT_ACCESS);
      BX_NEXT_INSTR(i);
   }
@@ -34237,7 +34271,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::VMWRITE_GqEq(bxInstruction_c *i)
   Bit32u encoding = BX_READ_32BIT_REG(i->dst());
 
   if (! BX_CPU_THIS_PTR vmcs_map->is_valid(encoding)) {
-    BX_ERROR(("VMWRITE: not supported field 0x%08x", encoding));
+    //BX_ERROR(("VMWRITE: not supported field 0x%08x", encoding));
     VMfail(VMXERR_UNSUPPORTED_VMCS_COMPONENT_ACCESS);
     BX_NEXT_INSTR(i);
   }
@@ -34245,7 +34279,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::VMWRITE_GqEq(bxInstruction_c *i)
   if (VMCS_FIELD_TYPE(encoding) == VMCS_FIELD_TYPE_READ_ONLY)
   {
     if ((VMX_MSR_MISC & VMX_MISC_SUPPORT_VMWRITE_READ_ONLY_FIELDS) == 0) {
-      BX_ERROR(("VMWRITE: write to read only field 0x%08x", encoding));
+      //BX_ERROR(("VMWRITE: write to read only field 0x%08x", encoding));
       VMfail(VMXERR_VMWRITE_READ_ONLY_VMCS_COMPONENT);
       BX_NEXT_INSTR(i);
     }
@@ -34275,7 +34309,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::VMXOFF(bxInstruction_c *i)
   }
 
   if (CPL != 0) {
-    BX_ERROR(("%s: with CPL!=0 cause #GP(0)", i->getIaOpcodeNameShort()));
+    //BX_ERROR(("%s: with CPL!=0 cause #GP(0)", i->getIaOpcodeNameShort()));
     exception(BX_GP_EXCEPTION, 0);
   }
 
@@ -34311,14 +34345,14 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::VMXON(bxInstruction_c *i)
         ! (BX_CPU_THIS_PTR msr.ia32_feature_ctrl & BX_IA32_FEATURE_CONTROL_LOCK_BIT) ||
         ! (BX_CPU_THIS_PTR msr.ia32_feature_ctrl & BX_IA32_FEATURE_CONTROL_VMX_ENABLE_BIT))
     {
-      BX_ERROR(("#GP: VMXON is not allowed !"));
+      //BX_ERROR(("#GP: VMXON is not allowed !"));
       exception(BX_GP_EXCEPTION, 0);
     }
 
     bx_address eaddr = BX_CPU_RESOLVE_ADDR(i);
     Bit64u pAddr = read_virtual_qword(i->seg(), eaddr); // keep 64-bit
     if (! IsValidPageAlignedPhyAddr(pAddr)) {
-      BX_ERROR(("VMXON: invalid or not page aligned physical address !"));
+      //BX_ERROR(("VMXON: invalid or not page aligned physical address !"));
       VMfailInvalid();
       BX_NEXT_INSTR(i);
     }
@@ -34326,7 +34360,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::VMXON(bxInstruction_c *i)
     // not allowed to be shadow VMCS
     Bit32u revision = VMXReadRevisionID((bx_phy_address) pAddr);
     if (revision != BX_CPU_THIS_PTR vmcs_map->get_vmcs_revision_id()) {
-      BX_ERROR(("VMXON: not expected (%d != %d) VMCS revision id !", revision, BX_CPU_THIS_PTR vmcs_map->get_vmcs_revision_id()));
+      //BX_ERROR(("VMXON: not expected (%d != %d) VMCS revision id !", revision, BX_CPU_THIS_PTR vmcs_map->get_vmcs_revision_id()));
       VMfailInvalid();
       BX_NEXT_INSTR(i);
     }
@@ -34350,7 +34384,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::VMXON(bxInstruction_c *i)
   else {
     // in VMX root operation mode
     if (CPL != 0) {
-      BX_ERROR(("%s: with CPL!=0 cause #GP(0)", i->getIaOpcodeNameShort()));
+      //BX_ERROR(("%s: with CPL!=0 cause #GP(0)", i->getIaOpcodeNameShort()));
       exception(BX_GP_EXCEPTION, 0);
     }
 
@@ -36190,12 +36224,12 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::WRMSRLIST(bxInstruction_c *i)
 #endif
 
   if (!long64_mode() || CPL!=0) {
-    BX_ERROR(("WRMSRLIST: CPL != 0 cause #GP(0)"));
+    //BX_ERROR(("WRMSRLIST: CPL != 0 cause #GP(0)"));
     exception(BX_GP_EXCEPTION, 0);
   }
 
   if (((ESI | EDI) & 0x7) != 0) {
-    BX_ERROR(("WRMSRLIST: RSI and RDI must be 8-byte aligned"));
+    //BX_ERROR(("WRMSRLIST: RSI and RDI must be 8-byte aligned"));
     exception(BX_GP_EXCEPTION, 0);
   }
 
@@ -36206,7 +36240,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::WRMSRLIST(bxInstruction_c *i)
     Bit64u MSR_mask = (BX_CONST64(1) << MSR_index);
     Bit64u MSR_address = read_linear_qword(BX_SEG_REG_DS, RSI + MSR_index*8);
     if (GET32H(MSR_address)) {
-      BX_ERROR(("WRMSRLIST index=%d #GP(0): reserved bits are set in MSR address table entry", MSR_index));
+      //BX_ERROR(("WRMSRLIST index=%d #GP(0): reserved bits are set in MSR address table entry", MSR_index));
       exception(BX_GP_EXCEPTION, 0);
     }
 
@@ -36250,14 +36284,14 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::WRPKRU(bxInstruction_c *i)
 void BX_CPP_AttrRegparmN(1) BX_CPU_C::WRSSD(bxInstruction_c *i)
 {
   if (! ShadowStackWriteEnabled(CPL)) {
-    BX_ERROR(("%s: shadow stack not enabled", i->getIaOpcodeNameShort()));
+   // BX_ERROR(("%s: shadow stack not enabled", i->getIaOpcodeNameShort()));
     exception(BX_UD_EXCEPTION, 0);
   }
 
   bx_address eaddr = BX_CPU_RESOLVE_ADDR(i);
   bx_address laddr = agen_write_aligned(i->seg(), eaddr, 4);
   if (laddr & 0x3) {
-    BX_ERROR(("%s: must be 4 bytes aligned", i->getIaOpcodeNameShort()));
+    //BX_ERROR(("%s: must be 4 bytes aligned", i->getIaOpcodeNameShort()));
     exception(BX_GP_EXCEPTION, 0);
   }
   shadow_stack_write_dword(laddr, CPL, BX_READ_32BIT_REG(i->src()));
@@ -36268,14 +36302,14 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::WRSSD(bxInstruction_c *i)
 void BX_CPP_AttrRegparmN(1) BX_CPU_C::WRSSQ(bxInstruction_c *i)
 {
   if (! ShadowStackWriteEnabled(CPL)) {
-    BX_ERROR(("%s: shadow stack not enabled", i->getIaOpcodeNameShort()));
+    //BX_ERROR(("%s: shadow stack not enabled", i->getIaOpcodeNameShort()));
     exception(BX_UD_EXCEPTION, 0);
   }
 
   bx_address eaddr = BX_CPU_RESOLVE_ADDR(i);
   bx_address laddr = agen_write_aligned(i->seg(), eaddr, 8);
   if (laddr & 0x7) {
-    BX_ERROR(("%s: must be 8 bytes aligned", i->getIaOpcodeNameShort()));
+   // BX_ERROR(("%s: must be 8 bytes aligned", i->getIaOpcodeNameShort()));
     exception(BX_GP_EXCEPTION, 0);
   }
   shadow_stack_write_qword(laddr, CPL, BX_READ_64BIT_REG(i->src()));
@@ -36286,19 +36320,19 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::WRSSQ(bxInstruction_c *i)
 void BX_CPP_AttrRegparmN(1) BX_CPU_C::WRUSSD(bxInstruction_c *i)
 {
   if (!BX_CPU_THIS_PTR cr4.get_CET()) {
-    BX_ERROR(("%s: shadow stack not enabled", i->getIaOpcodeNameShort()));
+    //BX_ERROR(("%s: shadow stack not enabled", i->getIaOpcodeNameShort()));
     exception(BX_UD_EXCEPTION, 0);
   }
 
   if (CPL > 0) {
-    BX_ERROR(("%s: CPL != 0", i->getIaOpcodeNameShort()));
+    //BX_ERROR(("%s: CPL != 0", i->getIaOpcodeNameShort()));
     exception(BX_GP_EXCEPTION, 0);
   }
 
   bx_address eaddr = BX_CPU_RESOLVE_ADDR(i);
   bx_address laddr = agen_write_aligned(i->seg(), eaddr, 4);
   if (laddr & 0x3) {
-    BX_ERROR(("%s: must be 4 bytes aligned", i->getIaOpcodeNameShort()));
+    //BX_ERROR(("%s: must be 4 bytes aligned", i->getIaOpcodeNameShort()));
     exception(BX_GP_EXCEPTION, 0);
   }
   shadow_stack_write_dword(laddr, 3, BX_READ_32BIT_REG(i->src()));
@@ -36309,19 +36343,19 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::WRUSSD(bxInstruction_c *i)
 void BX_CPP_AttrRegparmN(1) BX_CPU_C::WRUSSQ(bxInstruction_c *i)
 {
   if (!BX_CPU_THIS_PTR cr4.get_CET()) {
-    BX_ERROR(("%s: shadow stack not enabled", i->getIaOpcodeNameShort()));
+    //BX_ERROR(("%s: shadow stack not enabled", i->getIaOpcodeNameShort()));
     exception(BX_UD_EXCEPTION, 0);
   }
 
   if (CPL > 0) {
-    BX_ERROR(("%s: CPL != 0", i->getIaOpcodeNameShort()));
+    //BX_ERROR(("%s: CPL != 0", i->getIaOpcodeNameShort()));
     exception(BX_GP_EXCEPTION, 0);
   }
 
   bx_address eaddr = BX_CPU_RESOLVE_ADDR(i);
   bx_address laddr = agen_write_aligned(i->seg(), eaddr, 8);
   if (laddr & 0x7) {
-    BX_ERROR(("%s: must be 8 bytes aligned", i->getIaOpcodeNameShort()));
+    //BX_ERROR(("%s: must be 8 bytes aligned", i->getIaOpcodeNameShort()));
     exception(BX_GP_EXCEPTION, 0);
   }
   shadow_stack_write_qword(laddr, 3, BX_READ_64BIT_REG(i->src()));
@@ -36333,7 +36367,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::XGETBV(bxInstruction_c *i)
 {
 #if BX_CPU_LEVEL >= 6
   if(! BX_CPU_THIS_PTR cr4.get_OSXSAVE()) {
-    BX_ERROR(("XGETBV: OSXSAVE feature is not enabled in CR4!"));
+   // BX_ERROR(("XGETBV: OSXSAVE feature is not enabled in CR4!"));
     exception(BX_UD_EXCEPTION, 0);
   }
 
@@ -36349,7 +36383,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::XGETBV(bxInstruction_c *i)
       RAX = get_xinuse_vector(BX_CPU_THIS_PTR xcr0.get32());
     }
     else {
-      BX_ERROR(("XGETBV: Invalid XCR%d register", ECX));
+      //BX_ERROR(("XGETBV: Invalid XCR%d register", ECX));
       exception(BX_GP_EXCEPTION, 0);
     }
   }
@@ -36370,7 +36404,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::XRSTOR(bxInstruction_c *i)
   bool xrstors = (i->getIaOpcode() == BX_IA_XRSTORS);
   if (xrstors) {
     if (CPL != 0) {
-      BX_ERROR(("%s: with CPL != 0", i->getIaOpcodeNameShort()));
+     // BX_ERROR(("%s: with CPL != 0", i->getIaOpcodeNameShort()));
       exception(BX_GP_EXCEPTION, 0);
     }
 
@@ -36379,7 +36413,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::XRSTOR(bxInstruction_c *i)
       VMCS_CACHE *vm = &BX_CPU_THIS_PTR vmcs;
 
       if (! vm->vmexec_ctrls2.XSAVES_XRSTORS()) {
-        BX_ERROR(("%s in VMX guest: not allowed to use instruction !", i->getIaOpcodeNameShort()));
+        //BX_ERROR(("%s in VMX guest: not allowed to use instruction !", i->getIaOpcodeNameShort()));
         exception(BX_UD_EXCEPTION, 0);
       }
 
@@ -36390,7 +36424,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::XRSTOR(bxInstruction_c *i)
 #endif
   }
 
-  BX_DEBUG(("%s: restore processor state XCR0=0x%08x XSS=" FMT_LL "x", i->getIaOpcodeNameShort(), BX_CPU_THIS_PTR xcr0.get32(), BX_CPU_THIS_PTR msr.ia32_xss));
+  //BX_DEBUG(("%s: restore processor state XCR0=0x%08x XSS=" FMT_LL "x", i->getIaOpcodeNameShort(), BX_CPU_THIS_PTR xcr0.get32(), BX_CPU_THIS_PTR msr.ia32_xss));
 
   bx_address eaddr = BX_CPU_RESOLVE_ADDR(i);
   bx_address laddr = get_laddr(i->seg(), eaddr);
@@ -36398,14 +36432,14 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::XRSTOR(bxInstruction_c *i)
 #if BX_SUPPORT_ALIGNMENT_CHECK && BX_CPU_LEVEL >= 4
   if (BX_CPU_THIS_PTR alignment_check()) {
     if (laddr & 0x3) {
-      BX_ERROR(("%s: access not aligned to 4-byte cause model specific #AC(0)", i->getIaOpcodeNameShort()));
+      //BX_ERROR(("%s: access not aligned to 4-byte cause model specific #AC(0)", i->getIaOpcodeNameShort()));
       exception(BX_AC_EXCEPTION, 0);
     }
   }
 #endif
 
   if (laddr & 0x3f) {
-    BX_ERROR(("%s: access not aligned to 64-byte", i->getIaOpcodeNameShort()));
+    //BX_ERROR(("%s: access not aligned to 64-byte", i->getIaOpcodeNameShort()));
     exception(BX_GP_EXCEPTION, 0);
   }
 
@@ -36416,7 +36450,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::XRSTOR(bxInstruction_c *i)
   Bit64u header3 = read_virtual_qword(i->seg(), (eaddr + 528) & asize_mask);
 
   if (header3 != 0) {
-    BX_ERROR(("%s: Reserved header3 state is not '0", i->getIaOpcodeNameShort()));
+    //BX_ERROR(("%s: Reserved header3 state is not '0", i->getIaOpcodeNameShort()));
     exception(BX_GP_EXCEPTION, 0);
   }
 
@@ -36424,7 +36458,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::XRSTOR(bxInstruction_c *i)
 
   if (! BX_CPUID_SUPPORT_ISA_EXTENSION(BX_ISA_XSAVEC) || ! compaction) {
     if (xcomp_bv != 0) {
-      BX_ERROR(("%s: Reserved header2 state is not '0", i->getIaOpcodeNameShort()));
+      //BX_ERROR(("%s: Reserved header2 state is not '0", i->getIaOpcodeNameShort()));
       exception(BX_GP_EXCEPTION, 0);
     }
   }
@@ -36435,23 +36469,23 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::XRSTOR(bxInstruction_c *i)
 
   if (! compaction) {
     if (xrstors) {
-      BX_ERROR(("XRSTORS require compaction XCOMP_BV[63] to be set"));
+      //BX_ERROR(("XRSTORS require compaction XCOMP_BV[63] to be set"));
       exception(BX_GP_EXCEPTION, 0);
     }
 
     if ((~xcr0 & xstate_bv) != 0) {
-      BX_ERROR(("%s: Invalid xsave_bv state", i->getIaOpcodeNameShort()));
+      //BX_ERROR(("%s: Invalid xsave_bv state", i->getIaOpcodeNameShort()));
       exception(BX_GP_EXCEPTION, 0);
     }
   }
   else {
     if ((~xcr0 & xcomp_bv & ~XSAVEC_COMPACTION_ENABLED) != 0) {
-      BX_ERROR(("%s: Invalid xcomp_bv state", i->getIaOpcodeNameShort()));
+      //BX_ERROR(("%s: Invalid xcomp_bv state", i->getIaOpcodeNameShort()));
       exception(BX_GP_EXCEPTION, 0);
     }
 
     if (xstate_bv & ~xcomp_bv) {
-      BX_ERROR(("%s: xstate_bv set a bit which is not in xcomp_bv state", i->getIaOpcodeNameShort()));
+     // BX_ERROR(("%s: xstate_bv set a bit which is not in xcomp_bv state", i->getIaOpcodeNameShort()));
       exception(BX_GP_EXCEPTION, 0);
     }
 
@@ -36462,7 +36496,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::XRSTOR(bxInstruction_c *i)
     Bit64u header8 = read_virtual_qword(i->seg(), (eaddr + 568) & asize_mask);
 
     if (header4 | header5 | header6 | header7 | header8) {
-      BX_ERROR(("%s: Reserved header4_header7 state is not '0", i->getIaOpcodeNameShort()));
+      //BX_ERROR(("%s: Reserved header4_header7 state is not '0", i->getIaOpcodeNameShort()));
       exception(BX_GP_EXCEPTION, 0);
     }
   }
@@ -36489,7 +36523,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::XRSTOR(bxInstruction_c *i)
     // read cannot cause any boundary cross because XSAVE image is 64-byte aligned
     Bit32u new_mxcsr = read_virtual_dword(i->seg(), eaddr + 24);
     if(new_mxcsr & ~MXCSR_MASK) {
-       BX_ERROR(("%s: corrupted MXCSR state restored new_mxcsr=0x%08x", i->getIaOpcodeNameShort(), new_mxcsr));
+       //BX_ERROR(("%s: corrupted MXCSR state restored new_mxcsr=0x%08x", i->getIaOpcodeNameShort(), new_mxcsr));
        exception(BX_GP_EXCEPTION, 0);
     }
     BX_MXCSR_REGISTER = new_mxcsr;
@@ -36515,16 +36549,16 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::XRSTOR(bxInstruction_c *i)
       if ((requested_feature_bitmap & feature_mask) != 0)
       {
         if (! xsave_restore[feature].len) {
-          BX_ERROR(("%s: feature #%d requested to restore but not implemented !", i->getIaOpcodeNameShort(), feature));
+          //BX_ERROR(("%s: feature #%d requested to restore but not implemented !", i->getIaOpcodeNameShort(), feature));
           continue;
         }
 
         if (restore_mask & feature_mask) {
-          BX_ASSERT(xsave_restore[feature].xrstor_method);
+          //BX_ASSERT(xsave_restore[feature].xrstor_method);
           CALL_XSAVE_FN(xsave_restore[feature].xrstor_method)(i, eaddr+offset);
         }
         else {
-          BX_ASSERT(xsave_restore[feature].xrstor_init_method);
+          //BX_ASSERT(xsave_restore[feature].xrstor_init_method);
           CALL_XSAVE_FN(xsave_restore[feature].xrstor_init_method)();
         }
 
@@ -36543,16 +36577,16 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::XRSTOR(bxInstruction_c *i)
       if ((requested_feature_bitmap & feature_mask) != 0)
       {
         if (! xsave_restore[feature].len) {
-          BX_ERROR(("%s: feature #%d requested to restore but not implemented !", i->getIaOpcodeNameShort(), feature));
+          //BX_ERROR(("%s: feature #%d requested to restore but not implemented !", i->getIaOpcodeNameShort(), feature));
           continue;
         }
 
         if (xstate_bv & feature_mask) {
-          BX_ASSERT(xsave_restore[feature].xrstor_method);
+          //BX_ASSERT(xsave_restore[feature].xrstor_method);
           CALL_XSAVE_FN(xsave_restore[feature].xrstor_method)(i, eaddr+xsave_restore[feature].offset);
         }
         else {
-          BX_ASSERT(xsave_restore[feature].xrstor_init_method);
+          //BX_ASSERT(xsave_restore[feature].xrstor_init_method);
           CALL_XSAVE_FN(xsave_restore[feature].xrstor_init_method)();
         }
       }
@@ -36578,7 +36612,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::XSAVE(bxInstruction_c *i)
 
   bool xsaveopt = (i->getIaOpcode() == BX_IA_XSAVEOPT);
 
-  BX_DEBUG(("%s: save processor state XCR0=0x%08x", i->getIaOpcodeNameShort(), BX_CPU_THIS_PTR xcr0.get32()));
+  //BX_DEBUG(("%s: save processor state XCR0=0x%08x", i->getIaOpcodeNameShort(), BX_CPU_THIS_PTR xcr0.get32()));
 
   bx_address eaddr = BX_CPU_RESOLVE_ADDR(i);
   bx_address laddr = get_laddr(i->seg(), eaddr);
@@ -36586,14 +36620,14 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::XSAVE(bxInstruction_c *i)
 #if BX_SUPPORT_ALIGNMENT_CHECK && BX_CPU_LEVEL >= 4
   if (BX_CPU_THIS_PTR alignment_check()) {
     if (laddr & 0x3) {
-      BX_ERROR(("%s: access not aligned to 4-byte cause model specific #AC(0)", i->getIaOpcodeNameShort()));
+      //BX_ERROR(("%s: access not aligned to 4-byte cause model specific #AC(0)", i->getIaOpcodeNameShort()));
       exception(BX_AC_EXCEPTION, 0);
     }
   }
 #endif
 
   if (laddr & 0x3f) {
-    BX_ERROR(("%s: access not aligned to 64-byte", i->getIaOpcodeNameShort()));
+    //BX_ERROR(("%s: access not aligned to 64-byte", i->getIaOpcodeNameShort()));
     exception(BX_GP_EXCEPTION, 0);
   }
 
@@ -36632,12 +36666,12 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::XSAVE(bxInstruction_c *i)
     if ((requested_feature_bitmap & feature_mask) != 0)
     {
       if (! xsave_restore[feature].len) {
-        BX_ERROR(("%s: feature #%d requested to save but not implemented !", i->getIaOpcodeNameShort(), feature));
+        //BX_ERROR(("%s: feature #%d requested to save but not implemented !", i->getIaOpcodeNameShort(), feature));
         continue;
       }
 
       if (! xsaveopt || (xinuse & feature_mask) != 0) {
-        BX_ASSERT(xsave_restore[feature].xsave_method);
+        //BX_ASSERT(xsave_restore[feature].xsave_method);
         CALL_XSAVE_FN(xsave_restore[feature].xsave_method)(i, eaddr+xsave_restore[feature].offset);
       }
 
@@ -36663,7 +36697,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::XSAVEC(bxInstruction_c *i)
   bool xsaves = (i->getIaOpcode() == BX_IA_XSAVES);
   if (xsaves) {
     if (CPL != 0) {
-      BX_ERROR(("%s: with CPL != 0", i->getIaOpcodeNameShort()));
+      //BX_ERROR(("%s: with CPL != 0", i->getIaOpcodeNameShort()));
       exception(BX_GP_EXCEPTION, 0);
     }
 
@@ -36672,7 +36706,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::XSAVEC(bxInstruction_c *i)
       VMCS_CACHE *vm = &BX_CPU_THIS_PTR vmcs;
 
       if (! vm->vmexec_ctrls2.XSAVES_XRSTORS()) {
-        BX_ERROR(("%s in VMX guest: not allowed to use instruction !", i->getIaOpcodeNameShort()));
+        //BX_ERROR(("%s in VMX guest: not allowed to use instruction !", i->getIaOpcodeNameShort()));
         exception(BX_UD_EXCEPTION, 0);
       }
 
@@ -36683,7 +36717,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::XSAVEC(bxInstruction_c *i)
 #endif
   }
 
-  BX_DEBUG(("%s: save processor state XCR0=0x%08x XSS=" FMT_LL "x", i->getIaOpcodeNameShort(), BX_CPU_THIS_PTR xcr0.get32(), BX_CPU_THIS_PTR msr.ia32_xss));
+  //BX_DEBUG(("%s: save processor state XCR0=0x%08x XSS=" FMT_LL "x", i->getIaOpcodeNameShort(), BX_CPU_THIS_PTR xcr0.get32(), BX_CPU_THIS_PTR msr.ia32_xss));
 
   bx_address eaddr = BX_CPU_RESOLVE_ADDR(i);
   bx_address laddr = get_laddr(i->seg(), eaddr);
@@ -36691,14 +36725,14 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::XSAVEC(bxInstruction_c *i)
 #if BX_SUPPORT_ALIGNMENT_CHECK && BX_CPU_LEVEL >= 4
   if (BX_CPU_THIS_PTR alignment_check()) {
     if (laddr & 0x3) {
-      BX_ERROR(("%s: access not aligned to 4-byte cause model specific #AC(0)", i->getIaOpcodeNameShort()));
+      //BX_ERROR(("%s: access not aligned to 4-byte cause model specific #AC(0)", i->getIaOpcodeNameShort()));
       exception(BX_AC_EXCEPTION, 0);
     }
   }
 #endif
 
   if (laddr & 0x3f) {
-    BX_ERROR(("%s: access not aligned to 64-byte", i->getIaOpcodeNameShort()));
+    //BX_ERROR(("%s: access not aligned to 64-byte", i->getIaOpcodeNameShort()));
     exception(BX_GP_EXCEPTION, 0);
   }
 
@@ -36740,12 +36774,12 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::XSAVEC(bxInstruction_c *i)
     if ((requested_feature_bitmap & feature_mask) != 0)
     {
       if (! xsave_restore[feature].len) {
-        BX_ERROR(("%s: feature #%d requested to save but not implemented !", i->getIaOpcodeNameShort(), feature));
+        //BX_ERROR(("%s: feature #%d requested to save but not implemented !", i->getIaOpcodeNameShort(), feature));
         continue;
       }
 
       if (xinuse & feature_mask) {
-        BX_ASSERT(xsave_restore[feature].xsave_method);
+        //BX_ASSERT(xsave_restore[feature].xsave_method);
         CALL_XSAVE_FN(xsave_restore[feature].xsave_method)(i, eaddr+offset);
       }
 
@@ -36765,7 +36799,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::XSETBV(bxInstruction_c *i)
 {
 #if BX_CPU_LEVEL >= 6
   if(! BX_CPU_THIS_PTR cr4.get_OSXSAVE()) {
-    BX_ERROR(("XSETBV: OSXSAVE feature is not enabled in CR4!"));
+    //BX_ERROR(("XSETBV: OSXSAVE feature is not enabled in CR4!"));
     exception(BX_UD_EXCEPTION, 0);
   }
 
@@ -36783,25 +36817,25 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::XSETBV(bxInstruction_c *i)
 
   // CPL is always 3 in vm8086 mode
   if (/* v8086_mode() || */ CPL != 0) {
-    BX_ERROR(("XSETBV: The current priveledge level is not 0"));
+    //BX_ERROR(("XSETBV: The current priveledge level is not 0"));
     exception(BX_GP_EXCEPTION, 0);
   }
 
   // For now hardcoded handle only XCR0 register, it should take a few
   // years until extension will be required
   if (ECX != 0) {
-    BX_ERROR(("XSETBV: Invalid XCR%d register", ECX));
+    //BX_ERROR(("XSETBV: Invalid XCR%d register", ECX));
     exception(BX_GP_EXCEPTION, 0);
   }
 
   if (EDX != 0 || (EAX & ~BX_CPU_THIS_PTR xcr0_suppmask) != 0 || (EAX & BX_XCR0_FPU_MASK) == 0) {
-    BX_ERROR(("XSETBV: Attempt to change reserved bits"));
+    //BX_ERROR(("XSETBV: Attempt to change reserved bits"));
     exception(BX_GP_EXCEPTION, 0);
   }
 
 #if BX_SUPPORT_AVX
   if ((EAX & (BX_XCR0_YMM_MASK | BX_XCR0_SSE_MASK)) == BX_XCR0_YMM_MASK) {
-    BX_ERROR(("XSETBV: Attempt to enable AVX without SSE"));
+    //BX_ERROR(("XSETBV: Attempt to enable AVX without SSE"));
     exception(BX_GP_EXCEPTION, 0);
   }
 #endif
@@ -36810,7 +36844,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::XSETBV(bxInstruction_c *i)
   if (EAX & (BX_XCR0_OPMASK_MASK | BX_XCR0_ZMM_HI256_MASK | BX_XCR0_HI_ZMM_MASK)) {
     Bit32u avx512_state_mask = (BX_XCR0_FPU_MASK | BX_XCR0_SSE_MASK | BX_XCR0_YMM_MASK | BX_XCR0_OPMASK_MASK | BX_XCR0_ZMM_HI256_MASK | BX_XCR0_HI_ZMM_MASK);
     if ((EAX & avx512_state_mask) != avx512_state_mask) {
-      BX_ERROR(("XSETBV: Illegal attempt to enable AVX-512 state"));
+      //BX_ERROR(("XSETBV: Illegal attempt to enable AVX-512 state"));
       exception(BX_GP_EXCEPTION, 0);
     }
   }

@@ -1014,6 +1014,96 @@
     <ClCompile Include="amx.cc">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="fpu.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="f2xm1.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ferr.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="fpatan.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="fprem.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="fpu_arith.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="fpu_compare.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="fpu_const.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="fpu_load_store.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="fsincos.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="fyl2x.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="poly.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="gf2.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="rdrand.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="sse.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="avx_ifma52.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="avx_ne_convert.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="avx_pfp.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="avx10_2_bf16.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="avx10_2_misc.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="avx512.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="bf16_arith.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="avx512_pfp.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="avx512_pfp16.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="avx512_rcp14.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="avx512_rsqrt14.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="xop.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="faststring.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="uintr.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="vmfunc.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bochs.h">
@@ -1377,6 +1467,24 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="bf16.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="fpu_trans.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="fpu_constant.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="softfloat-helpers.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="primitiveTypes.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="opts-GCC.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="bf16-compare.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

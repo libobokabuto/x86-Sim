@@ -1,8 +1,10 @@
 #pragma once
+
 class VmxVmexec1Controls {
 private:
 	Bit32u vmexec_ctrls;
 public:
+	VmxVmexec1Controls(Bit32u ctrls = 0) : vmexec_ctrls(ctrls) {}
 #define VMX_VM_EXEC_CTRL1_INTERRUPT_WINDOW_VMEXIT   (1 << 2)
 #define VMX_VM_EXEC_CTRL1_TSC_OFFSET                (1 << 3)
 #define VMX_VM_EXEC_CTRL1_HLT_VMEXIT                (1 << 7)
@@ -61,6 +63,8 @@ class VmxVmexec2Controls {
 private:
 	Bit32u vmexec_ctrls;
 public:
+	VmxVmexec2Controls(Bit32u ctrls = 0) : vmexec_ctrls(ctrls) {}
+
 #define VMX_VM_EXEC_CTRL2_VIRTUALIZE_APIC_ACCESSES  (1 <<  0) /* APIC virtualization */
 #define VMX_VM_EXEC_CTRL2_EPT_ENABLE                (1 <<  1) /* EPT */
 #define VMX_VM_EXEC_CTRL2_DESCRIPTOR_TABLE_VMEXIT   (1 <<  2) /* Descriptor Table VMEXIT */
@@ -131,7 +135,7 @@ class VmxVmexec3Controls {
 private:
 	Bit64u vmexec_ctrls;
 public:
-
+	VmxVmexec3Controls(Bit64u ctrls = 0) : vmexec_ctrls(ctrls) {}
 #define VMX_VM_EXEC_CTRL3_LOADIWKEY_VMEXIT          (1 <<  0) /* KeyLocker (not implemented) */
 #define VMX_VM_EXEC_CTRL3_HLAT_ENABLE               (1 <<  1) /* HLAT (not implemented) */
 #define VMX_VM_EXEC_CTRL3_EPT_PAGING_WRITE          (1 <<  2) /* HLAT (not implemented) */
@@ -163,6 +167,7 @@ class VmxPinBasedVmexecControls {
 private:
 	Bit32u pin_vmexec_ctrls;
 public:
+	VmxPinBasedVmexecControls(Bit32u ctrls = 0) : pin_vmexec_ctrls(ctrls) {}
 #define VMX_PIN_BASED_VMEXEC_CTRL_EXTERNAL_INTERRUPT_VMEXIT   (1 << 0)
 #define VMX_PIN_BASED_VMEXEC_CTRL_NMI_EXITING                 (1 << 3)
 #define VMX_PIN_BASED_VMEXEC_CTRL_VIRTUAL_NMI                 (1 << 5) /* Virtual NMI */
@@ -236,6 +241,7 @@ class BxVmexit1Controls {
 private:
 	Bit32u vmexit1_ctrls;
 public:
+	BxVmexit1Controls(Bit32u ctrls = 0) : vmexit1_ctrls(ctrls) {}
 #define VMX_VMEXIT_CTRL1_SAVE_DBG_CTRLS             (1 <<  2) /* legacy must be '1 */
 #define VMX_VMEXIT_CTRL1_HOST_ADDR_SPACE_SIZE       (1 <<  9)
 #define VMX_VMEXIT_CTRL1_LOAD_PERF_GLOBAL_CTRL_MSR  (1 << 12) /* Perf Global Control */
@@ -285,6 +291,7 @@ class BxVmexit2Controls {
 private:
 	Bit64u vmexit2_ctrls;
 public:
+	BxVmexit2Controls(Bit64u ctrls = 0) : vmexit2_ctrls(ctrls) {}
 #define VMX_VMEXIT_CTRL2_LOAD_HOST_IA32_SPEC_CTRL   (1 <<  2)
 #define VMX_VMEXIT_CTRL2_SHADOW_STACK_BUSY_CTRL     (1 <<  3) /* Shadow stack prematurely busy */
 

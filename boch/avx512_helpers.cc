@@ -260,3 +260,49 @@ void BX_CPU_C::avx_masked_store64(bxInstruction_c* i, bx_address eaddr, const Bx
 }
 
 #endif // BX_SUPPORT_AVX
+
+#if BX_SUPPORT_EVEX
+
+#include "simd_int.h"
+
+void BX_CPU_C::avx512_write_regb_masked(bxInstruction_c* i, const BxPackedAvxRegister* op, unsigned len, Bit64u opmask)
+{
+    if (i->isZeroMasking())
+        simd_zero_pblendb(&BX_READ_AVX_REG(i->dst()), op, opmask, BYTE_ELEMENTS(len));
+    else
+        simd_pblendb(&BX_READ_AVX_REG(i->dst()), op, opmask, BYTE_ELEMENTS(len));
+
+    BX_CLEAR_AVX_REGZ(i->dst(), len);
+}
+
+void BX_CPU_C::avx512_write_regw_masked(bxInstruction_c* i, const BxPackedAvxRegister* op, unsigned len, Bit32u opmask)
+{
+    if (i->isZeroMasking())
+        simd_zero_pblendw(&BX_READ_AVX_REG(i->dst()), op, opmask, WORD_ELEMENTS(len));
+    else
+        simd_pblendw(&BX_READ_AVX_REG(i->dst()), op, opmask, WORD_ELEMENTS(len));
+
+    BX_CLEAR_AVX_REGZ(i->dst(), len);
+}
+
+void BX_CPU_C::avx512_write_regd_masked(bxInstruction_c* i, const BxPackedAvxRegister* op, unsigned len, Bit32u opmask)
+{
+    if (i->isZeroMasking())
+        simd_zero_blendps(&BX_READ_AVX_REG(i->dst()), op, opmask, DWORD_ELEMENTS(len));
+    else
+        simd_blendps(&BX_READ_AVX_REG(i->dst()), op, opmask, DWORD_ELEMENTS(len));
+
+    BX_CLEAR_AVX_REGZ(i->dst(), len);
+}
+
+void BX_CPU_C::avx512_write_regq_masked(bxInstruction_c* i, const BxPackedAvxRegister* op, unsigned len, Bit32u opmask)
+{
+    if (i->isZeroMasking())
+        simd_zero_blendpd(&BX_READ_AVX_REG(i->dst()), op, opmask, QWORD_ELEMENTS(len));
+    else
+        simd_blendpd(&BX_READ_AVX_REG(i->dst()), op, opmask, QWORD_ELEMENTS(len));
+
+    BX_CLEAR_AVX_REGZ(i->dst(), len);
+}
+
+#endif

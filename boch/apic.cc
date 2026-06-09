@@ -1146,6 +1146,16 @@ Bit32u bx_local_apic_c::read_vmx_preemption_timer(void)
         return vmx_preemption_timer_value - diff;
 }
 
+void bx_local_apic_c::set_vmx_preemption_timer(Bit32u value)
+{
+    vmx_preemption_timer_value = value;
+    vmx_preemption_timer_initial = bx_pc_system.time_ticks();
+    vmx_preemption_timer_fire = ((vmx_preemption_timer_initial >> vmx_preemption_timer_rate) + value) << vmx_preemption_timer_rate;
+    //BX_DEBUG(("VMX Preemption timer: value = %u, rate = %u, init = " FMT_LL "u, fire = " FMT_LL "u", value, vmx_preemption_timer_rate, vmx_preemption_timer_initial, vmx_preemption_timer_fire));
+    bx_pc_system.activate_timer_ticks(vmx_timer_handle, vmx_preemption_timer_fire - vmx_preemption_timer_initial, 0);
+    vmx_timer_active = true;
+}
+
 void bx_local_apic_c::deactivate_vmx_preemption_timer(void)
 {  //1189
     if (!vmx_timer_active) return;
@@ -1163,6 +1173,16 @@ void bx_local_apic_c::vmx_preemption_timer_expired(void* this_ptr)
 
 
 #if BX_SUPPORT_MONITOR_MWAIT
+
+void bx_local_apic_c::set_mwaitx_timer(Bit64u value)
+{
+    if (mwaitx_timer_active) deactivate_mwaitx_timer();
+    if (value) {
+        //BX_DEBUG(("MWAITX timer: delay value = " FMT_LL "u", value));
+        bx_pc_system.activate_timer_ticks(mwaitx_timer_handle, value, 0);
+        mwaitx_timer_active = true;
+    }
+}
 
 void bx_local_apic_c::deactivate_mwaitx_timer(void)
 {
@@ -1342,5 +1362,73 @@ bool bx_local_apic_c::write_x2apic(unsigned index, Bit32u val32_hi, Bit32u val32
     return true;
 }
 #endif
+
+void bx_local_apic_c::register_state(bx_param_c* parent)
+{
+    unsigned i;
+    char name[6];
+
+    bx_list_c* lapic = new bx_list_c(parent, "local_apic");
+
+    BXRS_HEX_PARAM_SIMPLE(lapic, base_addr);
+    BXRS_HEX_PARAM_SIMPLE(lapic, apic_id);
+    BXRS_HEX_PARAM_SIMPLE(lapic, mode);
+    BXRS_HEX_PARAM_SIMPLE(lapic, spurious_vector);
+    BXRS_PARAM_BOOL(lapic, software_enabled, software_enabled);
+    BXRS_PARAM_BOOL(lapic, focus_disable, focus_disable);
+    BXRS_HEX_PARAM_SIMPLE(lapic, task_priority);
+    BXRS_HEX_PARAM_SIMPLE(lapic, ldr);
+    BXRS_HEX_PARAM_SIMPLE(lapic, dest_format);
+
+    for (i = 0; i < 8; i++) {
+        sprintf(name, "isr%u", i);
+        new bx_shadow_num_c(lapic, name, &isr[i], BASE_HEX);
+
+        sprintf(name, "tmr%u", i);
+        new bx_shadow_num_c(lapic, name, &tmr[i], BASE_HEX);
+
+        sprintf(name, "irr%u", i);
+        new bx_shadow_num_c(lapic, name, &irr[i], BASE_HEX);
+    }
+
+#if BX_CPU_LEVEL >= 6
+    if (cpu->is_cpu_extension_supported(BX_ISA_XAPIC_EXT)) {
+        BXRS_HEX_PARAM_SIMPLE(lapic, xapic_ext);
+        for (i = 0; i < 8; i++) {
+            sprintf(name, "ier%u", i);
+            new bx_shadow_num_c(lapic, name, &ier[i], BASE_HEX);
+        }
+    }
+#endif
+
+    BXRS_HEX_PARAM_SIMPLE(lapic, error_status);
+    BXRS_HEX_PARAM_SIMPLE(lapic, shadow_error_status);
+    BXRS_HEX_PARAM_SIMPLE(lapic, icr_hi);
+    BXRS_HEX_PARAM_SIMPLE(lapic, icr_lo);
+
+    for (i = 0; i < APIC_LVT_ENTRIES; i++) {
+        sprintf(name, "lvt%u", i);
+        new bx_shadow_num_c(lapic, name, &lvt[i], BASE_HEX);
+    }
+
+    BXRS_HEX_PARAM_SIMPLE(lapic, timer_initial);
+    BXRS_HEX_PARAM_SIMPLE(lapic, timer_current);
+    BXRS_HEX_PARAM_SIMPLE(lapic, timer_divconf);
+    BXRS_DEC_PARAM_SIMPLE(lapic, timer_divide_factor);
+    BXRS_PARAM_BOOL(lapic, timer_active, timer_active);
+    BXRS_HEX_PARAM_SIMPLE(lapic, ticksInitial);
+
+#if BX_SUPPORT_VMX >= 2
+    BXRS_HEX_PARAM_SIMPLE(lapic, vmx_preemption_timer_initial);
+    BXRS_HEX_PARAM_SIMPLE(lapic, vmx_preemption_timer_fire);
+    BXRS_HEX_PARAM_SIMPLE(lapic, vmx_preemption_timer_value);
+    BXRS_HEX_PARAM_SIMPLE(lapic, vmx_preemption_timer_rate);
+    BXRS_PARAM_BOOL(lapic, vmx_timer_active, vmx_timer_active);
+#endif
+
+#if BX_SUPPORT_MONITOR_MWAIT
+    BXRS_PARAM_BOOL(lapic, mwaitx_timer_active, mwaitx_timer_active);
+#endif
+}
 
 #endif
