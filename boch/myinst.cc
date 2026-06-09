@@ -18002,6 +18002,10 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::LOAD_BROADCAST_MASK_Quarter_VectorW(bxInst
 #endif // BX_SUPPORT_AVX
 
 // myinst.cc 前面，放在指令函数第一次使用这些 helper 之前
+// These implementation files are compiled as separate translation units by the
+// project.  Keep myinst.cc from aggregating them here, otherwise class methods
+// from those files are defined twice.
+#if 0
 #include "aes.cc"
 #include "crc32.cc"
 #include "sse_pfp.cc"
@@ -18014,9 +18018,11 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::LOAD_BROADCAST_MASK_Quarter_VectorW(bxInst
 #include "sm3.cc"
 #include "sm4.cc"
 #include "amx.cc"
+#endif
 
 #include "bf16.h"
 
+#if 0
 #include "gf2.cc"
 #include "rdrand.cc"
 #include "sse.cc"
@@ -18026,13 +18032,157 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::LOAD_BROADCAST_MASK_Quarter_VectorW(bxInst
 #include "uintr.cc"
 #include "vmfunc.cc"
 #include "avx512_helpers.cc"
+#endif
 
 #include "fpu_trans.h"
 #include "softfloat-extra.h"
 #include "softfloat-specialize.h"
+#include "softfloat-compare.h"
 #include "simd_pfp.h"
 
 extern softfloat_status_t i387cw_to_softfloat_status_word(Bit16u control_word);
+
+#ifndef BX_INVPCID_INDIVIDUAL_ADDRESS_NON_GLOBAL_INVALIDATION
+#define BX_INVPCID_INDIVIDUAL_ADDRESS_NON_GLOBAL_INVALIDATION 0
+#endif
+#ifndef BX_INVPCID_SINGLE_CONTEXT_NON_GLOBAL_INVALIDATION
+#define BX_INVPCID_SINGLE_CONTEXT_NON_GLOBAL_INVALIDATION 1
+#endif
+#ifndef BX_INVPCID_ALL_CONTEXT_INVALIDATION
+#define BX_INVPCID_ALL_CONTEXT_INVALIDATION 2
+#endif
+#ifndef BX_INVPCID_ALL_CONTEXT_NON_GLOBAL_INVALIDATION
+#define BX_INVPCID_ALL_CONTEXT_NON_GLOBAL_INVALIDATION 3
+#endif
+
+#ifndef BX_MWAIT_WAKEUP_ON_EVENT_WHEN_INTERRUPT_DISABLE
+#define BX_MWAIT_WAKEUP_ON_EVENT_WHEN_INTERRUPT_DISABLE 0x1
+#endif
+#ifndef BX_MWAIT_TIMED_MWAITX
+#define BX_MWAIT_TIMED_MWAITX 0x2
+#endif
+#ifndef BX_MWAIT_MONITORLESS_MWAIT
+#define BX_MWAIT_MONITORLESS_MWAIT 0x4
+#endif
+
+#ifndef BX_INSTR_MWAIT
+#define BX_INSTR_MWAIT(cpu_id, addr, len, flags) ((void)0)
+#endif
+
+// Helper-only implementation files.  These files provide static/inline helpers
+// used by instruction bodies copied into myinst.cc; they do not add duplicate
+// BX_CPU_C opcode handler definitions here.
+#include "aes.cc"
+#include "crc32.cc"
+#include "sse.cc"
+#include "sse_string.cc"
+#include "gf2.cc"
+#include "avx_ifma52.cc"
+#include "xop.cc"
+
+#define prepare_softfloat_status_word_3dnow myinst_prepare_softfloat_status_word_3dnow
+#include "3dnow.cc"
+
+#include "sha.cc"
+#undef sha_ch
+#undef sha_maj
+BX_CPP_INLINE Bit32u sha_ch(Bit32u e, Bit32u f, Bit32u g)
+{
+  return sha_f0(e, f, g);
+}
+
+BX_CPP_INLINE Bit32u sha_maj(Bit32u a, Bit32u b, Bit32u c)
+{
+  return sha_f2(a, b, c);
+}
+#include "sha512.cc"
+#include "sm4.cc"
+
+#define HW_RANDOM_GENERATOR_READY (1)
+extern Bit16u hw_rand16();
+extern Bit32u hw_rand32();
+extern Bit64u hw_rand64();
+extern float32 approximate_rcp(float32 op);
+extern float32 approximate_rsqrt(float32 op);
+extern float32 approximate_rcp14_3dnow(float32 op);
+extern float32 approximate_rsqrt14_3dnow(float32 op);
+
+#if BX_SUPPORT_FPU
+extern bool FPU_handle_NaN(floatx80 a, float32 b, floatx80& r, softfloat_status_t& status);
+extern bool FPU_handle_NaN(floatx80 a, float64 b, floatx80& r, softfloat_status_t& status);
+
+static int myinst_status_word_flags_fpu_compare(int float_relation)
+{
+  switch (float_relation) {
+  case softfloat_relation_unordered:
+    return (FPU_SW_C0 | FPU_SW_C2 | FPU_SW_C3);
+  case softfloat_relation_greater:
+    return 0;
+  case softfloat_relation_less:
+    return FPU_SW_C0;
+  case softfloat_relation_equal:
+    return FPU_SW_C3;
+  }
+
+  return -1;
+}
+
+#define status_word_flags_fpu_compare myinst_status_word_flags_fpu_compare
+#define swap_values16u(a, b) { Bit16u tmp = a; a = b; b = tmp; }
+
+static const floatx80 Const_L2T = packFloatx80(0, 0x4000, BX_CONST64(0xd49a784bcd1b8afe));
+static const floatx80 Const_L2E = packFloatx80(0, 0x3fff, BX_CONST64(0xb8aa3b295c17f0bc));
+static const floatx80 Const_PI  = packFloatx80(0, 0x4000, BX_CONST64(0xc90fdaa22168c235));
+static const floatx80 Const_LG2 = packFloatx80(0, 0x3ffd, BX_CONST64(0x9a209a84fbcff799));
+static const floatx80 Const_LN2 = packFloatx80(0, 0x3ffe, BX_CONST64(0xb17217f7d1cf79ac));
+
+#define DOWN_OR_CHOP() (FPU_CONTROL_WORD & FPU_CW_RC & FPU_RC_DOWN)
+
+BX_CPP_INLINE floatx80 FPU_round_const(const floatx80& a, int adj)
+{
+  floatx80 result = a;
+  result.signif += adj;
+  return result;
+}
+#endif
+
+#if BX_SUPPORT_AVX
+extern float32_compare_method avx_compare32[32];
+extern float64_compare_method avx_compare64[32];
+#define compare32 avx_compare32
+#define compare64 avx_compare64
+
+BX_CPP_INLINE Bit32u SM3_P1(Bit32u v32)
+{
+  return v32 ^ rol32(v32, 15) ^ rol32(v32, 23);
+}
+
+BX_CPP_INLINE Bit32u SM3_P0(Bit32u v32)
+{
+  return v32 ^ rol32(v32, 9) ^ rol32(v32, 17);
+}
+
+BX_CPP_INLINE Bit32u SM3_FF(Bit32u x, Bit32u y, Bit32u z, unsigned round)
+{
+  return (round < 16) ? (x ^ y ^ z) : ((x & y) | (x & z) | (y & z));
+}
+
+BX_CPP_INLINE Bit32u SM3_GG(Bit32u x, Bit32u y, Bit32u z, unsigned round)
+{
+  return (round < 16) ? (x ^ y ^ z) : ((x & y) | (~x & z));
+}
+#endif
+
+#if BX_CPU_LEVEL >= 6
+static const Bit64u XSAVEC_COMPACTION_ENABLED = BX_CONST64(0x8000000000000000);
+extern XSaveRestoreStateHelper xsave_restore[];
+
+#if BX_USE_CPU_SMF == 0
+#define CALL_XSAVE_FN(ptrToFunc)  (this->*(ptrToFunc))
+#else
+#define CALL_XSAVE_FN(ptrToFunc)  (ptrToFunc)
+#endif
+#endif
 
 // Opcode handlers migrated from cpu.h gao_no stubs.
 void BX_CPP_AttrRegparmN(1) BX_CPU_C::AADD_EdGdM(bxInstruction_c *i)
@@ -18367,6 +18517,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::CLRSSBSY(bxInstruction_c *i)
   BX_NEXT_INSTR(i);
 }
 
+#if BX_SUPPORT_UINTR && BX_SUPPORT_X86_64
 void BX_CPP_AttrRegparmN(1) BX_CPU_C::CLUI(bxInstruction_c *i)
 {
   if (! BX_CPU_THIS_PTR cr4.get_UINTR()) {
@@ -18378,6 +18529,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::CLUI(bxInstruction_c *i)
 
   BX_NEXT_INSTR(i);
 }
+#endif
 
 void BX_CPP_AttrRegparmN(1) BX_CPU_C::CMPBEXADD_EdGdBd(bxInstruction_c *i)
 {
@@ -22300,10 +22452,12 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::FPTAN(bxInstruction_c *i)
   BX_NEXT_INSTR(i);
 }
 
+#if BX_SUPPORT_FPU == 0
 void BX_CPP_AttrRegparmN(1) BX_CPU_C::FPU_ESC(bxInstruction_c *i)
 {
   BX_NEXT_INSTR(i);
 }
+#endif
 
 void BX_CPP_AttrRegparmN(1) BX_CPU_C::FRNDINT(bxInstruction_c *i)
 {
@@ -23158,7 +23312,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::FXRSTOR(bxInstruction_c *i)
   }
 
 #if BX_SUPPORT_X86_64
-  if (BX_CPU_THIS_PTR efer.get_FFXSR() && CPL == 0 && long64_mode()) {
+  if ((BX_CPU_THIS_PTR efer.get32() & BX_EFER_FFXSR_MASK) && CPL == 0 && long64_mode()) {
     BX_NEXT_INSTR(i); // skip restore of the XMM state
   }
 #endif
@@ -23271,7 +23425,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::FXSAVE(bxInstruction_c *i)
   }
 
 #if BX_SUPPORT_X86_64
-  if (BX_CPU_THIS_PTR efer.get_FFXSR() && CPL == 0 && long64_mode()) {
+  if ((BX_CPU_THIS_PTR efer.get32() & BX_EFER_FFXSR_MASK) && CPL == 0 && long64_mode()) {
     BX_NEXT_INSTR(i); // skip saving of the XMM state
   }
 #endif
@@ -23392,7 +23546,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::GETSEC(bxInstruction_c *i)
   }
 #endif
 
-  BX_PANIC(("GETSEC: SMX is not implemented yet !"));
+  //BX_PANIC(("GETSEC: SMX is not implemented yet !"));
 #endif
 
   BX_NEXT_TRACE(i);
@@ -23869,7 +24023,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::INVPCID(bxInstruction_c *i)
   case BX_INVPCID_INDIVIDUAL_ADDRESS_NON_GLOBAL_INVALIDATION:
 #if BX_SUPPORT_X86_64
     if (! IsCanonical(invpcid_desc.xmm64u(1))) {
-      BX_ERROR(("INVPCID: non canonical LADDR single context invalidation"));
+      //BX_ERROR(("INVPCID: non canonical LADDR single context invalidation"));
       exception(BX_GP_EXCEPTION, 0);
     }
 #endif
@@ -24732,6 +24886,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::LDMXCSR(bxInstruction_c *i)
   BX_NEXT_INSTR(i);
 }
 
+#if BX_SUPPORT_AMX
 void BX_CPP_AttrRegparmN(1) BX_CPU_C::LDTILECFG(bxInstruction_c *i)
 {
   BxPackedAvxRegister tilecfg;
@@ -24743,6 +24898,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::LDTILECFG(bxInstruction_c *i)
 
   BX_NEXT_INSTR(i);
 }
+#endif
 
 void BX_CPP_AttrRegparmN(1) BX_CPU_C::MASKMOVDQU_VdqUdq(bxInstruction_c *i)
 {
@@ -24908,7 +25064,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::MONITOR(bxInstruction_c *i)
 
   // Set the monitor immediately. If monitor is still armed when we MWAIT,
   // the processor will stall.
-  bx_pc_system.invlpg(paddr);
+  TLB_invlpg(paddr);
 
   BX_CPU_THIS_PTR monitor.arm(paddr, (i->getIaOpcode() == BX_IA_MONITOR) ? BX_MONITOR_ARMED_BY_MONITOR : BX_MONITOR_ARMED_BY_MONITORX);
 
@@ -25491,7 +25647,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::MWAIT(bxInstruction_c *i)
 #if BX_SUPPORT_VMX
     if (BX_CPU_THIS_PTR in_vmx_guest) {
       if (BX_CPU_THIS_PTR vmcs.vmexec_ctrls1.MWAIT_VMEXIT()) {
-        VMexit(VMX_VMEXIT_MWAIT, BX_CPU_THIS_PTR monitor.armed_by_monitor());
+        VMexit(VMX_VMEXIT_MWAIT, BX_CPU_THIS_PTR monitor.armed_by == BX_MONITOR_ARMED_BY_MONITOR);
       }
     }
 #endif
@@ -25526,11 +25682,11 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::MWAIT(bxInstruction_c *i)
     // If monitor has already triggered, we just return.
     bool monitor_armed = true;
     if (i->getIaOpcode() == BX_IA_MWAITX) {
-      if (! BX_CPU_THIS_PTR monitor.armed_by_monitorx())
+      if (BX_CPU_THIS_PTR monitor.armed_by != BX_MONITOR_ARMED_BY_MONITORX)
         monitor_armed = false;
     }
     else {
-      if (! BX_CPU_THIS_PTR monitor.armed_by_monitor())
+      if (BX_CPU_THIS_PTR monitor.armed_by != BX_MONITOR_ARMED_BY_MONITOR)
         monitor_armed = false;
     }
 
@@ -25543,7 +25699,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::MWAIT(bxInstruction_c *i)
     BX_CPU_THIS_PTR monitor.reset_monitor(); // Monitorless MWAIT
   }
 
-  static bool mwait_is_nop = SIM->get_param_bool(BXPN_MWAIT_IS_NOP)->get();
+  static bool mwait_is_nop = false;
   if (mwait_is_nop) {
     BX_NEXT_TRACE(i);
   }
@@ -29625,12 +29781,12 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::RDMSRLIST(bxInstruction_c *i)
 #endif
 
   if (!long64_mode() || CPL!=0) {
-    BX_ERROR(("RDMSRLIST: CPL != 0 cause #GP(0)"));
+    //BX_ERROR(("RDMSRLIST: CPL != 0 cause #GP(0)"));
     exception(BX_GP_EXCEPTION, 0);
   }
 
   if (((ESI | EDI) & 0x7) != 0) {
-    BX_ERROR(("RDMSRLIST: RSI and RDI must be 8-byte aligned"));
+    //BX_ERROR(("RDMSRLIST: RSI and RDI must be 8-byte aligned"));
     exception(BX_GP_EXCEPTION, 0);
   }
 
@@ -29641,7 +29797,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::RDMSRLIST(bxInstruction_c *i)
     Bit64u MSR_mask = (BX_CONST64(1) << MSR_index);
     Bit64u MSR_address = read_linear_qword(BX_SEG_REG_DS, RSI + MSR_index*8);
     if (GET32H(MSR_address)) {
-      BX_ERROR(("RDMSRLIST index=%d #GP(0): reserved bits are set in MSR address table entry", MSR_index));
+      //BX_ERROR(("RDMSRLIST index=%d #GP(0): reserved bits are set in MSR address table entry", MSR_index));
       exception(BX_GP_EXCEPTION, 0);
     }
 
@@ -29675,7 +29831,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::RDPID_Ed(bxInstruction_c *i)
   // RDTSCP will always #UD in legacy VMX mode
   if (BX_CPU_THIS_PTR in_vmx_guest) {
     if (! BX_CPU_THIS_PTR vmcs.vmexec_ctrls2.RDTSCP()) {
-       BX_ERROR(("%s in VMX guest: not allowed to use instruction !", i->getIaOpcodeNameShort()));
+       //BX_ERROR(("%s in VMX guest: not allowed to use instruction !", i->getIaOpcodeNameShort()));
        exception(BX_UD_EXCEPTION, 0);
     }
   }
@@ -29687,6 +29843,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::RDPID_Ed(bxInstruction_c *i)
   BX_NEXT_INSTR(i);
 }
 
+#if BX_SUPPORT_PKEYS
 void BX_CPP_AttrRegparmN(1) BX_CPU_C::RDPKRU(bxInstruction_c *i)
 {
   if (! BX_CPU_THIS_PTR cr4.get_PKE())
@@ -29700,13 +29857,14 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::RDPKRU(bxInstruction_c *i)
 
   BX_NEXT_INSTR(i);
 }
+#endif
 
 void BX_CPP_AttrRegparmN(1) BX_CPU_C::RDPMC(bxInstruction_c *i)
 {
 #if BX_CPU_LEVEL >= 5
   // in real mode CPL=0
   if (! BX_CPU_THIS_PTR cr4.get_PCE() && CPL != 0 /* && protected_mode() */) {
-    BX_ERROR(("%s: not allowed to use instruction !", i->getIaOpcodeNameShort()));
+    //BX_ERROR(("%s: not allowed to use instruction !", i->getIaOpcodeNameShort()));
     exception(BX_GP_EXCEPTION, 0);
   }
 
@@ -29749,7 +29907,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::RDPMC(bxInstruction_c *i)
   RAX = 0;
   RDX = 0; // if P4 and ECX & 0x10000000, then always 0 (short read 32 bits)
 
-  BX_ERROR(("RDPMC: Performance Counters Support not implemented yet"));
+  //BX_ERROR(("RDPMC: Performance Counters Support not implemented yet"));
 #endif
 
   BX_NEXT_INSTR(i);
@@ -30086,14 +30244,14 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::RSQRTSS_VssWssR(bxInstruction_c *i)
 void BX_CPP_AttrRegparmN(1) BX_CPU_C::RSTORSSP(bxInstruction_c *i)
 {
   if (! ShadowStackEnabled(CPL)) {
-    BX_ERROR(("%s: shadow stack not enabled", i->getIaOpcodeNameShort()));
+    //BX_ERROR(("%s: shadow stack not enabled", i->getIaOpcodeNameShort()));
     exception(BX_UD_EXCEPTION, 0);
   }
 
   bx_address eaddr = BX_CPU_RESOLVE_ADDR(i);
   bx_address laddr = agen_read_aligned(i->seg(), eaddr, 8);
   if (laddr & 0x7) {
-    BX_ERROR(("%s: SSP_LA must be 8 bytes aligned", i->getIaOpcodeNameShort()));
+    //BX_ERROR(("%s: SSP_LA must be 8 bytes aligned", i->getIaOpcodeNameShort()));
     exception(BX_GP_EXCEPTION, 0);
   }
 
@@ -30102,18 +30260,18 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::RSTORSSP(bxInstruction_c *i)
 // should be done atomically using RMW
   Bit64u SSP_tmp = shadow_stack_read_qword(laddr, CPL); // should be LWSI
   if ((SSP_tmp & 0x03) != (int) long64_mode()) {
-    BX_ERROR(("%s: CS.L of shadow stack token doesn't match or bit1 is not 0", i->getIaOpcodeNameShort()));
+    //BX_ERROR(("%s: CS.L of shadow stack token doesn't match or bit1 is not 0", i->getIaOpcodeNameShort()));
     exception(BX_CP_EXCEPTION, BX_CP_RSTORSSP);
   }
   if (!long64_mode() && GET32H(SSP_tmp) != 0) {
-    BX_ERROR(("%s: 64-bit SSP token not in 64-bit mode", i->getIaOpcodeNameShort()));
+    //BX_ERROR(("%s: 64-bit SSP token not in 64-bit mode", i->getIaOpcodeNameShort()));
     exception(BX_CP_EXCEPTION, BX_CP_RSTORSSP);
   }
 
   Bit64u tmp = SSP_tmp & ~BX_CONST64(0x01);
   tmp = (tmp-8) & ~BX_CONST64(0x07);
   if (tmp != laddr) {
-    BX_ERROR(("%s: address in SSP token doesn't match requested top of stack", i->getIaOpcodeNameShort()));
+    //BX_ERROR(("%s: address in SSP token doesn't match requested top of stack", i->getIaOpcodeNameShort()));
     exception(BX_CP_EXCEPTION, BX_CP_RSTORSSP);
   }
   shadow_stack_write_qword(laddr, CPL, previous_ssp_token);
@@ -30131,12 +30289,12 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::RSTORSSP(bxInstruction_c *i)
 void BX_CPP_AttrRegparmN(1) BX_CPU_C::SAVEPREVSSP(bxInstruction_c *i)
 {
   if (! ShadowStackEnabled(CPL)) {
-    BX_ERROR(("%s: shadow stack not enabled", i->getIaOpcodeNameShort()));
+    //BX_ERROR(("%s: shadow stack not enabled", i->getIaOpcodeNameShort()));
     exception(BX_UD_EXCEPTION, 0);
   }
 
   if (SSP & 7) {
-    BX_ERROR(("%s: shadow stack not aligned to 8 byte boundary", i->getIaOpcodeNameShort()));
+    //BX_ERROR(("%s: shadow stack not aligned to 8 byte boundary", i->getIaOpcodeNameShort()));
     exception(BX_GP_EXCEPTION, 0);
   }
 
@@ -30180,6 +30338,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::SAVEPREVSSP(bxInstruction_c *i)
   BX_NEXT_INSTR(i);
 }
 
+#if BX_SUPPORT_UINTR && BX_SUPPORT_X86_64
 void BX_CPP_AttrRegparmN(1) BX_CPU_C::SENDUIPI_Gq(bxInstruction_c *i)
 {
   if (! BX_CPU_THIS_PTR cr4.get_UINTR()) {
@@ -30268,6 +30427,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::SENDUIPI_Gq(bxInstruction_c *i)
 
   BX_NEXT_TRACE(i);
 }
+#endif
 
 void BX_CPP_AttrRegparmN(1) BX_CPU_C::SETSSBSY(bxInstruction_c *i)
 {
@@ -30526,12 +30686,15 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::STMXCSR(bxInstruction_c *i)
   BX_NEXT_INSTR(i);
 }
 
+#if BX_SUPPORT_AMX
 void BX_CPP_AttrRegparmN(1) BX_CPU_C::STTILECFG(bxInstruction_c *i)
 {
   xsave_tilecfg_state(i, BX_CPU_RESOLVE_ADDR_64(i));
   BX_NEXT_INSTR(i);
 }
+#endif
 
+#if BX_SUPPORT_UINTR && BX_SUPPORT_X86_64
 void BX_CPP_AttrRegparmN(1) BX_CPU_C::STUI(bxInstruction_c *i)
 {
   if (! BX_CPU_THIS_PTR cr4.get_UINTR()) {
@@ -30543,6 +30706,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::STUI(bxInstruction_c *i)
 
   BX_NEXT_TRACE(i);
 }
+#endif
 
 void BX_CPP_AttrRegparmN(1) BX_CPU_C::SUBSD_VsdWsdR(bxInstruction_c *i)
 {
@@ -30579,7 +30743,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::SYSCALL(bxInstruction_c *i)
 
  // BX_DEBUG(("Execute SYSCALL instruction"));
 
-  if (!BX_CPU_THIS_PTR efer.get_SCE()) {
+  if (!(BX_CPU_THIS_PTR efer.get32() & BX_EFER_SCE_MASK)) {
     exception(BX_UD_EXCEPTION, 0);
   }
 
@@ -30938,7 +31102,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::SYSRET(bxInstruction_c *i)
 
   //BX_DEBUG(("Execute SYSRET instruction"));
 
-  if (!BX_CPU_THIS_PTR efer.get_SCE()) {
+  if (!(BX_CPU_THIS_PTR efer.get32() & BX_EFER_SCE_MASK)) {
     exception(BX_UD_EXCEPTION, 0);
   }
 
@@ -31074,6 +31238,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::SYSRET(bxInstruction_c *i)
   BX_NEXT_TRACE(i);
 }
 
+#if BX_SUPPORT_AMX
 void BX_CPP_AttrRegparmN(1) BX_CPU_C::TCMMIMFP16PS_TnnnTrmTreg(bxInstruction_c *i)
 {
   unsigned tile_dst = i->dst(), tile_src1 = i->src1(), tile_src2 = i->src2();
@@ -31409,7 +31574,9 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::TDPFP16PS_TnnnTrmTreg(bxInstruction_c *i)
 
   BX_NEXT_INSTR(i);
 }
+#endif
 
+#if BX_SUPPORT_UINTR && BX_SUPPORT_X86_64
 void BX_CPP_AttrRegparmN(1) BX_CPU_C::TESTUI(bxInstruction_c *i)
 {
   if (! BX_CPU_THIS_PTR cr4.get_UINTR()) {
@@ -31421,7 +31588,9 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::TESTUI(bxInstruction_c *i)
 
   BX_NEXT_INSTR(i);
 }
+#endif
 
+#if BX_SUPPORT_AMX
 void BX_CPP_AttrRegparmN(1) BX_CPU_C::TILELOADD_TnnnMdq(bxInstruction_c *i)
 {
   if (i->sibIndex() == BX_NIL_REGISTER) {
@@ -31581,6 +31750,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::TMMULTF32PS_TnnnTrmTreg(bxInstruction_c *i
 
   BX_NEXT_INSTR(i);
 }
+#endif
 
 void BX_CPP_AttrRegparmN(1) BX_CPU_C::UCOMISD_VsdWsdR(bxInstruction_c *i)
 {
@@ -31612,6 +31782,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::UCOMISS_VssWssR(bxInstruction_c *i)
   BX_NEXT_INSTR(i);
 }
 
+#if BX_SUPPORT_UINTR && BX_SUPPORT_X86_64
 void BX_CPP_AttrRegparmN(1) BX_CPU_C::UIRET(bxInstruction_c *i)
 {
   if (! BX_CPU_THIS_PTR cr4.get_UINTR()) {
@@ -31661,6 +31832,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::UIRET(bxInstruction_c *i)
 
   BX_NEXT_TRACE(i);
 }
+#endif
 
 void BX_CPP_AttrRegparmN(1) BX_CPU_C::UMONITOR_Eq(bxInstruction_c *i)
 {
@@ -31669,7 +31841,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::UMONITOR_Eq(bxInstruction_c *i)
 #if BX_SUPPORT_VMX
   if (BX_CPU_THIS_PTR in_vmx_guest) {
     if (! BX_CPU_THIS_PTR vmcs.vmexec_ctrls2.UMWAIT_TPAUSE_VMEXIT()) {
-      BX_DEBUG(("%s: instruction is not enabled in VMX guest", i->getIaOpcodeNameShort()));
+      //BX_DEBUG(("%s: instruction is not enabled in VMX guest", i->getIaOpcodeNameShort()));
       exception(BX_UD_EXCEPTION, 0);
     }
   }
@@ -31694,11 +31866,11 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::UMONITOR_Eq(bxInstruction_c *i)
 
   // Set the monitor immediately. If monitor is still armed when we MWAIT,
   // the processor will stall.
-  bx_pc_system.invlpg(paddr);
+  TLB_invlpg(paddr);
 
   BX_CPU_THIS_PTR monitor.arm(paddr, BX_MONITOR_ARMED_BY_UMONITOR);
 
-  BX_DEBUG(("UMONITOR for phys_addr=0x" FMT_PHY_ADDRX, BX_CPU_THIS_PTR monitor.monitor_addr));
+  //BX_DEBUG(("UMONITOR for phys_addr=0x" FMT_PHY_ADDRX, BX_CPU_THIS_PTR monitor.monitor_addr));
 #endif
 
   BX_NEXT_INSTR(i);
@@ -31707,19 +31879,19 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::UMONITOR_Eq(bxInstruction_c *i)
 void BX_CPP_AttrRegparmN(1) BX_CPU_C::UMWAIT_Ed(bxInstruction_c *i)
 {
 #if BX_SUPPORT_MONITOR_MWAIT
-  BX_DEBUG(("%s instruction executed EAX = 0x%08x EDX = 0x%08x", i->getIaOpcodeNameShort(), EAX, EDX));
+  //BX_DEBUG(("%s instruction executed EAX = 0x%08x EDX = 0x%08x", i->getIaOpcodeNameShort(), EAX, EDX));
 
 #if BX_SUPPORT_VMX
   if (BX_CPU_THIS_PTR in_vmx_guest) {
     if (! BX_CPU_THIS_PTR vmcs.vmexec_ctrls2.UMWAIT_TPAUSE_VMEXIT()) {
-      BX_DEBUG(("%s: instruction is not enabled in VMX guest", i->getIaOpcodeNameShort()));
+      //BX_DEBUG(("%s: instruction is not enabled in VMX guest", i->getIaOpcodeNameShort()));
       exception(BX_UD_EXCEPTION, 0);
     }
   }
 #endif
 
   if (BX_CPU_THIS_PTR cr4.get_TSD() && CPL != 0) {
-    BX_ERROR(("%s: not allowed to use instruction !", i->getIaOpcodeNameShort()));
+    //BX_ERROR(("%s: not allowed to use instruction !", i->getIaOpcodeNameShort()));
     exception(BX_GP_EXCEPTION, 0);
   }
 
@@ -31731,7 +31903,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::UMWAIT_Ed(bxInstruction_c *i)
 
   Bit32u req_sleep_state = BX_READ_32BIT_REG(i->dst());
   if (req_sleep_state & ~0x1) {
-    BX_ERROR(("%s: incorrect sleep state 0x%08x - #GP(0)", i->getIaOpcodeNameShort(), req_sleep_state));
+    //BX_ERROR(("%s: incorrect sleep state 0x%08x - #GP(0)", i->getIaOpcodeNameShort(), req_sleep_state));
     exception(BX_GP_EXCEPTION, 0);
   }
 
@@ -31739,8 +31911,8 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::UMWAIT_Ed(bxInstruction_c *i)
 
   if (i->getIaOpcode() != BX_IA_TPAUSE_Ed) {
     // If monitor has already triggered, we just return.
-    if (! BX_CPU_THIS_PTR monitor.armed_by_umonitor()) {
-      BX_DEBUG(("%s: the UMONITOR was not armed or already triggered", i->getIaOpcodeNameShort()));
+    if (BX_CPU_THIS_PTR monitor.armed_by != BX_MONITOR_ARMED_BY_UMONITOR) {
+      //BX_DEBUG(("%s: the UMONITOR was not armed or already triggered", i->getIaOpcodeNameShort()));
       BX_NEXT_TRACE(i);
     }
   }
@@ -31748,7 +31920,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::UMWAIT_Ed(bxInstruction_c *i)
     BX_CPU_THIS_PTR monitor.reset_umonitor();
   }
 
-  static bool mwait_is_nop = SIM->get_param_bool(BXPN_MWAIT_IS_NOP)->get();
+  static bool mwait_is_nop = false;
   if (mwait_is_nop) {
     BX_NEXT_TRACE(i);
   }
@@ -31756,7 +31928,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::UMWAIT_Ed(bxInstruction_c *i)
   Bit64u tsc = get_Virtual_TSC();
   Bit64u instr_deadline = GET64_FROM_HI32_LO32(EDX, EAX);
   if (instr_deadline <= tsc) {
-    BX_DEBUG(("%s: requested deadline is in the past", i->getIaOpcodeNameShort()));
+    //BX_DEBUG(("%s: requested deadline is in the past", i->getIaOpcodeNameShort()));
     BX_NEXT_TRACE(i);
   }
   Bit64u instr_delay = instr_deadline - tsc;
@@ -31768,17 +31940,17 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::UMWAIT_Ed(bxInstruction_c *i)
 //  using_os_deadline = true;
   }
 
-  BX_ASSERT(instr_delay > 0);
+  //BX_ASSERT(instr_delay > 0);
 #if BX_SUPPORT_VMX
   instr_delay = compute_physical_TSC_delay(instr_delay);
 #endif
 
   if (instr_delay == 0) {
-    BX_DEBUG(("%s: requested delay is 0", i->getIaOpcodeNameShort()));
+    //BX_DEBUG(("%s: requested delay is 0", i->getIaOpcodeNameShort()));
     BX_NEXT_TRACE(i);
   }
 
-  BX_DEBUG(("%s entering sleep state with delay=" FMT_LL "d", i->getIaOpcodeNameShort(), instr_delay));
+  //BX_DEBUG(("%s entering sleep state with delay=" FMT_LL "d", i->getIaOpcodeNameShort(), instr_delay));
 
   BX_CPU_THIS_PTR lapic->set_mwaitx_timer(instr_delay);
 
@@ -31799,7 +31971,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::UMWAIT_Ed(bxInstruction_c *i)
 
 void BX_CPP_AttrRegparmN(1) BX_CPU_C::UndefinedOpcode(bxInstruction_c *i)
 {
-  BX_DEBUG(("UndefinedOpcode: generate #UD exception"));
+  //BX_DEBUG(("UndefinedOpcode: generate #UD exception"));
   exception(BX_UD_EXCEPTION, 0);
 
   BX_NEXT_TRACE(i); // keep compiler happy
@@ -32103,7 +32275,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::VCVTDQ2PD_VpdWdqR(bxInstruction_c *i)
   softfloat_status_word_rc_override(status, i);
 
   for (unsigned n=0; n < QWORD_ELEMENTS(len); n++) {
-    result.vmm64u(n) = (i32_to_f64)(op.ymm32u(n), &status);
+    result.vmm64u(n) = ui32_to_f64(op.ymm32u(n));
   }
 
   check_exceptionsSSE(softfloat_getExceptionFlags(&status));
@@ -32912,7 +33084,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::VFRCZSS_VssWssR(bxInstruction_c *i)
 void BX_CPP_AttrRegparmN(1) BX_CPU_C::VGATHERDPD_VpdHpd(bxInstruction_c *i)
 {
   if (i->sibIndex() == i->src2() || i->sibIndex() == i->dst() || i->src2() == i->dst()) {
-    BX_ERROR(("%s: incorrect source operands", i->getIaOpcodeNameShort()));
+    //BX_ERROR(("%s: incorrect source operands", i->getIaOpcodeNameShort()));
     exception(BX_UD_EXCEPTION, 0);
   }
 
@@ -33015,7 +33187,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::VGATHERDPS_VpsHps(bxInstruction_c *i)
 void BX_CPP_AttrRegparmN(1) BX_CPU_C::VGATHERQPD_VpdHpd(bxInstruction_c *i)
 {
   if (i->sibIndex() == i->src2() || i->sibIndex() == i->dst() || i->src2() == i->dst()) {
-    BX_ERROR(("VGATHERQPD_VpdHpd: incorrect source operands"));
+    //BX_ERROR(("VGATHERQPD_VpdHpd: incorrect source operands"));
     exception(BX_UD_EXCEPTION, 0);
   }
 
@@ -36268,6 +36440,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::WRMSRLIST(bxInstruction_c *i)
   BX_NEXT_TRACE(i);
 }
 
+#if BX_SUPPORT_PKEYS
 void BX_CPP_AttrRegparmN(1) BX_CPU_C::WRPKRU(bxInstruction_c *i)
 {
   if (! BX_CPU_THIS_PTR cr4.get_PKE())
@@ -36280,6 +36453,7 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::WRPKRU(bxInstruction_c *i)
 
   BX_NEXT_TRACE(i);
 }
+#endif
 
 void BX_CPP_AttrRegparmN(1) BX_CPU_C::WRSSD(bxInstruction_c *i)
 {
