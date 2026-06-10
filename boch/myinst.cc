@@ -18039,6 +18039,9 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::LOAD_BROADCAST_MASK_Quarter_VectorW(bxInst
 #include "softfloat-specialize.h"
 #include "softfloat-compare.h"
 #include "simd_pfp.h"
+#include "simd_compare.h"
+#include "simd_bf16.h"
+#include "simd_vnni.h"
 
 extern softfloat_status_t i387cw_to_softfloat_status_word(Bit16u control_word);
 
@@ -18106,6 +18109,130 @@ extern float32 approximate_rcp(float32 op);
 extern float32 approximate_rsqrt(float32 op);
 extern float32 approximate_rcp14_3dnow(float32 op);
 extern float32 approximate_rsqrt14_3dnow(float32 op);
+
+#if BX_CPU_LEVEL >= 6
+void BX_CPU_C::check_exceptionsSSE(int exceptions_flags)
+{
+  exceptions_flags &= MXCSR_EXCEPTIONS;
+  int unmasked = ~(MXCSR.get_exceptions_masks()) & exceptions_flags;
+  if (unmasked & 0x7) exceptions_flags &= 0x7;
+  MXCSR.set_exceptions(exceptions_flags);
+
+  if (unmasked) {
+    if (BX_CPU_THIS_PTR cr4.get_OSXMMEXCPT())
+      exception(BX_XM_EXCEPTION, 0);
+    else
+      exception(BX_UD_EXCEPTION, 0);
+  }
+}
+
+softfloat_status_t mxcsr_to_softfloat_status_word(bx_mxcsr_t mxcsr)
+{
+  softfloat_status_t status;
+
+  status.softfloat_exceptionFlags = 0;
+  status.softfloat_roundingMode = mxcsr.get_rounding_mode();
+  status.softfloat_flush_underflow_to_zero =
+    (mxcsr.get_flush_masked_underflow() && mxcsr.get_UM()) ? 1 : 0;
+  status.softfloat_exceptionMasks = mxcsr.get_exceptions_masks();
+  status.softfloat_suppressException = 0;
+  status.softfloat_denormals_are_zeros = mxcsr.get_DAZ();
+
+  return status;
+}
+
+void mxcsr_to_softfloat_status_word_imm_override(softfloat_status_t& status, Bit8u control)
+{
+  if ((control & 0x4) == 0)
+    status.softfloat_roundingMode = control & 0x3;
+  if (control & 0x8)
+    status.softfloat_suppressException |= softfloat_flag_inexact;
+}
+
+void softfloat_status_word_rc_override(softfloat_status_t& status, bxInstruction_c* i)
+{
+#if BX_SUPPORT_EVEX
+  if (i->modC0() && i->getEvexb() &&
+      ((i->getVL() == BX_VL512) || (!i->getEvexU() && (i->getVL() == BX_VL256)))) {
+    status.softfloat_roundingMode = i->getRC();
+    status.softfloat_suppressException = softfloat_all_exceptions_mask;
+    status.softfloat_exceptionMasks = softfloat_all_exceptions_mask;
+  }
+#endif
+}
+#endif
+
+#if BX_SUPPORT_AVX
+float32_compare_method avx_compare32[32] = {
+  f32_eq_ordered_quiet,
+  f32_lt_ordered_signalling,
+  f32_le_ordered_signalling,
+  f32_unordered_quiet,
+  f32_neq_unordered_quiet,
+  f32_nlt_unordered_signalling,
+  f32_nle_unordered_signalling,
+  f32_ordered_quiet,
+  f32_eq_unordered_quiet,
+  f32_nge_unordered_signalling,
+  f32_ngt_unordered_signalling,
+  f32_false_quiet,
+  f32_neq_ordered_quiet,
+  f32_ge_ordered_signalling,
+  f32_gt_ordered_signalling,
+  f32_true_quiet,
+  f32_eq_ordered_signalling,
+  f32_lt_ordered_quiet,
+  f32_le_ordered_quiet,
+  f32_unordered_signalling,
+  f32_neq_unordered_signalling,
+  f32_nlt_unordered_quiet,
+  f32_nle_unordered_quiet,
+  f32_ordered_signalling,
+  f32_eq_unordered_signalling,
+  f32_nge_unordered_quiet,
+  f32_ngt_unordered_quiet,
+  f32_false_quiet,
+  f32_neq_ordered_signalling,
+  f32_ge_ordered_quiet,
+  f32_gt_ordered_quiet,
+  f32_true_quiet
+};
+
+float64_compare_method avx_compare64[32] = {
+  f64_eq_ordered_quiet,
+  f64_lt_ordered_signalling,
+  f64_le_ordered_signalling,
+  f64_unordered_quiet,
+  f64_neq_unordered_quiet,
+  f64_nlt_unordered_signalling,
+  f64_nle_unordered_signalling,
+  f64_ordered_quiet,
+  f64_eq_unordered_quiet,
+  f64_nge_unordered_signalling,
+  f64_ngt_unordered_signalling,
+  f64_false_quiet,
+  f64_neq_ordered_quiet,
+  f64_ge_ordered_signalling,
+  f64_gt_ordered_signalling,
+  f64_true_quiet,
+  f64_eq_ordered_signalling,
+  f64_lt_ordered_quiet,
+  f64_le_ordered_quiet,
+  f64_unordered_signalling,
+  f64_neq_unordered_signalling,
+  f64_nlt_unordered_quiet,
+  f64_nle_unordered_quiet,
+  f64_ordered_signalling,
+  f64_eq_unordered_signalling,
+  f64_nge_unordered_quiet,
+  f64_ngt_unordered_quiet,
+  f64_false_quiet,
+  f64_neq_ordered_signalling,
+  f64_ge_ordered_quiet,
+  f64_gt_ordered_quiet,
+  f64_true_quiet
+};
+#endif
 
 #if BX_SUPPORT_FPU
 extern bool FPU_handle_NaN(floatx80 a, float32 b, floatx80& r, softfloat_status_t& status);
@@ -23783,6 +23910,14 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::HANDLE_AVX_PFP_3OP(bxInstruction_c *i)
   BX_NEXT_INSTR(i);
 }
 
+#endif
+
+#ifndef BX_STANDALONE_DECODER
+BxExecutePtr_tR myinst_opcode_template_refs[][2] = {
+#define bx_define_opcode(a, b, c, d, e, f, s1, s2, s3, s4, g) { d, e },
+#include "ia_opcodes.def"
+#undef bx_define_opcode
+};
 #endif
 
 void BX_CPP_AttrRegparmN(1) BX_CPU_C::INCSSPD(bxInstruction_c *i)

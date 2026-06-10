@@ -76,7 +76,8 @@
       <SDLCheck>false</SDLCheck>
       <PreprocessorDefinitions>WIN32;INLINE_LEVEL=5;SOFTFLOAT_FAST_DIV32TO16;SOFTFLOAT_FAST_DIV64TO32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>false</ConformanceMode>
-      <AdditionalOptions>/utf-8 /wd4146 %(AdditionalOptions)</AdditionalOptions>
+      <DebugInformationFormat>OldStyle</DebugInformationFormat>
+      <AdditionalOptions>/FS /utf-8 /wd4146 %(AdditionalOptions)</AdditionalOptions>
       <CompileAs>CompileAsCpp</CompileAs>
     </ClCompile>
     <Link>
@@ -93,7 +94,7 @@
       <SDLCheck>false</SDLCheck>
       <PreprocessorDefinitions>WIN32;INLINE_LEVEL=5;SOFTFLOAT_FAST_DIV32TO16;SOFTFLOAT_FAST_DIV64TO32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>false</ConformanceMode>
-      <AdditionalOptions>/utf-8 /wd4146 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/FS /utf-8 /wd4146 %(AdditionalOptions)</AdditionalOptions>
       <CompileAs>CompileAsCpp</CompileAs>
     </ClCompile>
     <Link>
@@ -108,7 +109,8 @@
       <SDLCheck>false</SDLCheck>
       <PreprocessorDefinitions>WIN32;INLINE_LEVEL=5;SOFTFLOAT_FAST_DIV32TO16;SOFTFLOAT_FAST_DIV64TO32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>false</ConformanceMode>
-      <AdditionalOptions>/utf-8 /wd4146 %(AdditionalOptions)</AdditionalOptions>
+      <DebugInformationFormat>OldStyle</DebugInformationFormat>
+      <AdditionalOptions>/FS /utf-8 /wd4146 %(AdditionalOptions)</AdditionalOptions>
       <CompileAs>CompileAsCpp</CompileAs>
     </ClCompile>
     <Link>
@@ -125,7 +127,7 @@
       <SDLCheck>false</SDLCheck>
       <PreprocessorDefinitions>WIN32;INLINE_LEVEL=5;SOFTFLOAT_FAST_DIV32TO16;SOFTFLOAT_FAST_DIV64TO32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>false</ConformanceMode>
-      <AdditionalOptions>/utf-8 /wd4146 %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions>/FS /utf-8 /wd4146 %(AdditionalOptions)</AdditionalOptions>
       <CompileAs>CompileAsCpp</CompileAs>
     </ClCompile>
     <Link>
@@ -135,12 +137,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="3dnow.cc" />
     <ClCompile Include="3dnow_rcp.cc" />
     <ClCompile Include="access.cc" />
     <ClCompile Include="access2.cc" />
     <ClCompile Include="acpi.cc" />
-    <ClCompile Include="aes.cc" />
     <ClCompile Include="amx.cc" />
     <ClCompile Include="apic.cc" />
     <ClCompile Include="avx10_2_bf16.cc" />
@@ -151,7 +151,6 @@
     <ClCompile Include="avx512_pfp16.cc" />
     <ClCompile Include="avx512_rcp14.cc" />
     <ClCompile Include="avx512_rsqrt14.cc" />
-    <ClCompile Include="avx_ifma52.cc" />
     <ClCompile Include="avx_ne_convert.cc" />
     <ClCompile Include="avx_pfp.cc" />
     <ClCompile Include="bf16_arith.cc" />
@@ -166,7 +165,6 @@
     <ClCompile Include="corei7_haswell_4770.cc" />
     <ClCompile Include="cpu.cc" />
     <ClCompile Include="cpuid.cc" />
-    <ClCompile Include="crc32.cc" />
     <ClCompile Include="crregs.cc" />
     <ClCompile Include="ctrl_xfer16.cc" />
     <ClCompile Include="ctrl_xfer32.cc" />
@@ -340,7 +338,6 @@
     <ClCompile Include="fsincos.cc" />
     <ClCompile Include="fyl2x.cc" />
     <ClCompile Include="gather.cc" />
-    <ClCompile Include="gf2.cc" />
     <ClCompile Include="gui.cc" />
     <ClCompile Include="harddrv.cc" />
     <ClCompile Include="hdimage.cc" />
@@ -395,23 +392,16 @@
     <ClCompile Include="scrollwin.cc" />
     <ClCompile Include="segment_ctrl_pro.cc" />
     <ClCompile Include="serial.cc" />
-    <ClCompile Include="sha.cc" />
-    <ClCompile Include="sha512.cc" />
     <ClCompile Include="siminterface.cc" />
     <ClCompile Include="sm3.cc" />
-    <ClCompile Include="sm4.cc" />
     <ClCompile Include="smm.cc" />
     <ClCompile Include="soundlow.cc" />
     <ClCompile Include="soundmod.cc" />
     <ClCompile Include="speaker.cc" />
-    <ClCompile Include="sse.cc" />
     <ClCompile Include="sse_move.cc" />
-    <ClCompile Include="sse_pfp.cc" />
     <ClCompile Include="sse_rcp.cc" />
-    <ClCompile Include="sse_string.cc" />
     <ClCompile Include="stack.cc" />
     <ClCompile Include="svm.cc" />
-    <ClCompile Include="s_add128.c" />
     <ClCompile Include="s_add256M.c" />
     <ClCompile Include="s_addMagsExtF80.c" />
     <ClCompile Include="s_addMagsF128.c" />
@@ -421,16 +411,14 @@
     <ClCompile Include="s_approxRecipSqrt32_1.c" />
     <ClCompile Include="s_approxRecipSqrt_1Ks.c" />
     <ClCompile Include="s_approxRecip_1Ks.c" />
-    <ClCompile Include="s_countLeadingZeros16.c" />
-    <ClCompile Include="s_countLeadingZeros32.c" />
+    <ClCompile Include="s_commonNaNToExtF80UI.c" />
+    <ClCompile Include="s_commonNaNToF128UI.c" />
+    <ClCompile Include="s_commonNaNToF16UI.c" />
+    <ClCompile Include="s_commonNaNToF32UI.c" />
+    <ClCompile Include="s_commonNaNToF64UI.c" />
     <ClCompile Include="s_countLeadingZeros64.c" />
     <ClCompile Include="s_countLeadingZeros8.c" />
-    <ClCompile Include="s_eq128.c" />
-    <ClCompile Include="s_le128.c" />
-    <ClCompile Include="s_lt128.c" />
-    <ClCompile Include="s_mul128By32.c" />
     <ClCompile Include="s_mul128To256M.c" />
-    <ClCompile Include="s_mul64ByShifted32To128.c" />
     <ClCompile Include="s_mul64To128.c" />
     <ClCompile Include="s_normRoundPackToExtF80.c" />
     <ClCompile Include="s_normRoundPackToF128.c" />
@@ -443,6 +431,11 @@
     <ClCompile Include="s_normSubnormalF32Sig.c" />
     <ClCompile Include="s_normSubnormalF64Sig.c" />
     <ClCompile Include="s_packToExtF80.c" />
+    <ClCompile Include="s_propagateNaNExtF80UI.c" />
+    <ClCompile Include="s_propagateNaNF128UI.c" />
+    <ClCompile Include="s_propagateNaNF16UI.c" />
+    <ClCompile Include="s_propagateNaNF32UI.c" />
+    <ClCompile Include="s_propagateNaNF64UI.c" />
     <ClCompile Include="s_roundPackToExtF80.c" />
     <ClCompile Include="s_roundPackToF128.c" />
     <ClCompile Include="s_roundPackToF16.c" />
@@ -459,16 +452,6 @@
     <ClCompile Include="s_shiftRightJam128.c" />
     <ClCompile Include="s_shiftRightJam128Extra.c" />
     <ClCompile Include="s_shiftRightJam256M.c" />
-    <ClCompile Include="s_shiftRightJam32.c" />
-    <ClCompile Include="s_shiftRightJam64.c" />
-    <ClCompile Include="s_shiftRightJam64Extra.c" />
-    <ClCompile Include="s_shortShiftLeft128.c" />
-    <ClCompile Include="s_shortShiftRight128.c" />
-    <ClCompile Include="s_shortShiftRightJam128.c" />
-    <ClCompile Include="s_shortShiftRightJam128Extra.c" />
-    <ClCompile Include="s_shortShiftRightJam64.c" />
-    <ClCompile Include="s_shortShiftRightJam64Extra.c" />
-    <ClCompile Include="s_sub128.c" />
     <ClCompile Include="s_sub256M.c" />
     <ClCompile Include="s_subMagsExtF80.c" />
     <ClCompile Include="s_subMagsF128.c" />
@@ -505,7 +488,6 @@
     <ClCompile Include="win32.cc" />
     <ClCompile Include="win32config.cc" />
     <ClCompile Include="win32paramdlg.cc" />
-    <ClCompile Include="xop.cc" />
     <ClCompile Include="xsave.cc" />
   </ItemGroup>
   <ItemGroup>

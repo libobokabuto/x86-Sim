@@ -368,7 +368,7 @@ void BX_CPP_AttrRegparmN(2) BX_CPU_C::VMwrite64_Shadow(unsigned encoding, Bit64u
 
 #endif
 
-BX_CPP_INLINE void BX_CPU_C::VMfail(Bit32u error_code)
+void BX_CPU_C::VMfail(Bit32u error_code)
 {
     clearEFlagsOSZAPC();
 
