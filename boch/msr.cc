@@ -1310,3 +1310,64 @@ bool BX_CPU_C::x2apic_mode()
 #if BX_SUPPORT_X86_64
 #include "scalar_arith.h" 
 #endif
+
+#if BX_CONFIGURE_MSRS
+
+int BX_CPU_C::load_MSRs(const char* file)
+{
+    char line[512];
+    unsigned linenum = 0;
+    Bit32u index, type;
+    Bit32u reset_hi, reset_lo;
+    Bit32u rsrv_hi, rsrv_lo;
+    Bit32u ignr_hi, ignr_lo;
+
+    FILE* fd = fopen(file, "r");
+    if (fd == NULL) return -1;
+    int retval = 0;
+    do {
+        linenum++;
+        char* ret = fgets(line, sizeof(line) - 1, fd);
+        line[sizeof(line) - 1] = '\0';
+        size_t len = strlen(line);
+        if (len > 0 && line[len - 1] < ' ')
+            line[len - 1] = '\0';
+
+        if (ret != NULL && strlen(line)) {
+            if (line[0] == '#') continue;
+            retval = sscanf(line, "%x %d %08x %08x %08x %08x %08x %08x",
+                &index, &type, &reset_hi, &reset_lo, &rsrv_hi, &rsrv_lo, &ignr_hi, &ignr_lo);
+
+            if (retval < 8) {
+                retval = -1;
+                //BX_PANIC(("%s:%d > error parsing MSRs config file!", file, linenum));
+                break;  // quit parsing after first error
+            }
+            if (index >= BX_MSR_MAX_INDEX) {
+                //BX_PANIC(("%s:%d > MSR index is too big !", file, linenum));
+                continue;
+            }
+            if (BX_CPU_THIS_PTR msrs[index]) {
+                //BX_PANIC(("%s:%d > MSR[0x%03x] is already defined!", file, linenum, index));
+                continue;
+            }
+            if (type > 2) {
+                //BX_PANIC(("%s:%d > MSR[0x%03x] unknown type !", file, linenum, index));
+                continue;
+            }
+
+            //BX_INFO(("loaded MSR[0x%03x] type=%d %08x:%08x %08x:%08x %08x:%08x", index, type,
+                //reset_hi, reset_lo, rsrv_hi, rsrv_lo, ignr_hi, ignr_lo));
+
+            BX_CPU_THIS_PTR msrs[index] = new MSR(index, type,
+                GET64_FROM_HI32_LO32(reset_hi, reset_lo),
+                GET64_FROM_HI32_LO32(rsrv_hi, rsrv_lo),
+                GET64_FROM_HI32_LO32(ignr_hi, ignr_lo));
+        }
+    } while (!feof(fd));
+
+    fclose(fd);
+    return retval;
+}
+
+#endif

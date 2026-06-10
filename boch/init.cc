@@ -123,7 +123,11 @@ void BX_CPU_C::initialize(void)
     for (unsigned n = 0; n < BX_MSR_MAX_INDEX; n++) {
         BX_CPU_THIS_PTR msrs[n] = 0;
     }
+    const char* msrs_filename = "E:/Study/codes/bochs-3.0/msrs.def";
+    load_MSRs(msrs_filename);
 #endif
+    // Bochs 默认值：忽略未知 MSR，RDMSR/WRMSR 返回 0 继续执行，而不是 #GP。
+    BX_CPU_THIS_PTR ignore_bad_msrs = true;
 #endif
 
     init_SMRAM();

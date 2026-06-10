@@ -180,21 +180,7 @@ void BX_CPU_C::handleFpuMmxModeChange(void)
 	updateFetchModeMask(); /* FPU_MMX_OK changed */
 }
 
-void BX_CPP_AttrRegparmN(1) BX_CPU_C::BxError(bxInstruction_c* i)
-{
 
-}
-
-
-void BX_CPP_AttrRegparmN(1) BX_CPU_C::BxNoFPU(bxInstruction_c* i)
-{
-	//456
-}
-
-void BX_CPP_AttrRegparmN(1) BX_CPU_C::BxNoMMX(bxInstruction_c* i)
-{
-	//466
-}
 #if BX_CPU_LEVEL >= 6
 void BX_CPU_C::handleSseModeChange(void)
 {
@@ -211,10 +197,7 @@ void BX_CPU_C::handleSseModeChange(void)
 	updateFetchModeMask(); /* SSE_OK changed */
 }
 
-void BX_CPP_AttrRegparmN(1) BX_CPU_C::BxNoSSE(bxInstruction_c* i)
-{
-	//495
-}
+
 #endif
 
 #if BX_SUPPORT_AVX
@@ -259,20 +242,8 @@ void BX_CPU_C::handleAvxModeChange(void)
 	updateFetchModeMask(); /* AVX_OK changed */
 }
 
-void BX_CPP_AttrRegparmN(1) BX_CPU_C::BxNoAVX(bxInstruction_c* i)
-{
-	//550
-}
 #endif
-void BX_CPP_AttrRegparmN(1) BX_CPU_C::BxNoOpMask(bxInstruction_c* i)
-{
-	//568
-}
 
-void BX_CPP_AttrRegparmN(1) BX_CPU_C::BxNoEVEX(bxInstruction_c* i)
-{
-	//584
-}
 
 void BX_CPU_C::handleCpuContextChange(void)
 {

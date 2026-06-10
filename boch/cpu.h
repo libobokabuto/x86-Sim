@@ -4214,7 +4214,7 @@ public:
     BX_SMF void UndefinedOpcode(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
     BX_SMF void BxError(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
 #if BX_SUPPORT_HANDLERS_CHAINING_SPEEDUPS
-    BX_SMF void BxEndTrace(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void BxEndTrace(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
 #endif
 
     BX_SMF void BxNoFPU(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
@@ -4229,7 +4229,7 @@ public:
     BX_SMF void BxNoEVEX(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
 #endif
 #if BX_SUPPORT_AMX
-    BX_SMF void BxNoAMX(bxInstruction_c*) BX_CPP_AttrRegparmN(1) { gao_no(__LINE__, __func__); }
+    BX_SMF void BxNoAMX(bxInstruction_c*) BX_CPP_AttrRegparmN(1);
 #endif
 #endif
 

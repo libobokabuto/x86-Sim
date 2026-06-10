@@ -633,7 +633,7 @@ void bx_floppy_ctrl_c::write(Bit32u address, Bit32u value, unsigned io_len)
             break;
         }
         else if (BX_FD_THIS s.command_complete) {
-            if (BX_FD_THIS s.pending_command != FD_CMD_NOP)
+            if (BX_FD_THIS s.pending_command != FD_CMD_NOP){}
                 //BX_PANIC(("write 0x03f5: receiving new command 0x%02x, old one (0x%02x) pending",
                     //value, BX_FD_THIS s.pending_command));
             BX_FD_THIS s.command[0] = value;
@@ -866,7 +866,7 @@ void bx_floppy_ctrl_c::floppy_command(void)
         BX_FD_THIS s.HUT = BX_FD_THIS s.command[1] & 0x0f;
         BX_FD_THIS s.HLT = BX_FD_THIS s.command[2] >> 1;
         BX_FD_THIS s.main_status_reg |= (BX_FD_THIS s.command[2] & 0x01) ? FD_MS_NDMA : 0;
-        if (BX_FD_THIS s.main_status_reg & FD_MS_NDMA)
+        if (BX_FD_THIS s.main_status_reg & FD_MS_NDMA){}
             //BX_ERROR(("non DMA mode not fully implemented yet"));
         //BX_DEBUG(("Specify (SRT     = 0x%02x)", (BX_FD_THIS s.command[1] & 0xF0) >> 4));
         //BX_DEBUG(("        (HUT     = 0x%02x)", (BX_FD_THIS s.command[1] & 0x0F) >> 0));

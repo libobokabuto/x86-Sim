@@ -37178,3 +37178,152 @@ void BX_CPP_AttrRegparmN(1) BX_CPU_C::XSETBV(bxInstruction_c *i)
 
   BX_NEXT_TRACE(i);
 }
+
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::BxError(bxInstruction_c* i)
+{
+    unsigned ia_opcode = i->getIaOpcode();
+
+    if (ia_opcode == BX_IA_ERROR) {
+        //BX_DEBUG(("BxError: Encountered an unknown instruction (signalling #UD)"));
+
+        //if (LOG_THIS getonoff(LOGLEV_DEBUG))
+            //debug_disasm_instruction(BX_CPU_THIS_PTR prev_rip);
+    }
+    else {
+        //BX_DEBUG(("%s: instruction not supported - signalling #UD", get_bx_opcode_name(ia_opcode)));
+        for (unsigned n = 0; n < BX_ISA_EXTENSIONS_ARRAY_SIZE; n++){}
+            //BX_DEBUG(("ia_extensions_bitmask[%d]: %08x", n, BX_CPU_THIS_PTR ia_extensions_bitmask[n]));
+    }
+
+    exception(BX_UD_EXCEPTION, 0);
+
+    BX_NEXT_TRACE(i); // keep compiler happy
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::BxNoFPU(bxInstruction_c* i)
+{
+    if (BX_CPU_THIS_PTR cr0.get_EM() || BX_CPU_THIS_PTR cr0.get_TS())
+        exception(BX_NM_EXCEPTION, 0);
+
+    //BX_ASSERT(0);
+
+    BX_NEXT_TRACE(i); // keep compiler happy
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::BxNoMMX(bxInstruction_c* i)
+{
+    if (BX_CPU_THIS_PTR cr0.get_EM())
+        exception(BX_UD_EXCEPTION, 0);
+
+    if (BX_CPU_THIS_PTR cr0.get_TS())
+        exception(BX_NM_EXCEPTION, 0);
+
+    //BX_ASSERT(0);
+
+    BX_NEXT_TRACE(i); // keep compiler happy
+}
+
+#if BX_CPU_LEVEL >= 6
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::BxNoSSE(bxInstruction_c* i)
+{
+    if (BX_CPU_THIS_PTR cr0.get_EM() || !BX_CPU_THIS_PTR cr4.get_OSFXSR())
+        exception(BX_UD_EXCEPTION, 0);
+
+    if (BX_CPU_THIS_PTR cr0.get_TS())
+        exception(BX_NM_EXCEPTION, 0);
+
+    //BX_ASSERT(0);
+
+    BX_NEXT_TRACE(i); // keep compiler happy
+}
+
+#if BX_SUPPORT_AVX
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::BxNoAVX(bxInstruction_c* i)
+{
+    if (!protected_mode() || !BX_CPU_THIS_PTR cr4.get_OSXSAVE())
+        exception(BX_UD_EXCEPTION, 0);
+
+    if (~BX_CPU_THIS_PTR xcr0.val32 & (BX_XCR0_SSE_MASK | BX_XCR0_YMM_MASK))
+        exception(BX_UD_EXCEPTION, 0);
+
+    if (BX_CPU_THIS_PTR cr0.get_TS())
+        exception(BX_NM_EXCEPTION, 0);
+
+    //BX_ASSERT(0);
+
+    BX_NEXT_TRACE(i); // keep compiler happy
+}
+#endif
+
+#if BX_SUPPORT_EVEX
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::BxNoOpMask(bxInstruction_c* i)
+{
+    if (!protected_mode() || !BX_CPU_THIS_PTR cr4.get_OSXSAVE())
+        exception(BX_UD_EXCEPTION, 0);
+
+    if (~BX_CPU_THIS_PTR xcr0.val32 & (BX_XCR0_SSE_MASK | BX_XCR0_YMM_MASK | BX_XCR0_OPMASK_MASK))
+        exception(BX_UD_EXCEPTION, 0);
+
+    if (BX_CPU_THIS_PTR cr0.get_TS())
+        exception(BX_NM_EXCEPTION, 0);
+
+    //BX_ASSERT(0);
+
+    BX_NEXT_TRACE(i); // keep compiler happy
+}
+
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::BxNoEVEX(bxInstruction_c* i)
+{
+    if (!protected_mode() || !BX_CPU_THIS_PTR cr4.get_OSXSAVE())
+        exception(BX_UD_EXCEPTION, 0);
+
+    if (~BX_CPU_THIS_PTR xcr0.val32 & (BX_XCR0_SSE_MASK | BX_XCR0_YMM_MASK | BX_XCR0_OPMASK_MASK | BX_XCR0_ZMM_HI256_MASK | BX_XCR0_HI_ZMM_MASK))
+        exception(BX_UD_EXCEPTION, 0);
+
+    if (BX_CPU_THIS_PTR cr0.get_TS())
+        exception(BX_NM_EXCEPTION, 0);
+
+    //BX_ASSERT(0);
+
+    BX_NEXT_TRACE(i); // keep compiler happy
+}
+#endif
+
+#if BX_SUPPORT_AMX
+void BX_CPP_AttrRegparmN(1) BX_CPU_C::BxNoAMX(bxInstruction_c* i)
+{
+    if (!long64_mode() || !BX_CPU_THIS_PTR cr4.get_OSXSAVE())
+        exception(BX_UD_EXCEPTION, 0);
+
+    if (~BX_CPU_THIS_PTR xcr0.val32 & (BX_XCR0_XTILECFG_MASK | BX_XCR0_XTILEDATA_MASK))
+        exception(BX_UD_EXCEPTION, 0);
+
+    BX_ASSERT(0);
+
+    BX_NEXT_TRACE(i); // keep compiler happy
+}
+#endif
+
+#endif
+
+#if BX_SUPPORT_HANDLERS_CHAINING_SPEEDUPS
+
+void BX_CPU_C::BxEndTrace(bxInstruction_c* i)
+{
+    // do nothing, return to main cpu_loop
+}
+
+void genDummyICacheEntry(bxInstruction_c* i)
+{
+    i->setILen(0);
+    i->setIaOpcode(BX_INSERTED_OPCODE);
+    i->execute1 = &BX_CPU_C::BxEndTrace;
+}
+
+#endif
+
+
+

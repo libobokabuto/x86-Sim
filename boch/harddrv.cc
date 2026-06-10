@@ -88,7 +88,7 @@ struct bx_local_ata_device_conf_t {
 
 static const bx_local_ata_channel_conf_t bx_local_ata_channels[BX_MAX_ATA_CHANNEL] = {
     { true,  0x1f0, 0x3f0, 14 },
-    { false, 0x170, 0x370, 15 },
+    { true, 0x170, 0x370, 15 },
     { false, 0x1e8, 0x3e0, 11 },
     { false, 0x168, 0x360, 10 }
 };//自己加的
