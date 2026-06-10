@@ -1,3 +1,4 @@
+#define NEED_CPU_REG_SHORTCUTS 1
 #include "bochs.h"
 #include "cpu.h"
 #include "MD5.h"

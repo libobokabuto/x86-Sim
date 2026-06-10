@@ -3,12 +3,13 @@
 
 #include <setjmp.h>
 #include "wide_int.h"
-#include "decoder.h" //27行
-#include "instrument.h" //29行
+#include "decoder.h" 
+#include "instrument.h" 
 
 const Bit64u BX_PHY_ADDRESS_MASK = ((((Bit64u)(1)) << BX_PHY_ADDRESS_WIDTH) - 1);
 
 const Bit64u BX_PHY_ADDRESS_RESERVED_BITS = (~BX_PHY_ADDRESS_MASK); //33
+
 #if defined(NEED_CPU_REG_SHORTCUTS)
 
 /* WARNING:
@@ -5068,6 +5069,7 @@ BX_CPP_INLINE void BX_CPU_C::prepareXSAVE(void)
 }
 #endif
 
+#if defined(NEED_CPU_REG_SHORTCUTS)
 
 #if BX_SUPPORT_X86_64  //5402
 BX_CPP_INLINE Bit64u BX_CPP_AttrRegparmN(1) BX_CPU_C::BxResolve64(bxInstruction_c* i)
@@ -5104,7 +5106,7 @@ BX_CPP_INLINE Bit32u BX_CPP_AttrRegparmN(1) BX_CPU_C::BxResolve32(bxInstruction_
   PRESERVE_RSP;                           \
   PRESERVE_SSP;                           \
 }
-
+#endif // defined(NEED_CPU_REG_SHORTCUTS)
 enum {
     BX_FETCH_MODE_IS32_MASK = (1 << 0),
     BX_FETCH_MODE_IS64_MASK = (1 << 1),

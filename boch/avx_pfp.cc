@@ -22,15 +22,15 @@ void BX_CPU_C::print_state_AVX(void)
 #if BX_SUPPORT_EVEX
         BxPackedZmmRegister vmm = BX_READ_AVX_REG(n);
         //BX_DEBUG(("VMM%02u: %08x%08x:%08x%08x:%08x%08x:%08x%08x:%08x%08x:%08x%08x:%08x%08x:%08x%08x", n,
-            vmm.zmm32u(15), vmm.zmm32u(14), vmm.zmm32u(13), vmm.zmm32u(12),
-            vmm.zmm32u(11), vmm.zmm32u(10), vmm.zmm32u(9), vmm.zmm32u(8),
-            vmm.zmm32u(7), vmm.zmm32u(6), vmm.zmm32u(5), vmm.zmm32u(4),
-            vmm.zmm32u(3), vmm.zmm32u(2), vmm.zmm32u(1), vmm.zmm32u(0)));
+            //vmm.zmm32u(15), vmm.zmm32u(14), vmm.zmm32u(13), vmm.zmm32u(12),
+            //vmm.zmm32u(11), vmm.zmm32u(10), vmm.zmm32u(9), vmm.zmm32u(8),
+            //vmm.zmm32u(7), vmm.zmm32u(6), vmm.zmm32u(5), vmm.zmm32u(4),
+            //vmm.zmm32u(3), vmm.zmm32u(2), vmm.zmm32u(1), vmm.zmm32u(0)));
 #else
         BxPackedYmmRegister vmm = BX_READ_YMM_REG(n);
-        BX_DEBUG(("VMM%02u: %08x%08x:%08x%08x:%08x%08x:%08x%08x", n,
-            vmm.ymm32u(7), vmm.ymm32u(6), vmm.ymm32u(5), vmm.ymm32u(4),
-            vmm.ymm32u(3), vmm.ymm32u(2), vmm.ymm32u(1), vmm.ymm32u(0)));
+        //BX_DEBUG(("VMM%02u: %08x%08x:%08x%08x:%08x%08x:%08x%08x", n,
+           // vmm.ymm32u(7), vmm.ymm32u(6), vmm.ymm32u(5), vmm.ymm32u(4),
+            //vmm.ymm32u(3), vmm.ymm32u(2), vmm.ymm32u(1), vmm.ymm32u(0)));
 #endif
     }
 }
