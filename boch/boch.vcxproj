@@ -497,6 +497,7 @@
     <ClInclude Include="apic.h" />
     <ClInclude Include="bf16-compare.h" />
     <ClInclude Include="bf16.h" />
+    <ClInclude Include="bf8.h" />
     <ClInclude Include="biosdev.h" />
     <ClInclude Include="bochs.h" />
     <ClInclude Include="bswap.h" />
@@ -536,6 +537,7 @@
     <ClInclude Include="gui.h" />
     <ClInclude Include="harddrv.h" />
     <ClInclude Include="hdimage.h" />
+    <ClInclude Include="hf8.h" />
     <ClInclude Include="hpet.h" />
     <ClInclude Include="i386.h" />
     <ClInclude Include="i387.h" />

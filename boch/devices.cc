@@ -316,6 +316,11 @@ void bx_devices_c::init(BX_MEM_C* newmem)
     DEV_cmos_set_reg(0x35, (Bit8u)((extended_memory_in_64k >> 8) & 0xff));
 
 
+    if (timer_handle == BX_NULL_TIMER_HANDLE) {
+        timer_handle = DEV_register_timer(this, timer_handler,
+            (unsigned)BX_IODEV_HANDLER_PERIOD, 1, 1, "devices.cc");
+    }
+
     bx_init_plugins(); //354
     DEV_cmos_checksum();//357
 }
@@ -506,6 +511,10 @@ void bx_devices_c::timer(void)
     if (++paste.counter >= paste.delay) {
         service_paste_buf();
         paste.counter = 0;
+    }
+
+    if (!bx_pc_system.kill_bochs_request && bx_gui != NULL) {
+        bx_gui->handle_events();
     }
 }
 
